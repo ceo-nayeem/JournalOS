@@ -365,6 +365,27 @@ input,textarea,select{font-family:var(--font-sans);}
   </div>
 </div>
 
+<!-- ============ FIREBASE (Auth + Firestore) ============ -->
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script>
+/* Your web app's Firebase configuration */
+const firebaseConfig = {
+  apiKey: "AIzaSyAFiBNpsVidZGSOdHujKpdQYHjvXIuFf4o",
+  authDomain: "journalos-v1.firebaseapp.com",
+  projectId: "journalos-v1",
+  storageBucket: "journalos-v1.firebasestorage.app",
+  messagingSenderId: "760962674361",
+  appId: "1:760962674361:web:31f075aa7ec84807eb3568",
+  measurementId: "G-QKNTSGXX9F"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+</script>
+
 <script>
 /* ================================================================
    JOURNALOS — APP LOGIC
@@ -374,43 +395,57 @@ input,textarea,select{font-family:var(--font-sans);}
 
    DATA LAYER
    ----------------------------------------------------------------
-   Everything currently persists to localStorage under the
-   `journalos_*` keys so the app is fully usable right now.
-   This is a placeholder for the real backend. When you wire up
-   your real-time database, replace the functions in the
-   "DATA LAYER" section below — the rest of the app calls only
-   these functions, so nothing else needs to change.
+   Data now lives in Firebase:
+     users/{uid}                 -> profile + settings (map field)
+     users/{uid}/entries/{id}    -> one journal entry per doc
+   Real-time listeners (onSnapshot) keep state.entries / state.settings
+   in sync across tabs/devices automatically.
 
    AI LAYER
    ----------------------------------------------------------------
-   `generateDailySummary()` / `generateWeeklySummary()` /
-   `extractInformation()` are stubbed with a naive local
-   approximation so the UI is functional today. Replace their
-   internals with your real AI API call — the function
-   signatures (input: entry text / entries[], output: string or
-   structured object) are the integration contract the rest of
-   the app already expects.
+   `generateDailySummary()` / `generateWeeklySummary()` call the
+   Gemini API (generateContent) using the API key saved in
+   Settings. `extractInformation()` stays a fast local keyword
+   heuristic (no API call) since it runs on every dashboard render.
    ================================================================ */
 
-const STORE_KEY_USER = 'journalos_user';
-const STORE_KEY_ENTRIES = 'journalos_entries';
-const STORE_KEY_SETTINGS = 'journalos_settings';
+const THEME_CACHE_KEY = 'journalos_theme_cache'; // local-only, avoids a flash of wrong theme before Firebase responds
+const DEFAULT_SETTINGS = {theme:'light', apiKey:'', dailyReminder:true, weeklySummary:true, aiExtraction:true};
 
-/* ---------------- DATA LAYER (swap for real DB later) ---------------- */
-const DB = {
-  getUser(){ try{return JSON.parse(localStorage.getItem(STORE_KEY_USER));}catch(e){return null;} },
-  setUser(u){ localStorage.setItem(STORE_KEY_USER, JSON.stringify(u)); },
-  clearUser(){ localStorage.removeItem(STORE_KEY_USER); },
+function userDocRef(){ return db.collection('users').doc(state.user.uid); }
+function entriesColRef(){ return userDocRef().collection('entries'); }
 
-  getEntries(){ try{return JSON.parse(localStorage.getItem(STORE_KEY_ENTRIES))||[];}catch(e){return [];} },
-  saveEntries(list){ localStorage.setItem(STORE_KEY_ENTRIES, JSON.stringify(list)); },
+let unsubEntries = null, unsubUserDoc = null;
 
-  getSettings(){
-    const def = {theme:'light', apiKey:'', dbEndpoint:'', dailyReminder:true, weeklySummary:true, aiExtraction:true};
-    try{ return {...def, ...(JSON.parse(localStorage.getItem(STORE_KEY_SETTINGS))||{})}; }catch(e){ return def; }
-  },
-  saveSettings(s){ localStorage.setItem(STORE_KEY_SETTINGS, JSON.stringify(s)); }
-};
+function attachEntriesListener(){
+  if(unsubEntries) unsubEntries();
+  unsubEntries = entriesColRef().orderBy('date','desc').onSnapshot(snap=>{
+    state.entries = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    if(['dashboard','timeline','calendar','search','insights'].includes(state.view)) render();
+    else updateStreak();
+  }, err=>{ console.error('entries listener error', err); toast('এন্ট্রি লোড করতে সমস্যা হয়েছে।'); });
+}
+
+function attachUserDocListener(){
+  if(unsubUserDoc) unsubUserDoc();
+  unsubUserDoc = userDocRef().onSnapshot(snap=>{
+    const data = snap.exists ? (snap.data().settings || {}) : {};
+    state.settings = {...DEFAULT_SETTINGS, ...data};
+    document.documentElement.setAttribute('data-theme', state.settings.theme);
+    localStorage.setItem(THEME_CACHE_KEY, state.settings.theme);
+    if(state.view==='settings') render();
+  }, err=>{ console.error('user doc listener error', err); });
+}
+
+async function saveUserSettings(s){
+  try{
+    await userDocRef().set({settings:s}, {merge:true});
+    toast('সেটিংস সংরক্ষিত হয়েছে।');
+  }catch(err){
+    console.error(err);
+    toast('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
+  }
+}
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
@@ -430,8 +465,30 @@ const MOODS = [
 ];
 function moodInfo(id){ return MOODS.find(m=>m.id===id) || MOODS[5]; }
 
-/* ---------------- AI LAYER (stub — replace with real API call) ---------------- */
-function generateDailySummary(entry){
+/* ---------------- AI LAYER (Gemini API) ---------------- */
+async function callGemini(prompt){
+  const apiKey = state.settings && state.settings.apiKey;
+  if(!apiKey) return null;
+  try{
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] })
+    });
+    if(!res.ok){
+      const errBody = await res.text().catch(()=> '');
+      throw new Error(`Gemini ${res.status}: ${errBody.slice(0,180)}`);
+    }
+    const data = await res.json();
+    return (data.candidates && data.candidates[0] && data.candidates[0].content &&
+      data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+      data.candidates[0].content.parts[0].text || '').trim() || null;
+  }catch(err){
+    console.error('Gemini call failed', err);
+    return null;
+  }
+}
+function localDailySummary(entry){
   if(!entry || !entry.content || entry.content.trim().length < 12){
     return "যথেষ্ট লেখা হলে এখানে একটা সংক্ষিপ্ত AI সারাংশ দেখানো হবে।";
   }
@@ -440,12 +497,27 @@ function generateDailySummary(entry){
   const mood = moodInfo(entry.mood).label;
   return `${firstLine.slice(0,140)}${firstLine.length>140?'…':''} — overall mood: ${mood}, ~${words.length} words written.`;
 }
-function generateWeeklySummary(entries){
+function localWeeklySummary(entries){
   if(!entries.length) return "এই সপ্তাহে এখনো কোনো এন্ট্রি লেখা হয়নি।";
   const moodCount = {};
   entries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
   const topMood = Object.entries(moodCount).sort((a,b)=>b[1]-a[1])[0];
   return `${entries.length}টি এন্ট্রি লেখা হয়েছে এই সপ্তাহে। সবচেয়ে বেশি দেখা যাওয়া mood: ${moodInfo(topMood[0]).label}।`;
+}
+async function generateDailySummary(entry){
+  const local = localDailySummary(entry);
+  if(!entry || !entry.content || entry.content.trim().length < 12) return local;
+  const prompt = `তুমি একজন সহানুভূতিশীল journaling সহকারী। নিচের ডায়েরি এন্ট্রিটি বাংলা বা ইংরেজি, যেভাবেই লেখা হোক, ২-৩ বাক্যে একটা উষ্ণ, ব্যক্তিগত সারাংশ লিখে দাও (mood: ${moodInfo(entry.mood).label}):\n\n"""${entry.content}"""`;
+  const ai = await callGemini(prompt);
+  return ai || local;
+}
+async function generateWeeklySummary(entries){
+  const local = localWeeklySummary(entries);
+  if(!entries.length) return local;
+  const joined = entries.map(e=>`- (${e.date}, mood: ${moodInfo(e.mood).label}) ${e.content}`).join('\n').slice(0,6000);
+  const prompt = `নিচে এই সপ্তাহের কয়েকটা জার্নাল এন্ট্রি দেওয়া হলো। ৩-৪ বাক্যে একটা সাপ্তাহিক সারাংশ লেখো — সাধারণ mood প্যাটার্ন, বড় ঘটনা বা থিম উল্লেখ করে:\n\n${joined}`;
+  const ai = await callGemini(prompt);
+  return ai || local;
 }
 // Naive local "extraction" — looks for simple cue phrases. Replace with a real
 // AI extraction call for actual accuracy (Master Plan Module 12).
@@ -462,25 +534,47 @@ function extractInformation(text){
 }
 
 /* ---------------- STATE ---------------- */
-let state = { view:'dashboard', entries:[], user:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date() };
+let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date() };
 
 /* ---------------- BOOT ---------------- */
 function boot(){
-  const settings = DB.getSettings();
-  document.documentElement.setAttribute('data-theme', settings.theme);
-  const user = DB.getUser();
-  if(user){
-    state.user = user;
-    state.entries = DB.getEntries();
-    showApp();
-  } else {
-    showAuth();
-  }
+  // apply the last-known theme immediately so there's no flash before Firebase responds
+  document.documentElement.setAttribute('data-theme', localStorage.getItem(THEME_CACHE_KEY) || 'light');
+  renderAuthForm();
+
+  auth.onAuthStateChanged(function(user){
+    if(unsubEntries){ unsubEntries(); unsubEntries=null; }
+    if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
+
+    if(user){
+      state.user = {uid:user.uid, name:user.displayName||'You', email:user.email||'', photoURL:user.photoURL||''};
+      state.entries = [];
+      state.settings = null;
+
+      const ref = userDocRef();
+      ref.get().then(snap=>{
+        if(!snap.exists){
+          return ref.set({
+            profile:{name:state.user.name, email:state.user.email, createdAt:new Date().toISOString()},
+            settings: DEFAULT_SETTINGS
+          });
+        }
+      }).catch(err=>console.error('user doc init failed', err));
+
+      attachUserDocListener();
+      attachEntriesListener();
+      showApp();
+    } else {
+      state.user = null;
+      state.entries = [];
+      state.settings = null;
+      showAuth();
+    }
+  });
 }
 function showAuth(){
   document.getElementById('auth').style.display='flex';
   document.getElementById('app').classList.remove('shown');
-  renderAuthForm(true);
 }
 function showApp(){
   document.getElementById('auth').style.display='none';
@@ -488,33 +582,28 @@ function showApp(){
   go('dashboard');
 }
 
-/* ---------------- AUTH (mock — see Settings for real-auth hook note) ---------------- */
-function renderAuthForm(isLogin){
+/* ---------------- AUTH (Firebase — Google Sign-In) ---------------- */
+function renderAuthForm(){
   const el = document.getElementById('authForm');
   el.innerHTML = `
-    <div class="field"><label>Name</label><input id="af_name" placeholder="তোমার নাম" ${isLogin?'':''}></div>
-    <div class="field"><label>Email</label><input id="af_email" type="email" placeholder="you@example.com"></div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;" onclick="doAuth()">
-      Continue to JournalOS
+    <button class="btn btn-primary" style="width:100%;justify-content:center;gap:10px;padding:11px;" onclick="googleSignIn()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.6C29.7 34.9 27 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.7l6.6 5.6C41.7 36 44 30.5 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      Continue with Google
     </button>
-    <div class="auth-switch">এটি একটি লোকাল ডেমো লগইন — বাস্তব authentication পরে backend কনফিগার করলে যুক্ত হবে।</div>
+    <div class="auth-switch">Google দিয়ে সাইন-ইন করলে তোমার এন্ট্রি নিরাপদে Firebase-এ সংরক্ষিত হবে ও যেকোনো ডিভাইস থেকে দেখা যাবে।</div>
   `;
 }
-function doAuth(){
-  const name = document.getElementById('af_name').value.trim() || 'You';
-  const email = document.getElementById('af_email').value.trim() || 'you@local';
-  const user = {id:uid(), name, email, createdAt:new Date().toISOString()};
-  DB.setUser(user);
-  state.user = user;
-  state.entries = DB.getEntries();
-  showApp();
-  toast(`স্বাগতম, ${name}!`);
+function googleSignIn(){
+  auth.signInWithPopup(googleProvider).then(result=>{
+    toast(`স্বাগতম, ${result.user.displayName || 'You'}!`);
+  }).catch(err=>{
+    console.error(err);
+    toast('লগইন ব্যর্থ হয়েছে: ' + err.message);
+  });
 }
 function logout(){
-  confirmAction('লগ আউট করবেন?', 'আপনার এন্ট্রিগুলো এই ব্রাউজারে সংরক্ষিত থাকবে।', ()=>{
-    DB.clearUser();
-    state.user = null;
-    showAuth();
+  confirmAction('লগ আউট করবেন?', 'তোমার এন্ট্রিগুলো Firebase-এ নিরাপদে সংরক্ষিত থাকবে।', ()=>{
+    auth.signOut();
   }, 'লগ আউট');
 }
 
@@ -547,6 +636,8 @@ function render(){
   };
   main.innerHTML = (views[state.view] || renderDashboard)();
   updateStreak();
+  if(state.view==='write') refreshAIPreview(true);
+  if(state.view==='insights') refreshWeeklyAI();
 }
 
 /* ---------------- DASHBOARD (Module 02) ---------------- */
@@ -684,8 +775,8 @@ function renderWrite(){
           <span>✦ AI Daily Summary</span>
           <button class="btn btn-sm btn-ghost" onclick="refreshAIPreview(true)">Regenerate</button>
         </div>
-        <p id="aiPreview">${escapeHtml(generateDailySummary(draft))}</p>
-        <div class="ai-note">এটি একটি local placeholder সারাংশ। Settings-এ তোমার AI API কনফিগার করলে এখানে আসল AI summary দেখাবে।</div>
+        <p id="aiPreview">${escapeHtml(localDailySummary(draft))}</p>
+        <div class="ai-note" id="aiNote">${(state.settings && state.settings.apiKey) ? 'Gemini দিয়ে তৈরি সারাংশ।' : 'Settings-এ তোমার Gemini API key বসালে এখানে আসল AI summary দেখাবে।'}</div>
       </div>
     </div>
   `;
@@ -710,42 +801,58 @@ function toggleDraftFlag(flag){
 function updateWordCount(){
   document.getElementById('wordCount').textContent = (window.__draft.content||'').trim().split(/\s+/).filter(Boolean).length + ' words';
 }
-let aiDebounce;
+let aiDebounce, aiCallToken = 0;
 function refreshAIPreview(force){
   clearTimeout(aiDebounce);
-  aiDebounce = setTimeout(()=>{
+  aiDebounce = setTimeout(async ()=>{
     const el = document.getElementById('aiPreview');
-    if(el) el.textContent = generateDailySummary(window.__draft);
+    if(!el) return;
+    el.textContent = localDailySummary(window.__draft);
+    if(!state.settings || !state.settings.apiKey) return;
+    const myToken = ++aiCallToken;
+    const noteEl = document.getElementById('aiNote');
+    if(noteEl) noteEl.textContent = 'Gemini থেকে সারাংশ আনা হচ্ছে…';
+    const summary = await generateDailySummary(window.__draft);
+    if(myToken !== aiCallToken) return; // a newer call superseded this one
+    const el2 = document.getElementById('aiPreview');
+    if(el2) el2.textContent = summary;
+    const noteEl2 = document.getElementById('aiNote');
+    if(noteEl2) noteEl2.textContent = 'Gemini দিয়ে তৈরি সারাংশ।';
   }, force?0:400);
 }
-function saveDraft(){
+async function saveDraft(){
   const d = window.__draft;
   if(!d.content || !d.content.trim()){ toast('আগে কিছু লিখো।'); return; }
-  const list = DB.getEntries();
-  if(d.id){
-    const idx = list.findIndex(e=>e.id===d.id);
-    d.updatedAt = new Date().toISOString();
-    list[idx] = d;
-  } else {
-    d.id = uid();
-    d.createdAt = new Date().toISOString();
-    d.updatedAt = d.createdAt;
-    // avoid duplicate same-date entries silently overwriting — allow multiple per day
-    list.push(d);
+  try{
+    if(d.id){
+      const {id, ...data} = d;
+      data.updatedAt = new Date().toISOString();
+      await entriesColRef().doc(id).set(data, {merge:true});
+    } else {
+      d.createdAt = new Date().toISOString();
+      d.updatedAt = d.createdAt;
+      const {id, ...data} = d;
+      const ref = await entriesColRef().add(data);
+      d.id = ref.id;
+    }
+    state.editingId = d.id;
+    toast('জার্নাল সংরক্ষিত হয়েছে।');
+    go('dashboard');
+  }catch(err){
+    console.error(err);
+    toast('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
   }
-  DB.saveEntries(list);
-  state.entries = list;
-  state.editingId = d.id;
-  toast('জার্নাল সংরক্ষিত হয়েছে।');
-  go('dashboard');
 }
 function deleteEntry(id){
-  confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে।', ()=>{
-    const list = DB.getEntries().filter(e=>e.id!==id);
-    DB.saveEntries(list);
-    state.entries = list;
-    toast('এন্ট্রি মুছে ফেলা হয়েছে।');
-    go('timeline');
+  confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে।', async ()=>{
+    try{
+      await entriesColRef().doc(id).delete();
+      toast('এন্ট্রি মুছে ফেলা হয়েছে।');
+      go('timeline');
+    }catch(err){
+      console.error(err);
+      toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message);
+    }
   }, 'মুছে ফেলুন');
 }
 
@@ -926,15 +1033,27 @@ function renderInsights(){
       <div class="head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="section-title" style="margin:0;">✦ This Week's AI Summary</div>
       </div>
-      <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.6;">${escapeHtml(generateWeeklySummary(weekEntries))}</p>
-      <div class="ai-note">Placeholder সারাংশ — real AI API কনফিগার করলে এখানে গভীরতর সাপ্তাহিক analysis দেখাবে (Master Plan Module 09)।</div>
+      <p id="weeklyAiPreview" style="font-size:13.5px;color:var(--ink-soft);line-height:1.6;">${escapeHtml(localWeeklySummary(weekEntries))}</p>
+      <div class="ai-note" id="weeklyAiNote">${(state.settings && state.settings.apiKey) ? 'Gemini দিয়ে তৈরি সারাংশ।' : 'Settings-এ তোমার Gemini API key বসালে এখানে গভীরতর সাপ্তাহিক analysis দেখাবে।'}</div>
     </div>
   `;
+}
+async function refreshWeeklyAI(){
+  if(!state.settings || !state.settings.apiKey) return;
+  const now = new Date(); const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+  const weekEntries = state.entries.filter(e=> new Date(e.date) >= weekAgo);
+  const noteEl = document.getElementById('weeklyAiNote');
+  if(noteEl) noteEl.textContent = 'Gemini থেকে সাপ্তাহিক সারাংশ আনা হচ্ছে…';
+  const summary = await generateWeeklySummary(weekEntries);
+  const el = document.getElementById('weeklyAiPreview');
+  if(el && state.view==='insights') el.textContent = summary;
+  const noteEl2 = document.getElementById('weeklyAiNote');
+  if(noteEl2 && state.view==='insights') noteEl2.textContent = 'Gemini দিয়ে তৈরি সারাংশ।';
 }
 
 /* ---------------- SETTINGS (Module 33) ---------------- */
 function renderSettings(){
-  const s = DB.getSettings();
+  const s = state.settings || DEFAULT_SETTINGS;
   return `
     <div class="page-head"><h1>Settings</h1></div>
 
@@ -947,11 +1066,11 @@ function renderSettings(){
         <div><div class="label">Email</div><div class="desc">${escapeHtml(state.user.email)}</div></div>
       </div>
       <div class="settings-row">
-        <div><div class="label">Log out</div><div class="desc">তোমার ডেটা এই ব্রাউজারে থেকে যাবে।</div></div>
+        <div><div class="label">Log out</div><div class="desc">তোমার ডেটা Firebase-এ নিরাপদে থেকে যাবে।</div></div>
         <button class="btn btn-sm" onclick="logout()">Log out</button>
       </div>
       <div class="settings-row">
-        <div><div class="label" style="color:var(--rust)">Delete all my data</div><div class="desc">সব এন্ট্রি ও অ্যাকাউন্ট তথ্য স্থায়ীভাবে মুছে ফেলবে।</div></div>
+        <div><div class="label" style="color:var(--rust)">Delete all my data</div><div class="desc">সব এন্ট্রি ও সেটিংস Firebase থেকে স্থায়ীভাবে মুছে ফেলবে।</div></div>
         <button class="btn btn-sm btn-danger" onclick="wipeAll()">Delete</button>
       </div>
     </div>
@@ -977,40 +1096,42 @@ function renderSettings(){
     </div>
 
     <div class="settings-group card">
-      <h3>AI &amp; Data Configuration</h3>
+      <h3>AI Configuration</h3>
       <div class="field">
-        <label>AI API Key</label>
-        <input type="password" placeholder="তোমার AI API key এখানে বসাও" value="${escapeHtml(s.apiKey)}" onchange="saveSettingField('apiKey',this.value)">
-      </div>
-      <div class="field">
-        <label>Real-time Database Endpoint</label>
-        <input type="text" placeholder="তোমার database endpoint / project URL" value="${escapeHtml(s.dbEndpoint)}" onchange="saveSettingField('dbEndpoint',this.value)">
+        <label>Gemini API Key</label>
+        <input type="password" placeholder="তোমার Gemini API key এখানে বসাও" value="${escapeHtml(s.apiKey)}" onchange="saveSettingField('apiKey',this.value)">
       </div>
       <div class="hook-box">
-        এই দুইটা ফিল্ড এখন শুধু লোকালি সেভ হচ্ছে — এখনো কোনো external কল করছে না।
-        যখন তুমি আসল AI API ও database কনফিগার করবে, নিচের ফাংশনগুলো replace করলেই পুরো অ্যাপ কানেক্ট হয়ে যাবে:
+        এই key দিয়ে "Write Journal" পেজে দৈনিক সারাংশ এবং "Insights" পেজে সাপ্তাহিক সারাংশ সরাসরি Gemini API (gemini-flash-latest) থেকে জেনারেট হয়। Key খালি রাখলে একটা সাধারণ local সারাংশ দেখানো হবে।
         <br><br>
-        <code>DB.getEntries / DB.saveEntries</code> → real-time database কল দিয়ে replace করো।<br>
-        <code>generateDailySummary / generateWeeklySummary / extractInformation</code> → তোমার AI API কল দিয়ে replace করো।<br><br>
-        বাকি পুরো UI অপরিবর্তিত থাকবে কারণ সবকিছু শুধু এই ফাংশনগুলোর মধ্য দিয়েই ডেটা পড়ে/লেখে।
+        <b>মনে রাখা জরুরি:</b> এটি একটি ব্রাউজার-সাইড অ্যাপ, তাই এই key ব্রাউজারের ডেভেলপার টুলস / নেটওয়ার্ক ট্যাব থেকে দেখা সম্ভব। ব্যক্তিগত ব্যবহারের জন্য ঠিক আছে, কিন্তু সবার সাথে শেয়ার করা লিংকে এই key কখনো রেখো না।
       </div>
     </div>
   `;
 }
 function setTheme(dark){
-  const s = DB.getSettings(); s.theme = dark?'dark':'light'; DB.saveSettings(s);
-  document.documentElement.setAttribute('data-theme', s.theme);
+  const s = {...(state.settings||DEFAULT_SETTINGS), theme: dark?'dark':'light'};
+  document.documentElement.setAttribute('data-theme', s.theme); // instant feedback; listener will confirm
+  saveUserSettings(s);
 }
 function saveSettingField(field, val){
-  const s = DB.getSettings(); s[field]=val; DB.saveSettings(s);
-  toast('সেটিংস সংরক্ষিত হয়েছে।');
+  const s = {...(state.settings||DEFAULT_SETTINGS), [field]: val};
+  saveUserSettings(s);
 }
 function wipeAll(){
-  confirmAction('সব ডেটা মুছে ফেলবেন?', 'এই ব্রাউজারের সব জার্নাল এন্ট্রি ও অ্যাকাউন্ট তথ্য স্থায়ীভাবে মুছে যাবে। এটি ফেরানো যাবে না।', ()=>{
-    localStorage.removeItem(STORE_KEY_USER);
-    localStorage.removeItem(STORE_KEY_ENTRIES);
-    localStorage.removeItem(STORE_KEY_SETTINGS);
-    location.reload();
+  confirmAction('সব ডেটা মুছে ফেলবেন?', 'এই অ্যাকাউন্টের সব জার্নাল এন্ট্রি ও সেটিংস Firebase থেকে স্থায়ীভাবে মুছে যাবে। এটি ফেরানো যাবে না।', async ()=>{
+    try{
+      const snap = await entriesColRef().get();
+      const batch = db.batch();
+      snap.docs.forEach(d=>batch.delete(d.ref));
+      batch.delete(userDocRef());
+      await batch.commit();
+      toast('ডেটা মুছে ফেলা হয়েছে।');
+      auth.signOut();
+    }catch(err){
+      console.error(err);
+      toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message);
+    }
   }, 'সব মুছে ফেলুন');
 }
 
