@@ -72,7 +72,8 @@ input,textarea,select{font-family:var(--font-sans);}
   display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
 @media (max-width:860px){ .sidebar{position:fixed;left:0;top:0;z-index:40;width:230px;
   transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow);}
-  .sidebar.open{transform:translateX(0);} }
+  .sidebar.open{transform:translateX(0);}
+  #sidebarClose{display:inline-flex;} }
 .brand{display:flex;align-items:baseline;gap:6px;padding:6px 10px 20px;}
 .brand .mark{font-family:var(--font-serif);font-size:22px;font-style:italic;color:var(--accent);}
 .brand .word{font-family:var(--font-serif);font-size:19px;}
@@ -92,7 +93,7 @@ input,textarea,select{font-family:var(--font-sans);}
 .streak-pill b{color:var(--accent);font-family:var(--font-serif);font-size:16px;}
 
 .main{padding:28px 34px 80px;max-width:980px;width:100%;}
-@media (max-width:860px){ .main{padding:64px 18px 60px;} }
+@media (max-width:860px){ .main{padding:64px 18px 108px;} }
 .topbar{display:none;}
 @media (max-width:860px){
   .topbar{display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;
@@ -102,6 +103,43 @@ input,textarea,select{font-family:var(--font-sans);}
 .hamburger{background:none;border:none;font-size:20px;color:var(--ink);}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35;}
 .overlay.show{display:block;}
+
+/* ---------- Mobile bottom app-nav ---------- */
+.bottom-nav{display:none;}
+@media (max-width:860px){
+  .bottom-nav{display:flex;align-items:center;justify-content:space-between;position:fixed;left:0;right:0;bottom:0;
+    z-index:45;background:var(--paper-card);border-top:1px solid var(--rule);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 14px -6px rgba(0,0,0,.18);}
+}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;color:var(--ink-faint);font-size:10.5px;padding:6px 2px;border-radius:10px;
+  min-width:0;}
+.bn-item svg{width:21px;height:21px;flex:none;}
+.bn-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.bn-item.active{color:var(--accent);}
+.bn-fab{flex:none;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;
+  display:flex;align-items:center;justify-content:center;margin:0 2px;margin-top:-22px;
+  box-shadow:0 6px 16px -4px rgba(180,114,44,.55);}
+.bn-fab svg{width:24px;height:24px;}
+
+/* ---------- Bottom action sheets (mobile quick-add / mood) ---------- */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(20,18,12,.45);display:none;align-items:flex-end;
+  justify-content:center;z-index:70;}
+.sheet-backdrop.show{display:flex;}
+.sheet{background:var(--paper-card);width:100%;max-width:480px;border-radius:18px 18px 0 0;
+  padding:8px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:var(--shadow);
+  max-height:80vh;overflow-y:auto;}
+.sheet-handle{width:36px;height:4px;background:var(--rule);border-radius:99px;margin:6px auto 14px;}
+.sheet-title{font-size:12.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);
+  margin:0 0 10px;padding:0 6px;}
+.sheet-action{display:flex;align-items:center;gap:14px;width:100%;padding:13px 6px;border:none;background:none;
+  text-align:left;border-radius:10px;}
+.sheet-action:hover{background:var(--paper-dim);}
+.sheet-icon{font-size:21px;flex:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  background:var(--paper-dim);border-radius:10px;}
+.sheet-action b{display:block;font-size:14px;color:var(--ink);}
+.sheet-sub{font-size:12px;color:var(--ink-faint);margin-top:1px;}
+.quick-mood-grid{display:flex;flex-wrap:wrap;gap:8px;padding:2px 6px 14px;}
 
 .page-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;
   margin-bottom:22px;}
@@ -268,7 +306,8 @@ input,textarea,select{font-family:var(--font-sans);}
 
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);
   color:var(--paper);padding:11px 20px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;
-  transition:.25s;z-index:100;}
+  transition:.25s;z-index:100;max-width:calc(100% - 32px);text-align:center;}
+@media (max-width:860px){ .toast{bottom:calc(78px + env(safe-area-inset-bottom));} }
 :root[data-theme="dark"] .toast{background:var(--accent);color:#1B1B17;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -306,7 +345,9 @@ input,textarea,select{font-family:var(--font-sans);}
 
 <div id="app">
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><span class="mark">J</span><span class="word serif">JournalOS</span></div>
+    <div class="brand"><span class="mark">J</span><span class="word serif">JournalOS</span>
+      <button class="hamburger" style="margin-left:auto;display:none" id="sidebarClose" onclick="toggleSidebar()">✕</button>
+    </div>
 
     <button class="nav-item" data-view="dashboard" onclick="go('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
@@ -350,6 +391,54 @@ input,textarea,select{font-family:var(--font-sans);}
   </aside>
 
   <main class="main" id="main"></main>
+</div>
+
+<!-- ============ MOBILE BOTTOM APP-NAV ============ -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-item" data-view="dashboard" onclick="go('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+    <span>হোম</span>
+  </button>
+  <button class="bn-item" data-view="timeline" onclick="go('timeline')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+    <span>লাইব্রেরি</span>
+  </button>
+  <button class="bn-fab" onclick="openQuickAdd()" aria-label="নতুন এন্ট্রি">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+  <button class="bn-item" data-view="calendar" onclick="go('calendar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 15h.01M12 15h.01M16 15h.01"/></svg>
+    <span>ক্যালেন্ডার</span>
+  </button>
+  <button class="bn-item" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    <span>মোর</span>
+  </button>
+</nav>
+
+<!-- ============ QUICK-ADD SHEET (+ button) ============ -->
+<div class="sheet-backdrop" id="quickAddSheet" onclick="if(event.target===this) closeQuickAdd()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">নতুন এন্ট্রি</div>
+    <button class="sheet-action" onclick="startQuickWrite()">
+      <span class="sheet-icon">✍️</span>
+      <div><b>জার্নাল লিখো</b><div class="sheet-sub">আজকের দিনটা নিয়ে বিস্তারিত লেখো</div></div>
+    </button>
+    <button class="sheet-action" onclick="openMoodSheet()">
+      <span class="sheet-icon">🙂</span>
+      <div><b>শুধু Mood লগ করো</b><div class="sheet-sub">এক ট্যাপে আজকের mood বসাও</div></div>
+    </button>
+  </div>
+</div>
+
+<!-- ============ QUICK MOOD SHEET ============ -->
+<div class="sheet-backdrop" id="moodSheet" onclick="if(event.target===this) closeMoodSheet()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">আজ কেমন লাগছে?</div>
+    <div class="quick-mood-grid" id="quickMoodGrid"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -612,14 +701,59 @@ function go(view, param){
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   render();
   document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.overlay').classList.remove('show');
+  closeQuickAdd();
+  closeMoodSheet();
   document.getElementById('main').scrollTop = 0;
   window.scrollTo(0,0);
 }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
   document.querySelector('.overlay').classList.toggle('show');
+}
+
+/* ---------------- MOBILE QUICK-ADD / QUICK MOOD SHEETS ---------------- */
+function openQuickAdd(){ document.getElementById('quickAddSheet').classList.add('show'); }
+function closeQuickAdd(){ document.getElementById('quickAddSheet').classList.remove('show'); }
+function openMoodSheet(){
+  closeQuickAdd();
+  document.getElementById('moodSheet').classList.add('show');
+}
+function closeMoodSheet(){ document.getElementById('moodSheet').classList.remove('show'); }
+function renderQuickMoodOptions(){
+  const el = document.getElementById('quickMoodGrid');
+  if(!el) return;
+  el.innerHTML = MOODS.map(m=>`<button type="button" class="mood-opt" onclick="quickLogMood('${m.id}')">${m.emoji} ${m.label}</button>`).join('');
+}
+function startQuickWrite(){
+  closeQuickAdd();
+  const today = todayISO();
+  const existing = state.entries.find(e=>e.date===today);
+  go('write', existing ? existing.id : null);
+}
+async function quickLogMood(moodId){
+  closeMoodSheet();
+  if(!state.user) return;
+  try{
+    const today = todayISO();
+    const existing = state.entries.find(e=>e.date===today);
+    if(existing){
+      await entriesColRef().doc(existing.id).set({mood:moodId, updatedAt:new Date().toISOString()}, {merge:true});
+    } else {
+      await entriesColRef().add({
+        date:today, title:'', content:'', mood:moodId, moodIntensity:5,
+        tags:[], favorite:false, important:false,
+        createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+      });
+    }
+    toast('আজকের Mood সংরক্ষিত হয়েছে।');
+  }catch(err){
+    console.error(err);
+    toast('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
+  }
 }
 
 /* ---------------- RENDER ROUTER ---------------- */
@@ -1153,6 +1287,7 @@ function confirmAction(title, body, onConfirm, confirmLabel){
 }
 function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
 
+renderQuickMoodOptions();
 boot();
 </script>
 </body>
