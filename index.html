@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JournalOS — Write First. Everything Else Second.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   JOURNALOS — DESIGN TOKENS
+   Concept: a physical, ink-and-paper personal ledger, quietly
+   modernized. Warm parchment surfaces, fountain-pen ink type,
+   a single wax-seal ochre accent. Calm, not corporate.
+   ============================================================ */
+:root{
+  --paper:      #F6F1E6;
+  --paper-dim:  #ECE4D2;
+  --paper-card: #FFFDF8;
+  --ink:        #23291F;
+  --ink-soft:   #5B5A4E;
+  --ink-faint:  #8C8B7C;
+  --rule:       #DDD4BC;
+  --accent:     #B4722C;
+  --accent-soft:#E4C79B;
+  --sage:       #5E7A5E;
+  --sage-soft:  #DCE6D9;
+  --rust:       #A6503B;
+  --rust-soft:  #EAD3CB;
+  --sky:        #4E6E85;
+  --sky-soft:   #D9E3E9;
+
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans:  'Inter', -apple-system, sans-serif;
+
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(35,41,31,0.06), 0 8px 24px -12px rgba(35,41,31,0.18);
+}
+:root[data-theme="dark"]{
+  --paper:      #1B1B17;
+  --paper-dim:  #232320;
+  --paper-card: #242420;
+  --ink:        #EDE8D9;
+  --ink-soft:   #B8B3A2;
+  --ink-faint:  #7C7A6C;
+  --rule:       #38372F;
+  --accent:     #D79B54;
+  --accent-soft:#4A3A24;
+  --sage:       #8FAE8C;
+  --sage-soft:  #2C3A2A;
+  --rust:       #CE8874;
+  --rust-soft:  #3E2A24;
+  --sky:        #8FB1C6;
+  --sky-soft:   #23343C;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased;transition:background .2s,color .2s;}
+h1,h2,h3,.serif{font-family:var(--font-serif);font-weight:500;letter-spacing:-0.01em;}
+button{font-family:var(--font-sans);cursor:pointer;}
+input,textarea,select{font-family:var(--font-sans);}
+::selection{background:var(--accent-soft);}
+
+/* ---------- App shell ---------- */
+#app{display:none;min-height:100vh;grid-template-columns:230px 1fr;}
+#app.shown{display:grid;}
+@media (max-width:860px){ #app.shown{grid-template-columns:1fr;} }
+
+.sidebar{background:var(--paper-dim);border-right:1px solid var(--rule);padding:22px 16px;
+  display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+@media (max-width:860px){ .sidebar{position:fixed;left:0;top:0;z-index:40;width:230px;
+  transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow);}
+  .sidebar.open{transform:translateX(0);} }
+.brand{display:flex;align-items:baseline;gap:6px;padding:6px 10px 20px;}
+.brand .mark{font-family:var(--font-serif);font-size:22px;font-style:italic;color:var(--accent);}
+.brand .word{font-family:var(--font-serif);font-size:19px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  color:var(--ink-soft);text-decoration:none;font-size:14.5px;border:none;background:none;
+  text-align:left;width:100%;}
+.nav-item svg{width:17px;height:17px;flex:none;opacity:.85;}
+.nav-item:hover{background:var(--paper-card);color:var(--ink);}
+.nav-item.active{background:var(--paper-card);color:var(--ink);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--accent);}
+.nav-sep{height:1px;background:var(--rule);margin:12px 6px;}
+.nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);
+  padding:14px 12px 4px;}
+.sidebar-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--rule);}
+.streak-pill{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--paper-card);
+  border-radius:8px;font-size:13px;color:var(--ink-soft);}
+.streak-pill b{color:var(--accent);font-family:var(--font-serif);font-size:16px;}
+
+.main{padding:28px 34px 80px;max-width:980px;width:100%;}
+@media (max-width:860px){ .main{padding:64px 18px 60px;} }
+.topbar{display:none;}
+@media (max-width:860px){
+  .topbar{display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;
+    height:52px;background:var(--paper);border-bottom:1px solid var(--rule);padding:0 14px;z-index:30;}
+  .topbar .brand{padding:0;}
+}
+.hamburger{background:none;border:none;font-size:20px;color:var(--ink);}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35;}
+.overlay.show{display:block;}
+
+.page-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  margin-bottom:22px;}
+.page-head h1{font-size:27px;margin:0;}
+.page-head .sub{color:var(--ink-faint);font-size:13.5px;margin-top:2px;}
+.date-tag{color:var(--ink-faint);font-size:13px;}
+
+/* ---------- Cards / generic ---------- */
+.card{background:var(--paper-card);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);}
+.grid{display:grid;gap:16px;}
+.grid-2{grid-template-columns:1.3fr 1fr;}
+@media (max-width:760px){ .grid-2{grid-template-columns:1fr;} }
+.grid-3{grid-template-columns:repeat(3,1fr);}
+@media (max-width:760px){ .grid-3{grid-template-columns:1fr 1fr;} }
+.section-title{font-size:12.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);
+  margin:0 0 12px;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;border:1px solid var(--rule);
+  background:var(--paper-card);color:var(--ink);font-size:13.5px;font-weight:500;}
+.btn:hover{border-color:var(--ink-faint);}
+.btn-primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+:root[data-theme="dark"] .btn-primary{background:var(--accent);color:#1B1B17;border-color:var(--accent);}
+.btn-primary:hover{opacity:.9;}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-ghost{background:none;border-color:transparent;color:var(--ink-soft);}
+.btn-ghost:hover{background:var(--paper-dim);}
+.btn-sm{padding:6px 11px;font-size:12.5px;}
+.btn-danger{color:var(--rust);}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:12px;
+  background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--rule);}
+.tag{display:inline-flex;padding:3px 9px;border-radius:99px;font-size:11.5px;background:var(--sky-soft);
+  color:var(--sky);}
+.empty{color:var(--ink-faint);font-size:13.5px;padding:20px 4px;text-align:center;}
+
+/* ---------- Mood chip ---------- */
+.mood-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:99px;font-size:12.5px;font-weight:500;}
+.mood-happy{background:#F3E3B8;color:#7A5B12;}
+.mood-calm{background:var(--sage-soft);color:var(--sage);}
+.mood-sad{background:var(--sky-soft);color:var(--sky);}
+.mood-stressed{background:var(--rust-soft);color:var(--rust);}
+.mood-angry{background:#E9C6C6;color:#93342A;}
+.mood-neutral{background:var(--paper-dim);color:var(--ink-soft);}
+
+/* ---------- Auth screen ---------- */
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-box{width:100%;max-width:380px;text-align:center;}
+.auth-box .mark{font-family:var(--font-serif);font-style:italic;color:var(--accent);font-size:34px;}
+.auth-box h1{margin:2px 0 6px;font-size:26px;}
+.auth-box p.tag{display:block;color:var(--ink-faint);font-size:13.5px;margin-bottom:26px;}
+.field{margin-bottom:12px;text-align:left;}
+.field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;}
+.field input,.field textarea,.field select{width:100%;padding:10px 12px;border-radius:8px;
+  border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);font-size:14px;}
+.field textarea{resize:vertical;font-family:var(--font-serif);font-size:16px;line-height:1.6;}
+.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--accent-soft);
+  border-color:var(--accent);}
+.auth-switch{margin-top:16px;font-size:13px;color:var(--ink-faint);}
+.auth-switch button{background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;padding:0;}
+
+/* ---------- Dashboard ---------- */
+.today-hero{background:linear-gradient(155deg,var(--paper-card),var(--paper-dim));border:1px solid var(--rule);
+  border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.today-hero .eyebrow{color:var(--ink-faint);font-size:13px;}
+.today-hero h2{font-size:24px;margin:4px 0 14px;}
+.today-hero .preview{color:var(--ink-soft);font-size:14.5px;line-height:1.6;max-width:60ch;}
+.hero-actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;}
+.stat{display:flex;flex-direction:column;gap:2px;}
+.stat b{font-family:var(--font-serif);font-size:26px;}
+.stat span{font-size:12px;color:var(--ink-faint);}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;}
+@media (max-width:760px){ .quick-grid{grid-template-columns:repeat(2,1fr);} }
+.quick-btn{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px;
+  border-radius:9px;border:1px solid var(--rule);background:var(--paper-card);text-align:left;}
+.quick-btn:hover{border-color:var(--accent);}
+.quick-btn svg{width:18px;height:18px;color:var(--accent);}
+.quick-btn span{font-size:13px;font-weight:500;}
+
+/* ---------- Journal list / timeline ---------- */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.filter-row select,.filter-row input[type=text]{padding:7px 10px;border-radius:7px;border:1px solid var(--rule);
+  background:var(--paper-card);color:var(--ink);font-size:13px;}
+.entry-row{display:flex;gap:14px;padding:14px 4px;border-bottom:1px solid var(--rule);align-items:flex-start;
+  cursor:pointer;}
+.entry-row:hover{background:var(--paper-dim);border-radius:8px;}
+.entry-date{width:70px;flex:none;text-align:center;padding-top:2px;}
+.entry-date .d{font-family:var(--font-serif);font-size:20px;line-height:1;}
+.entry-date .m{font-size:10.5px;text-transform:uppercase;color:var(--ink-faint);letter-spacing:.05em;}
+.entry-body{flex:1;min-width:0;}
+.entry-body h3{margin:0 0 4px;font-size:15.5px;}
+.entry-body p{margin:0 0 8px;color:var(--ink-soft);font-size:13.5px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.entry-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.entry-star{color:var(--accent);font-size:15px;}
+
+/* ---------- Calendar ---------- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.cal-dow{text-align:center;font-size:11px;color:var(--ink-faint);padding-bottom:4px;text-transform:uppercase;}
+.cal-cell{aspect-ratio:1;border-radius:8px;border:1px solid var(--rule);background:var(--paper-card);
+  padding:6px;display:flex;flex-direction:column;justify-content:space-between;font-size:12px;position:relative;}
+.cal-cell.empty{border:none;background:none;}
+.cal-cell.has-entry{cursor:pointer;}
+.cal-cell.has-entry:hover{border-color:var(--accent);}
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--accent);}
+.cal-dot{width:7px;height:7px;border-radius:99px;align-self:flex-end;}
+
+/* ---------- Editor ---------- */
+.editor-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.title-input{font-family:var(--font-serif);font-size:24px;border:none;background:none;color:var(--ink);
+  width:100%;padding:2px 0;}
+.title-input:focus{outline:none;}
+.title-input::placeholder{color:var(--ink-faint);}
+.content-input{width:100%;min-height:340px;border:none;background:none;color:var(--ink);
+  font-family:var(--font-serif);font-size:17px;line-height:1.75;resize:vertical;padding:6px 0;}
+.content-input:focus{outline:none;}
+.content-input::placeholder{color:var(--ink-faint);font-style:italic;}
+.mood-picker{display:flex;gap:8px;flex-wrap:wrap;}
+.mood-opt{padding:6px 13px;border-radius:99px;border:1px solid var(--rule);background:var(--paper-card);
+  font-size:13px;color:var(--ink-soft);}
+.mood-opt.selected{border-color:var(--accent);color:var(--ink);font-weight:600;background:var(--accent-soft);}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--rule);border-radius:8px;
+  background:var(--paper-card);}
+.tag-input-wrap input{border:none;background:none;flex:1;min-width:90px;font-size:13px;color:var(--ink);}
+.tag-chip{display:inline-flex;align-items:center;gap:5px;background:var(--sky-soft);color:var(--sky);
+  padding:3px 8px;border-radius:99px;font-size:12px;}
+.tag-chip button{background:none;border:none;color:var(--sky);font-size:13px;line-height:1;padding:0;}
+.toggle-row{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;}
+.toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-soft);}
+.editor-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;
+  padding-top:16px;border-top:1px solid var(--rule);flex-wrap:wrap;gap:10px;}
+.word-count{font-size:12.5px;color:var(--ink-faint);}
+
+.ai-box{border:1px dashed var(--rule);border-radius:9px;padding:14px 16px;margin-top:18px;background:var(--paper-dim);}
+.ai-box .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.ai-box .head span{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+.ai-box p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
+.ai-note{font-size:11.5px;color:var(--ink-faint);margin-top:8px;}
+
+/* ---------- Search ---------- */
+.search-hero input{width:100%;padding:14px 16px;font-size:16px;border-radius:10px;border:1px solid var(--rule);
+  background:var(--paper-card);color:var(--ink);}
+.search-hero input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent);}
+.search-empty{text-align:center;padding:60px 20px;color:var(--ink-faint);}
+.search-empty .mark{font-size:32px;color:var(--accent-soft);}
+
+/* ---------- Settings ---------- */
+.settings-group{margin-bottom:26px;}
+.settings-group h3{font-size:15px;margin-bottom:10px;}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;
+  border-bottom:1px solid var(--rule);gap:16px;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row .label{font-size:13.5px;}
+.settings-row .desc{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.switch{position:relative;width:38px;height:22px;flex:none;}
+.switch input{opacity:0;width:0;height:0;}
+.switch .track{position:absolute;inset:0;background:var(--rule);border-radius:99px;transition:.2s;}
+.switch .track:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;
+  border-radius:50%;transition:.2s;}
+.switch input:checked + .track{background:var(--accent);}
+.switch input:checked + .track:before{transform:translateX(16px);}
+.hook-box{background:var(--paper-dim);border:1px dashed var(--rule);border-radius:8px;padding:12px 14px;
+  font-size:12.5px;color:var(--ink-soft);line-height:1.6;}
+.hook-box code{background:var(--paper-card);padding:1px 5px;border-radius:4px;font-size:11.5px;}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);
+  color:var(--paper);padding:11px 20px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;
+  transition:.25s;z-index:100;}
+:root[data-theme="dark"] .toast{background:var(--accent);color:#1B1B17;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,18,12,.45);display:none;align-items:center;
+  justify-content:center;z-index:60;padding:20px;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--paper-card);border-radius:12px;padding:22px;max-width:380px;width:100%;
+  box-shadow:var(--shadow);}
+.modal h3{margin:0 0 8px;font-size:17px;}
+.modal p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 18px;}
+.modal .row{display:flex;gap:10px;justify-content:flex-end;}
+
+.scroll-x{overflow-x:auto;}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN (mock — see Settings > Account for real-auth hook) ============ -->
+<div id="auth">
+  <div class="auth-box card">
+    <div class="mark">J</div>
+    <h1>JournalOS</h1>
+    <p class="tag">Write First. Everything Else Second.</p>
+    <div id="authForm"></div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div class="topbar">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <div class="brand"><span class="mark">J</span><span class="word serif">JournalOS</span></div>
+  <span style="width:20px"></span>
+</div>
+<div class="overlay" onclick="toggleSidebar()"></div>
+
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="mark">J</span><span class="word serif">JournalOS</span></div>
+
+    <button class="nav-item" data-view="dashboard" onclick="go('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-view="write" onclick="go('write')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Write Journal
+    </button>
+    <button class="nav-item" data-view="timeline" onclick="go('timeline')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      Journal Library
+    </button>
+    <button class="nav-item" data-view="calendar" onclick="go('calendar')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 15h.01M12 15h.01M16 15h.01"/></svg>
+      Calendar
+    </button>
+    <button class="nav-item" data-view="search" onclick="go('search')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Search
+    </button>
+
+    <div class="nav-label">Insights</div>
+    <button class="nav-item" data-view="insights" onclick="go('insights')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 15l4-6 3 3 5-8"/></svg>
+      Mood &amp; Writing
+    </button>
+
+    <div class="nav-sep"></div>
+    <button class="nav-item" data-view="settings" onclick="go('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.5 1 .51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+
+    <div class="sidebar-foot">
+      <div class="streak-pill">
+        <span>🔥</span>
+        <span><b id="streakNum">0</b> day streak</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">আপনি কি নিশ্চিত?</h3>
+    <p id="confirmBody"></p>
+    <div class="row">
+      <button class="btn" onclick="closeConfirm()">বাতিল</button>
+      <button class="btn btn-danger" id="confirmBtn">নিশ্চিত করুন</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   JOURNALOS — APP LOGIC
+   MVP scope (Master Plan §41): Auth, Journal, Mood, Timeline,
+   Calendar, Basic Search, AI Daily/Weekly Summary (stubbed),
+   Dashboard, Settings.
+
+   DATA LAYER
+   ----------------------------------------------------------------
+   Everything currently persists to localStorage under the
+   `journalos_*` keys so the app is fully usable right now.
+   This is a placeholder for the real backend. When you wire up
+   your real-time database, replace the functions in the
+   "DATA LAYER" section below — the rest of the app calls only
+   these functions, so nothing else needs to change.
+
+   AI LAYER
+   ----------------------------------------------------------------
+   `generateDailySummary()` / `generateWeeklySummary()` /
+   `extractInformation()` are stubbed with a naive local
+   approximation so the UI is functional today. Replace their
+   internals with your real AI API call — the function
+   signatures (input: entry text / entries[], output: string or
+   structured object) are the integration contract the rest of
+   the app already expects.
+   ================================================================ */
+
+const STORE_KEY_USER = 'journalos_user';
+const STORE_KEY_ENTRIES = 'journalos_entries';
+const STORE_KEY_SETTINGS = 'journalos_settings';
+
+/* ---------------- DATA LAYER (swap for real DB later) ---------------- */
+const DB = {
+  getUser(){ try{return JSON.parse(localStorage.getItem(STORE_KEY_USER));}catch(e){return null;} },
+  setUser(u){ localStorage.setItem(STORE_KEY_USER, JSON.stringify(u)); },
+  clearUser(){ localStorage.removeItem(STORE_KEY_USER); },
+
+  getEntries(){ try{return JSON.parse(localStorage.getItem(STORE_KEY_ENTRIES))||[];}catch(e){return [];} },
+  saveEntries(list){ localStorage.setItem(STORE_KEY_ENTRIES, JSON.stringify(list)); },
+
+  getSettings(){
+    const def = {theme:'light', apiKey:'', dbEndpoint:'', dailyReminder:true, weeklySummary:true, aiExtraction:true};
+    try{ return {...def, ...(JSON.parse(localStorage.getItem(STORE_KEY_SETTINGS))||{})}; }catch(e){ return def; }
+  },
+  saveSettings(s){ localStorage.setItem(STORE_KEY_SETTINGS, JSON.stringify(s)); }
+};
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(iso, opts){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-US', opts || {month:'short', day:'numeric', year:'numeric'});
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+const MOODS = [
+  {id:'happy', label:'Happy', emoji:'🙂', cls:'mood-happy'},
+  {id:'calm', label:'Calm', emoji:'😌', cls:'mood-calm'},
+  {id:'sad', label:'Sad', emoji:'😔', cls:'mood-sad'},
+  {id:'stressed', label:'Stressed', emoji:'😣', cls:'mood-stressed'},
+  {id:'angry', label:'Angry', emoji:'😠', cls:'mood-angry'},
+  {id:'neutral', label:'Neutral', emoji:'😐', cls:'mood-neutral'}
+];
+function moodInfo(id){ return MOODS.find(m=>m.id===id) || MOODS[5]; }
+
+/* ---------------- AI LAYER (stub — replace with real API call) ---------------- */
+function generateDailySummary(entry){
+  if(!entry || !entry.content || entry.content.trim().length < 12){
+    return "যথেষ্ট লেখা হলে এখানে একটা সংক্ষিপ্ত AI সারাংশ দেখানো হবে।";
+  }
+  const words = entry.content.trim().split(/\s+/);
+  const firstLine = entry.content.trim().split(/[.।\n]/)[0];
+  const mood = moodInfo(entry.mood).label;
+  return `${firstLine.slice(0,140)}${firstLine.length>140?'…':''} — overall mood: ${mood}, ~${words.length} words written.`;
+}
+function generateWeeklySummary(entries){
+  if(!entries.length) return "এই সপ্তাহে এখনো কোনো এন্ট্রি লেখা হয়নি।";
+  const moodCount = {};
+  entries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
+  const topMood = Object.entries(moodCount).sort((a,b)=>b[1]-a[1])[0];
+  return `${entries.length}টি এন্ট্রি লেখা হয়েছে এই সপ্তাহে। সবচেয়ে বেশি দেখা যাওয়া mood: ${moodInfo(topMood[0]).label}।`;
+}
+// Naive local "extraction" — looks for simple cue phrases. Replace with a real
+// AI extraction call for actual accuracy (Master Plan Module 12).
+function extractInformation(text){
+  const out = {achievements:[], plans:[], quotes:[]};
+  if(!text) return out;
+  text.split(/[.।\n]/).forEach(s=>{
+    const t = s.trim(); if(!t) return;
+    if(/\b(finished|completed|done|শেষ করেছি|সম্পন্ন)\b/i.test(t)) out.achievements.push(t);
+    if(/\b(will|plan to|going to|next week|করব|প্ল্যান)\b/i.test(t)) out.plans.push(t);
+    if(/["“”]/.test(t)) out.quotes.push(t);
+  });
+  return out;
+}
+
+/* ---------------- STATE ---------------- */
+let state = { view:'dashboard', entries:[], user:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date() };
+
+/* ---------------- BOOT ---------------- */
+function boot(){
+  const settings = DB.getSettings();
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  const user = DB.getUser();
+  if(user){
+    state.user = user;
+    state.entries = DB.getEntries();
+    showApp();
+  } else {
+    showAuth();
+  }
+}
+function showAuth(){
+  document.getElementById('auth').style.display='flex';
+  document.getElementById('app').classList.remove('shown');
+  renderAuthForm(true);
+}
+function showApp(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').classList.add('shown');
+  go('dashboard');
+}
+
+/* ---------------- AUTH (mock — see Settings for real-auth hook note) ---------------- */
+function renderAuthForm(isLogin){
+  const el = document.getElementById('authForm');
+  el.innerHTML = `
+    <div class="field"><label>Name</label><input id="af_name" placeholder="তোমার নাম" ${isLogin?'':''}></div>
+    <div class="field"><label>Email</label><input id="af_email" type="email" placeholder="you@example.com"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;" onclick="doAuth()">
+      Continue to JournalOS
+    </button>
+    <div class="auth-switch">এটি একটি লোকাল ডেমো লগইন — বাস্তব authentication পরে backend কনফিগার করলে যুক্ত হবে।</div>
+  `;
+}
+function doAuth(){
+  const name = document.getElementById('af_name').value.trim() || 'You';
+  const email = document.getElementById('af_email').value.trim() || 'you@local';
+  const user = {id:uid(), name, email, createdAt:new Date().toISOString()};
+  DB.setUser(user);
+  state.user = user;
+  state.entries = DB.getEntries();
+  showApp();
+  toast(`স্বাগতম, ${name}!`);
+}
+function logout(){
+  confirmAction('লগ আউট করবেন?', 'আপনার এন্ট্রিগুলো এই ব্রাউজারে সংরক্ষিত থাকবে।', ()=>{
+    DB.clearUser();
+    state.user = null;
+    showAuth();
+  }, 'লগ আউট');
+}
+
+/* ---------------- NAV ---------------- */
+function go(view, param){
+  state.view = view;
+  state.editingId = (view==='write') ? (param||null) : state.editingId;
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  render();
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('main').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.overlay').classList.toggle('show');
+}
+
+/* ---------------- RENDER ROUTER ---------------- */
+function render(){
+  const main = document.getElementById('main');
+  const views = {
+    dashboard: renderDashboard,
+    write: renderWrite,
+    timeline: renderTimeline,
+    calendar: renderCalendar,
+    search: renderSearch,
+    insights: renderInsights,
+    settings: renderSettings
+  };
+  main.innerHTML = (views[state.view] || renderDashboard)();
+  updateStreak();
+}
+
+/* ---------------- DASHBOARD (Module 02) ---------------- */
+function getStreak(){
+  const dates = new Set(state.entries.map(e=>e.date));
+  let streak = 0; let d = new Date();
+  while(true){
+    const iso = d.toISOString().slice(0,10);
+    if(dates.has(iso)){ streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  return streak;
+}
+function updateStreak(){ document.getElementById('streakNum').textContent = getStreak(); }
+
+function renderDashboard(){
+  const today = todayISO();
+  const todayEntry = state.entries.find(e=>e.date===today);
+  const totalWords = state.entries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
+  const recentPlans = state.entries.slice().reverse().flatMap(e=>extractInformation(e.content).plans.map(p=>({p,date:e.date}))).slice(0,3);
+  const recentAch = state.entries.slice().reverse().flatMap(e=>extractInformation(e.content).achievements.map(a=>({a,date:e.date}))).slice(0,3);
+
+  return `
+    <div class="page-head">
+      <div><h1>Good ${dayPart()}, ${escapeHtml(state.user.name)}.</h1>
+      <div class="sub">${fmtDate(today,{weekday:'long', month:'long', day:'numeric'})}</div></div>
+    </div>
+
+    <div class="today-hero">
+      <div class="eyebrow">Today's Journal</div>
+      ${todayEntry ? `
+        <h2>${escapeHtml(todayEntry.title || 'Untitled')}</h2>
+        <div class="entry-meta" style="margin-bottom:10px;">
+          <span class="mood-chip ${moodInfo(todayEntry.mood).cls}">${moodInfo(todayEntry.mood).emoji} ${moodInfo(todayEntry.mood).label}</span>
+        </div>
+        <p class="preview">${escapeHtml((todayEntry.content||'').slice(0,220))}${(todayEntry.content||'').length>220?'…':''}</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="go('write','${todayEntry.id}')">Continue writing</button>
+        </div>
+      ` : `
+        <h2>You haven't written today yet.</h2>
+        <p class="preview">একটা লাইন হলেও লিখে ফেলো — বাকি কাজ JournalOS সামলে নেবে।</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="go('write')">Write today's journal</button>
+        </div>
+      `}
+    </div>
+
+    <div class="grid grid-3" style="margin-top:16px;">
+      <div class="card"><div class="stat"><b>${state.entries.length}</b><span>Total entries</span></div></div>
+      <div class="card"><div class="stat"><b>${getStreak()}</b><span>Day streak</span></div></div>
+      <div class="card"><div class="stat"><b>${totalWords}</b><span>Words written</span></div></div>
+    </div>
+
+    <div class="quick-grid">
+      <button class="quick-btn" onclick="go('write')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Write Journal</span>
+      </button>
+      <button class="quick-btn" onclick="go('calendar')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>
+        <span>View Calendar</span>
+      </button>
+      <button class="quick-btn" onclick="go('insights')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 15l4-6 3 3 5-8"/></svg>
+        <span>View Insights</span>
+      </button>
+      <button class="quick-btn" onclick="go('search')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>Search</span>
+      </button>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-title">Recent Achievements</div>
+        ${recentAch.length ? recentAch.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px;">🏆 ${escapeHtml(x.a)} <span style="color:var(--ink-faint);font-size:11.5px;">— ${fmtDate(x.date)}</span></div>`).join('') : `<div class="empty">এখনো কোনো achievement শনাক্ত হয়নি। লিখতে থাকো!</div>`}
+      </div>
+      <div class="card">
+        <div class="section-title">Recent Plans</div>
+        ${recentPlans.length ? recentPlans.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px;">📌 ${escapeHtml(x.p)} <span style="color:var(--ink-faint);font-size:11.5px;">— ${fmtDate(x.date)}</span></div>`).join('') : `<div class="empty">কোনো plan এখনো শনাক্ত হয়নি।</div>`}
+      </div>
+    </div>
+  `;
+}
+function dayPart(){ const h=new Date().getHours(); return h<12?'morning':h<17?'afternoon':'evening'; }
+
+/* ---------------- DAILY JOURNAL / WRITE (Module 03) ---------------- */
+function renderWrite(){
+  const entry = state.editingId ? state.entries.find(e=>e.id===state.editingId) : null;
+  const draft = entry ? {...entry} : {
+    id: null, date: todayISO(), title:'', content:'', mood:'neutral', moodIntensity:5,
+    tags:[], favorite:false, important:false, createdAt:new Date().toISOString()
+  };
+  window.__draft = draft;
+
+  return `
+    <div class="page-head">
+      <div><h1>${entry?'Edit Entry':'Write Journal'}</h1><div class="sub date-tag">${fmtDate(draft.date,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div></div>
+      ${entry ? `<button class="btn btn-ghost btn-sm btn-danger" onclick="deleteEntry('${entry.id}')">Delete</button>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="editor-top">
+        <input type="date" class="btn btn-sm" style="border-radius:8px;" value="${draft.date}" onchange="window.__draft.date=this.value">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" id="favBtn" onclick="toggleDraftFlag('favorite')">${draft.favorite?'★ Favorited':'☆ Favorite'}</button>
+          <button class="btn btn-sm" id="impBtn" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
+        </div>
+      </div>
+
+      <input class="title-input" id="titleInput" placeholder="Give today a title…" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value">
+      <textarea class="content-input" id="contentInput" placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="window.__draft.content=this.value; updateWordCount(); refreshAIPreview();">${escapeHtml(draft.content)}</textarea>
+
+      <div class="section-title" style="margin-top:18px;">Mood</div>
+      <div class="mood-picker" id="moodPicker">
+        ${MOODS.map(m=>`<button type="button" class="mood-opt ${draft.mood===m.id?'selected':''}" data-mood="${m.id}" onclick="setDraftMood('${m.id}')">${m.emoji} ${m.label}</button>`).join('')}
+      </div>
+
+      <div class="section-title" style="margin-top:18px;">Tags</div>
+      <div class="tag-input-wrap" id="tagWrap">
+        ${draft.tags.map(t=>tagChip(t)).join('')}
+        <input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">
+      </div>
+
+      <div class="editor-footer">
+        <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
+        <div style="display:flex;gap:10px;">
+          <button class="btn" onclick="go('dashboard')">Cancel</button>
+          <button class="btn btn-primary" onclick="saveDraft()">Save Journal</button>
+        </div>
+      </div>
+
+      <div class="ai-box">
+        <div class="head">
+          <span>✦ AI Daily Summary</span>
+          <button class="btn btn-sm btn-ghost" onclick="refreshAIPreview(true)">Regenerate</button>
+        </div>
+        <p id="aiPreview">${escapeHtml(generateDailySummary(draft))}</p>
+        <div class="ai-note">এটি একটি local placeholder সারাংশ। Settings-এ তোমার AI API কনফিগার করলে এখানে আসল AI summary দেখাবে।</div>
+      </div>
+    </div>
+  `;
+}
+function tagChip(t){ return `<span class="tag-chip">${escapeHtml(t)}<button onclick="removeTag('${escapeHtml(t)}')">×</button></span>`; }
+function addTag(v){ v=v.trim(); if(!v) return; if(!window.__draft.tags.includes(v)) window.__draft.tags.push(v); rerenderTagWrap(); }
+function removeTag(t){ window.__draft.tags = window.__draft.tags.filter(x=>x!==t); rerenderTagWrap(); }
+function rerenderTagWrap(){
+  const wrap = document.getElementById('tagWrap');
+  wrap.innerHTML = window.__draft.tags.map(t=>tagChip(t)).join('') + `<input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">`;
+}
+function setDraftMood(m){
+  window.__draft.mood = m;
+  document.querySelectorAll('.mood-opt').forEach(b=>b.classList.toggle('selected', b.dataset.mood===m));
+  refreshAIPreview();
+}
+function toggleDraftFlag(flag){
+  window.__draft[flag] = !window.__draft[flag];
+  document.getElementById(flag==='favorite'?'favBtn':'impBtn').textContent =
+    flag==='favorite' ? (window.__draft.favorite?'★ Favorited':'☆ Favorite') : (window.__draft.important?'🔖 Important':'🏷️ Mark important');
+}
+function updateWordCount(){
+  document.getElementById('wordCount').textContent = (window.__draft.content||'').trim().split(/\s+/).filter(Boolean).length + ' words';
+}
+let aiDebounce;
+function refreshAIPreview(force){
+  clearTimeout(aiDebounce);
+  aiDebounce = setTimeout(()=>{
+    const el = document.getElementById('aiPreview');
+    if(el) el.textContent = generateDailySummary(window.__draft);
+  }, force?0:400);
+}
+function saveDraft(){
+  const d = window.__draft;
+  if(!d.content || !d.content.trim()){ toast('আগে কিছু লিখো।'); return; }
+  const list = DB.getEntries();
+  if(d.id){
+    const idx = list.findIndex(e=>e.id===d.id);
+    d.updatedAt = new Date().toISOString();
+    list[idx] = d;
+  } else {
+    d.id = uid();
+    d.createdAt = new Date().toISOString();
+    d.updatedAt = d.createdAt;
+    // avoid duplicate same-date entries silently overwriting — allow multiple per day
+    list.push(d);
+  }
+  DB.saveEntries(list);
+  state.entries = list;
+  state.editingId = d.id;
+  toast('জার্নাল সংরক্ষিত হয়েছে।');
+  go('dashboard');
+}
+function deleteEntry(id){
+  confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে।', ()=>{
+    const list = DB.getEntries().filter(e=>e.id!==id);
+    DB.saveEntries(list);
+    state.entries = list;
+    toast('এন্ট্রি মুছে ফেলা হয়েছে।');
+    go('timeline');
+  }, 'মুছে ফেলুন');
+}
+
+/* ---------------- TIMELINE / LIBRARY (Module 05) ---------------- */
+function renderTimeline(){
+  const f = state.filters;
+  let list = state.entries.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+  if(f.mood) list = list.filter(e=>e.mood===f.mood);
+  if(f.tag) list = list.filter(e=>(e.tags||[]).includes(f.tag));
+  if(f.favOnly) list = list.filter(e=>e.favorite);
+
+  const allTags = [...new Set(state.entries.flatMap(e=>e.tags||[]))];
+
+  return `
+    <div class="page-head">
+      <h1>Journal Library</h1>
+      <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
+    </div>
+
+    <div class="filter-row">
+      <select onchange="state.filters.mood=this.value; render();">
+        <option value="">All moods</option>
+        ${MOODS.map(m=>`<option value="${m.id}" ${f.mood===m.id?'selected':''}>${m.emoji} ${m.label}</option>`).join('')}
+      </select>
+      <select onchange="state.filters.tag=this.value; render();">
+        <option value="">All tags</option>
+        ${allTags.map(t=>`<option value="${escapeHtml(t)}" ${f.tag===t?'selected':''}>#${escapeHtml(t)}</option>`).join('')}
+      </select>
+      <label class="pill" style="cursor:pointer;">
+        <input type="checkbox" ${f.favOnly?'checked':''} onchange="state.filters.favOnly=this.checked; render();" style="margin:0;"> Favorites only
+      </label>
+      ${(f.mood||f.tag||f.favOnly) ? `<button class="btn btn-ghost btn-sm" onclick="state.filters={mood:'',tag:'',favOnly:false}; render();">Clear filters</button>` : ''}
+    </div>
+
+    <div class="card">
+      ${list.length ? list.map(e=>`
+        <div class="entry-row" onclick="go('write','${e.id}')">
+          <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
+          <div class="entry-body">
+            <h3>${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''}</h3>
+            <p>${escapeHtml(e.content||'')}</p>
+            <div class="entry-meta">
+              <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
+              ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+              ${e.favorite?`<span class="entry-star">★</span>`:''}
+            </div>
+          </div>
+        </div>
+      `).join('') : `<div class="empty">কোনো এন্ট্রি পাওয়া যায়নি। ফিল্টার পরিবর্তন করো অথবা নতুন লেখা শুরু করো।</div>`}
+    </div>
+  `;
+}
+
+/* ---------------- CALENDAR (Module 06) ---------------- */
+function renderCalendar(){
+  const cur = state.calMonth;
+  const year = cur.getFullYear(), month = cur.getMonth();
+  const first = new Date(year, month, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const entryByDate = {};
+  state.entries.forEach(e=>{ entryByDate[e.date] = e; });
+  const today = todayISO();
+
+  let cells = '';
+  for(let i=0;i<startDow;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const e = entryByDate[iso];
+    const isToday = iso===today;
+    cells += `<div class="cal-cell ${e?'has-entry':''} ${isToday?'today':''}" ${e?`onclick="go('write','${e.id}')"`:''}>
+      <span>${day}</span>
+      ${e ? `<span class="cal-dot" style="background:var(--accent)"></span>` : ''}
+    </div>`;
+  }
+  const dows = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  return `
+    <div class="page-head"><h1>Calendar</h1></div>
+    <div class="card">
+      <div class="cal-head">
+        <button class="btn btn-sm" onclick="shiftMonth(-1)">← Prev</button>
+        <h3 style="margin:0;">${cur.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h3>
+        <button class="btn btn-sm" onclick="shiftMonth(1)">Next →</button>
+      </div>
+      <div class="cal-grid">
+        ${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}
+        ${cells}
+      </div>
+    </div>
+  `;
+}
+function shiftMonth(n){
+  state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()+n, 1);
+  render();
+}
+
+/* ---------------- SEARCH (Module 21 — basic) ---------------- */
+function renderSearch(){
+  return `
+    <div class="page-head"><h1>Search</h1></div>
+    <div class="search-hero" style="margin-bottom:20px;">
+      <input id="searchInput" type="text" placeholder="Search by word, title, tag, or mood…" oninput="doSearch(this.value)" autofocus>
+    </div>
+    <div id="searchResults">
+      <div class="search-empty"><div class="mark serif">”</div>খোঁজার জন্য কিছু টাইপ করো।<br><span style="font-size:12px;">Semantic / AI search ভবিষ্যতে AI API কনফিগার করার পর যুক্ত হবে।</span></div>
+    </div>
+  `;
+}
+function doSearch(q){
+  const box = document.getElementById('searchResults');
+  q = q.trim().toLowerCase();
+  if(!q){ box.innerHTML = `<div class="search-empty"><div class="mark serif">”</div>খোঁজার জন্য কিছু টাইপ করো।</div>`; return; }
+  const results = state.entries.filter(e=>{
+    return (e.title||'').toLowerCase().includes(q) ||
+           (e.content||'').toLowerCase().includes(q) ||
+           (e.tags||[]).some(t=>t.toLowerCase().includes(q)) ||
+           moodInfo(e.mood).label.toLowerCase().includes(q) ||
+           e.date.includes(q);
+  }).sort((a,b)=>b.date.localeCompare(a.date));
+  box.innerHTML = results.length ? `<div class="card">${results.map(e=>`
+    <div class="entry-row" onclick="go('write','${e.id}')">
+      <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
+      <div class="entry-body">
+        <h3>${escapeHtml(e.title||'Untitled')}</h3>
+        <p>${escapeHtml(e.content||'')}</p>
+        <div class="entry-meta"><span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span></div>
+      </div>
+    </div>`).join('')}</div>` : `<div class="search-empty">কোনো ফলাফল পাওয়া যায়নি।</div>`;
+}
+
+/* ---------------- INSIGHTS (Mood Analytics §27 + Writing Analytics §28, lightweight) ---------------- */
+function renderInsights(){
+  const total = state.entries.length;
+  const moodCount = {};
+  MOODS.forEach(m=>moodCount[m.id]=0);
+  state.entries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
+  const totalWords = state.entries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
+  const avgWords = total ? Math.round(totalWords/total) : 0;
+  const longest = state.entries.reduce((max,e)=>{
+    const wc = (e.content||'').trim().split(/\s+/).filter(Boolean).length;
+    return wc > max.wc ? {wc, e} : max;
+  }, {wc:0, e:null});
+
+  const now = new Date(); const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+  const weekEntries = state.entries.filter(e=> new Date(e.date) >= weekAgo);
+
+  return `
+    <div class="page-head"><h1>Mood &amp; Writing Insights</h1></div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">Mood Distribution</div>
+        ${total ? MOODS.map(m=>{
+          const pct = total ? Math.round((moodCount[m.id]/total)*100) : 0;
+          return `<div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+              <span>${m.emoji} ${m.label}</span><span style="color:var(--ink-faint);">${pct}%</span>
+            </div>
+            <div style="height:7px;background:var(--paper-dim);border-radius:99px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:var(--accent);"></div>
+            </div>
+          </div>`;
+        }).join('') : `<div class="empty">এখনো ডেটা নেই।</div>`}
+      </div>
+      <div class="card">
+        <div class="section-title">Writing Stats</div>
+        <div class="grid grid-2" style="gap:12px;">
+          <div class="stat"><b>${total}</b><span>Total entries</span></div>
+          <div class="stat"><b>${totalWords}</b><span>Total words</span></div>
+          <div class="stat"><b>${avgWords}</b><span>Avg words / entry</span></div>
+          <div class="stat"><b>${longest.wc}</b><span>Longest entry</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="section-title" style="margin:0;">✦ This Week's AI Summary</div>
+      </div>
+      <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.6;">${escapeHtml(generateWeeklySummary(weekEntries))}</p>
+      <div class="ai-note">Placeholder সারাংশ — real AI API কনফিগার করলে এখানে গভীরতর সাপ্তাহিক analysis দেখাবে (Master Plan Module 09)।</div>
+    </div>
+  `;
+}
+
+/* ---------------- SETTINGS (Module 33) ---------------- */
+function renderSettings(){
+  const s = DB.getSettings();
+  return `
+    <div class="page-head"><h1>Settings</h1></div>
+
+    <div class="settings-group card">
+      <h3>Account</h3>
+      <div class="settings-row">
+        <div><div class="label">Name</div><div class="desc">${escapeHtml(state.user.name)}</div></div>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Email</div><div class="desc">${escapeHtml(state.user.email)}</div></div>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Log out</div><div class="desc">তোমার ডেটা এই ব্রাউজারে থেকে যাবে।</div></div>
+        <button class="btn btn-sm" onclick="logout()">Log out</button>
+      </div>
+      <div class="settings-row">
+        <div><div class="label" style="color:var(--rust)">Delete all my data</div><div class="desc">সব এন্ট্রি ও অ্যাকাউন্ট তথ্য স্থায়ীভাবে মুছে ফেলবে।</div></div>
+        <button class="btn btn-sm btn-danger" onclick="wipeAll()">Delete</button>
+      </div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>Appearance</h3>
+      <div class="settings-row">
+        <div><div class="label">Dark mode</div></div>
+        <label class="switch"><input type="checkbox" ${s.theme==='dark'?'checked':''} onchange="setTheme(this.checked)"><span class="track"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>Notifications</h3>
+      <div class="settings-row">
+        <div><div class="label">Daily reminder</div><div class="desc">"Write about your day."</div></div>
+        <label class="switch"><input type="checkbox" ${s.dailyReminder?'checked':''} onchange="saveSettingField('dailyReminder',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Weekly summary ready</div></div>
+        <label class="switch"><input type="checkbox" ${s.weeklySummary?'checked':''} onchange="saveSettingField('weeklySummary',this.checked)"><span class="track"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>AI &amp; Data Configuration</h3>
+      <div class="field">
+        <label>AI API Key</label>
+        <input type="password" placeholder="তোমার AI API key এখানে বসাও" value="${escapeHtml(s.apiKey)}" onchange="saveSettingField('apiKey',this.value)">
+      </div>
+      <div class="field">
+        <label>Real-time Database Endpoint</label>
+        <input type="text" placeholder="তোমার database endpoint / project URL" value="${escapeHtml(s.dbEndpoint)}" onchange="saveSettingField('dbEndpoint',this.value)">
+      </div>
+      <div class="hook-box">
+        এই দুইটা ফিল্ড এখন শুধু লোকালি সেভ হচ্ছে — এখনো কোনো external কল করছে না।
+        যখন তুমি আসল AI API ও database কনফিগার করবে, নিচের ফাংশনগুলো replace করলেই পুরো অ্যাপ কানেক্ট হয়ে যাবে:
+        <br><br>
+        <code>DB.getEntries / DB.saveEntries</code> → real-time database কল দিয়ে replace করো।<br>
+        <code>generateDailySummary / generateWeeklySummary / extractInformation</code> → তোমার AI API কল দিয়ে replace করো।<br><br>
+        বাকি পুরো UI অপরিবর্তিত থাকবে কারণ সবকিছু শুধু এই ফাংশনগুলোর মধ্য দিয়েই ডেটা পড়ে/লেখে।
+      </div>
+    </div>
+  `;
+}
+function setTheme(dark){
+  const s = DB.getSettings(); s.theme = dark?'dark':'light'; DB.saveSettings(s);
+  document.documentElement.setAttribute('data-theme', s.theme);
+}
+function saveSettingField(field, val){
+  const s = DB.getSettings(); s[field]=val; DB.saveSettings(s);
+  toast('সেটিংস সংরক্ষিত হয়েছে।');
+}
+function wipeAll(){
+  confirmAction('সব ডেটা মুছে ফেলবেন?', 'এই ব্রাউজারের সব জার্নাল এন্ট্রি ও অ্যাকাউন্ট তথ্য স্থায়ীভাবে মুছে যাবে। এটি ফেরানো যাবে না।', ()=>{
+    localStorage.removeItem(STORE_KEY_USER);
+    localStorage.removeItem(STORE_KEY_ENTRIES);
+    localStorage.removeItem(STORE_KEY_SETTINGS);
+    location.reload();
+  }, 'সব মুছে ফেলুন');
+}
+
+/* ---------------- UTIL: toast + confirm modal ---------------- */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function confirmAction(title, body, onConfirm, confirmLabel){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmBody').textContent = body;
+  const btn = document.getElementById('confirmBtn');
+  btn.textContent = confirmLabel || 'নিশ্চিত করুন';
+  const modal = document.getElementById('confirmModal');
+  modal.classList.add('show');
+  btn.onclick = ()=>{ modal.classList.remove('show'); onConfirm(); };
+}
+function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+
+boot();
+</script>
+</body>
+</html>
