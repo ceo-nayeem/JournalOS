@@ -396,6 +396,16 @@ input,textarea,select{font-family:var(--font-sans);}
 .quick-btn svg{width:18px;height:18px;color:var(--accent);}
 .quick-btn span{font-size:13px;font-weight:500;}
 
+/* Module 04: Dashboard's Daily Overview chips + clickable Recent Activity rows */
+.overview-row{display:flex;flex-wrap:wrap;gap:10px;}
+.overview-chip{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
+  background:var(--paper-dim);border:1px solid var(--rule);font-size:12.5px;color:var(--ink-soft);}
+.overview-chip b{color:var(--ink);font-family:var(--font-serif);font-size:14px;font-weight:600;}
+.dash-activity-row{padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px;cursor:pointer;
+  border-radius:6px;transition:background .12s;}
+.dash-activity-row:hover{background:var(--paper-dim);}
+.dash-activity-row:last-child{border-bottom:none;}
+
 /* ---------- Journal list / timeline ---------- */
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
 .filter-row select,.filter-row input[type=text],.filter-row input[type=date]{padding:7px 10px;border-radius:7px;border:1px solid var(--rule);
@@ -807,7 +817,17 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
    ================================================================ */
 
 const THEME_CACHE_KEY = 'journalos_theme_cache'; // local-only, avoids a flash of wrong theme before Firebase responds
-const DEFAULT_SETTINGS = {theme:'light', apiKey:'', dailyReminder:true, weeklySummary:true, aiExtraction:true};
+const DEFAULT_SETTINGS = {theme:'light', apiKey:'', dailyReminder:true, weeklySummary:true, aiExtraction:true,
+  // Module 04: which Dashboard sections the user wants to see, synced through
+  // the same Firestore user-settings doc as every other preference (not
+  // localStorage-only) so it follows the user across devices.
+  dashboardSections: {todayJournal:true, mood:true, dailyOverview:true, aiSummary:true, streakStats:true, quickActions:true, recentActivity:true}};
+// Tolerant of settings docs saved before a given section existed — missing
+// keys default to visible rather than disappearing.
+function dashSectionOn(key){
+  const sections = (state.settings && state.settings.dashboardSections) || {};
+  return sections[key] !== false;
+}
 
 function userDocRef(){ return db.collection('users').doc(state.user.uid); }
 function entriesColRef(){ return userDocRef().collection('entries'); }
@@ -1294,6 +1314,7 @@ function render(){
   updateStreak();
   if(state.view==='write') refreshAIPreview(true);
   if(state.view==='insights') refreshWeeklyAI();
+  if(state.view==='dashboard') refreshDashboardAISummary();
   syncWriteFixedBarVisibility();
 }
 
@@ -1344,7 +1365,9 @@ function syncWriteFixedBarVisibility(){
 
 /* ---------------- DASHBOARD (Module 02) ---------------- */
 function getStreak(){
-  const dates = new Set(state.entries.map(e=>e.date));
+  // Archived entries shouldn't unexpectedly inflate or break the streak —
+  // only active journal days count.
+  const dates = new Set(state.entries.filter(e=>!e.archived).map(e=>e.date));
   let streak = 0; let d = new Date();
   while(true){
     const iso = d.toISOString().slice(0,10);
@@ -1359,21 +1382,37 @@ function renderDashboard(){
   const activeEntries = state.entries.filter(e=>!e.archived);
   const todayEntry = activeEntries.find(e=>e.date===today);
   const totalWords = activeEntries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
-  const recentPlans = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).plans.map(p=>({p,date:e.date}))).slice(0,3);
-  const recentAch = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).achievements.map(a=>({a,date:e.date}))).slice(0,3);
+  const todayWords = todayEntry ? (todayEntry.content||'').trim().split(/\s+/).filter(Boolean).length : 0;
+  const recentPlans = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).plans.map(p=>({p,date:e.date,id:e.id}))).slice(0,3);
+  const recentAch = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).achievements.map(a=>({a,date:e.date,id:e.id}))).slice(0,3);
+  const todayInfo = todayEntry ? extractInformation(todayEntry.content) : {achievements:[], plans:[], quotes:[]};
+  const streak = getStreak();
+
+  // Short, calm supporting line under the date — only when it has something
+  // meaningful to say, never forced.
+  let supportLine = '';
+  if(streak >= 2) supportLine = `🔥 ${streak}-day streak চলছে — আজও একটু লিখে রাখো।`;
+  else if(!todayEntry) supportLine = 'আজকের একটা ছোট মুহূর্ত হলেও লিখে রাখো।';
 
   return `
     <div class="page-head">
       <div><h1>Good ${dayPart()}, ${escapeHtml(state.user.name)}.</h1>
-      <div class="sub">${fmtDate(today,{weekday:'long', month:'long', day:'numeric'})}</div></div>
+      <div class="sub">${fmtDate(today,{weekday:'long', month:'long', day:'numeric'})}</div>
+      ${supportLine ? `<div class="sub" style="margin-top:2px;color:var(--ink-faint);">${supportLine}</div>` : ''}</div>
+      <button class="btn btn-sm btn-ghost" onclick="go('settings')" title="Show/hide and customize Dashboard sections">⚙️ Customize</button>
     </div>
 
+    ${dashSectionOn('todayJournal') ? `
     <div class="today-hero">
       <div class="eyebrow">Today's Journal</div>
       ${todayEntry ? `
         <h2>${escapeHtml(todayEntry.title || 'Untitled')}</h2>
-        <div class="entry-meta" style="margin-bottom:10px;">
+        <div class="entry-meta" style="margin-bottom:10px;gap:8px;">
           <span class="mood-chip ${moodInfo(todayEntry.mood).cls}">${moodInfo(todayEntry.mood).emoji} ${moodInfo(todayEntry.mood).label}</span>
+          <span class="intensity-tag">Intensity ${todayEntry.moodIntensity||5}/10</span>
+          <span class="intensity-tag">${todayWords} words</span>
+          ${todayEntry.favorite ? `<span class="entry-star">★</span>` : ''}
+          ${todayEntry.important ? `<span class="archived-pill">🔖 Important</span>` : ''}
         </div>
         <p class="preview">${escapeHtml((todayEntry.content||'').slice(0,220))}${(todayEntry.content||'').length>220?'…':''}</p>
         <div class="hero-actions">
@@ -1386,14 +1425,58 @@ function renderDashboard(){
           <button class="btn btn-primary" onclick="go('write')">Write today's journal</button>
         </div>
       `}
-    </div>
+    </div>` : ''}
 
+    ${dashSectionOn('mood') ? `
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Today's Mood</div>
+      ${todayEntry ? `
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="font-size:32px;line-height:1;">${moodInfo(todayEntry.mood).emoji}</span>
+          <div>
+            <div style="font-weight:600;font-size:15px;color:var(--ink);">${moodInfo(todayEntry.mood).label}</div>
+            <div style="font-size:12px;color:var(--ink-faint);margin-top:2px;">Intensity ${todayEntry.moodIntensity||5}/10</div>
+          </div>
+        </div>
+      ` : `
+        <div class="empty" style="padding-bottom:8px;">আজকের mood এখনো log করা হয়নি।</div>
+        <button class="btn btn-sm btn-primary" onclick="openMoodSheet()">Log today's mood</button>
+      `}
+    </div>` : ''}
+
+    ${dashSectionOn('dailyOverview') ? `
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Daily Overview</div>
+      ${todayEntry || todayInfo.achievements.length || todayInfo.plans.length ? `
+        <div class="overview-row">
+          <div class="overview-chip">✍️ <b>${todayWords}</b> words today</div>
+          ${todayEntry ? `<div class="overview-chip">${moodInfo(todayEntry.mood).emoji} <b>${moodInfo(todayEntry.mood).label}</b></div>` : ''}
+          ${todayInfo.achievements.length ? `<div class="overview-chip">🏆 <b>${todayInfo.achievements.length}</b> achievement${todayInfo.achievements.length>1?'s':''}</div>` : ''}
+          ${todayInfo.plans.length ? `<div class="overview-chip">📌 <b>${todayInfo.plans.length}</b> plan${todayInfo.plans.length>1?'s':''}</div>` : ''}
+          ${todayEntry && todayEntry.important ? `<div class="overview-chip">🔖 Important moment</div>` : ''}
+        </div>
+      ` : `<div class="empty">আজকের জন্য এখনো কোনো তথ্য নেই।</div>`}
+    </div>` : ''}
+
+    ${dashSectionOn('aiSummary') ? `
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">✦ Today's AI Summary</div>
+      ${todayEntry && todayEntry.content && todayEntry.content.trim().length>=12 ? `
+        <div class="ai-box" style="margin-top:0;">
+          <p id="dashAiSummaryText">${escapeHtml(localDailySummary(todayEntry))}</p>
+          <div class="ai-note" id="dashAiSummaryNote">${(state.settings && state.settings.apiKey) ? 'সারাংশ লোড হচ্ছে…' : 'Settings-এ তোমার Gemini API key বসালে এখানে আসল AI summary দেখাবে।'}</div>
+        </div>
+      ` : `<div class="empty">আজকের journal-এ যথেষ্ট লেখা হলে এখানে একটা সংক্ষিপ্ত AI সারাংশ দেখানো হবে।</div>`}
+    </div>` : ''}
+
+    ${dashSectionOn('streakStats') ? `
     <div class="grid grid-3" style="margin-top:16px;">
       <div class="card"><div class="stat"><b>${activeEntries.length}</b><span>Total entries</span></div></div>
-      <div class="card"><div class="stat"><b>${getStreak()}</b><span>Day streak</span></div></div>
+      <div class="card"><div class="stat"><b>${streak}</b><span>Day streak</span></div></div>
       <div class="card"><div class="stat"><b>${totalWords}</b><span>Words written</span></div></div>
-    </div>
+    </div>` : ''}
 
+    ${dashSectionOn('quickActions') ? `
     <div class="quick-grid">
       <button class="quick-btn" onclick="go('write')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -1411,21 +1494,66 @@ function renderDashboard(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span>Search</span>
       </button>
-    </div>
+    </div>` : ''}
 
+    ${dashSectionOn('recentActivity') ? `
     <div class="grid grid-2" style="margin-top:16px;">
       <div class="card">
         <div class="section-title">Recent Achievements</div>
-        ${recentAch.length ? recentAch.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px;">🏆 ${escapeHtml(x.a)} <span style="color:var(--ink-faint);font-size:11.5px;">— ${fmtDate(x.date)}</span></div>`).join('') : `<div class="empty">এখনো কোনো achievement শনাক্ত হয়নি। লিখতে থাকো!</div>`}
+        ${recentAch.length ? recentAch.map(x=>`<div class="dash-activity-row" onclick="go('write','${x.id}')">🏆 ${escapeHtml(x.a)} <span style="color:var(--ink-faint);font-size:11.5px;">— ${fmtDate(x.date)}</span></div>`).join('') : `<div class="empty">এখনো কোনো achievement শনাক্ত হয়নি। লিখতে থাকো!</div>`}
       </div>
       <div class="card">
         <div class="section-title">Recent Plans</div>
-        ${recentPlans.length ? recentPlans.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px;">📌 ${escapeHtml(x.p)} <span style="color:var(--ink-faint);font-size:11.5px;">— ${fmtDate(x.date)}</span></div>`).join('') : `<div class="empty">কোনো plan এখনো শনাক্ত হয়নি।</div>`}
+        ${recentPlans.length ? recentPlans.map(x=>`<div class="dash-activity-row" onclick="go('write','${x.id}')">📌 ${escapeHtml(x.p)} <span style="color:var(--ink-faint);font-size:11.5px;">— ${fmtDate(x.date)}</span></div>`).join('') : `<div class="empty">কোনো plan এখনো শনাক্ত হয়নি।</div>`}
       </div>
-    </div>
+    </div>` : ''}
   `;
 }
 function dayPart(){ const h=new Date().getHours(); return h<12?'morning':h<17?'afternoon':'evening'; }
+
+/* Module 04: Dashboard's own AI-summary loader. Reuses the existing
+   generateDailySummary()/localDailySummary() (same Gemini-or-local
+   architecture as the Write page) but adds a small in-memory cache keyed by
+   entry id + updatedAt, so re-rendering the Dashboard (e.g. on every
+   Firestore snapshot) never re-issues a Gemini call unless today's entry
+   actually changed. */
+let dashSummaryCache = {};
+let dashAiToken = 0;
+function refreshDashboardAISummary(){
+  const today = todayISO();
+  const entry = state.entries.find(e=>e.date===today && !e.archived);
+  const el = document.getElementById('dashAiSummaryText');
+  if(!el || !entry || !entry.content || entry.content.trim().length < 12) return; // nothing to summarize / section not on screen
+  const noteEl = document.getElementById('dashAiSummaryNote');
+  const cacheKey = entry.id || 'draft';
+  const stamp = entry.updatedAt || entry.createdAt || entry.content;
+  const cached = dashSummaryCache[cacheKey];
+  if(cached && cached.stamp === stamp){
+    el.textContent = cached.text;
+    if(noteEl) noteEl.textContent = cached.note;
+    return; // already have this entry's summary — no API call needed
+  }
+  const local = localDailySummary(entry);
+  el.textContent = local;
+  if(!state.settings || !state.settings.apiKey){
+    const note = 'Settings-এ তোমার Gemini API key বসালে এখানে আসল AI summary দেখাবে।';
+    if(noteEl) noteEl.textContent = note;
+    dashSummaryCache[cacheKey] = {stamp, text: local, note};
+    return;
+  }
+  if(noteEl) noteEl.textContent = 'Gemini থেকে সারাংশ আনা হচ্ছে…';
+  const myToken = ++dashAiToken;
+  generateDailySummary(entry).then(summary=>{
+    if(myToken !== dashAiToken) return; // a newer call/navigation superseded this one
+    const elNow = document.getElementById('dashAiSummaryText');
+    const noteElNow = document.getElementById('dashAiSummaryNote');
+    const usedAi = summary && summary !== local;
+    const note = usedAi ? 'Gemini দিয়ে তৈরি সারাংশ।' : 'Gemini থেকে সারাংশ আনা যায়নি — local সারাংশ দেখানো হচ্ছে।';
+    if(elNow) elNow.textContent = summary || local;
+    if(noteElNow) noteElNow.textContent = note;
+    dashSummaryCache[cacheKey] = {stamp, text: summary || local, note};
+  });
+}
 
 /* ---------------- DAILY JOURNAL / WRITE (Module 03) ---------------- */
 function renderWrite(){
@@ -2103,6 +2231,38 @@ function renderSettings(){
     </div>
 
     <div class="settings-group card">
+      <h3>Dashboard</h3>
+      <div class="settings-row">
+        <div><div class="label">Today's Journal</div><div class="desc">Today's entry, mood chip and Continue writing.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('todayJournal')?'checked':''} onchange="saveDashboardSection('todayJournal',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Today's Mood</div><div class="desc">Today's mood, intensity, or a Log mood action.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('mood')?'checked':''} onchange="saveDashboardSection('mood',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Daily Overview</div><div class="desc">Compact chips: words, mood, achievements, plans.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('dailyOverview')?'checked':''} onchange="saveDashboardSection('dailyOverview',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">AI Daily Summary</div><div class="desc">Today's summary — Gemini if a key is set, otherwise local.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('aiSummary')?'checked':''} onchange="saveDashboardSection('aiSummary',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Streak &amp; Stats</div><div class="desc">Total entries, day streak, words written.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('streakStats')?'checked':''} onchange="saveDashboardSection('streakStats',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Quick Actions</div><div class="desc">Write, Calendar, Insights, Search shortcuts.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('quickActions')?'checked':''} onchange="saveDashboardSection('quickActions',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Recent Activity</div><div class="desc">Recent achievements and plans detected in your entries.</div></div>
+        <label class="switch"><input type="checkbox" ${dashSectionOn('recentActivity')?'checked':''} onchange="saveDashboardSection('recentActivity',this.checked)"><span class="track"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-group card">
       <h3>AI Configuration</h3>
       <div class="field">
         <label>Gemini API Key</label>
@@ -2123,6 +2283,15 @@ function setTheme(dark){
 }
 function saveSettingField(field, val){
   const s = {...(state.settings||DEFAULT_SETTINGS), [field]: val};
+  saveUserSettings(s);
+}
+// Merges a single Dashboard-section toggle into the existing settings doc
+// (rather than overwriting the whole dashboardSections object), and syncs
+// through the same Firestore user-settings architecture as every other
+// preference, so it follows the user across devices/refreshes.
+function saveDashboardSection(key, val){
+  const current = (state.settings && state.settings.dashboardSections) || DEFAULT_SETTINGS.dashboardSections;
+  const s = {...(state.settings||DEFAULT_SETTINGS), dashboardSections: {...current, [key]: val}};
   saveUserSettings(s);
 }
 function wipeAll(){
