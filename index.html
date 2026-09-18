@@ -334,8 +334,33 @@ input,textarea,select{font-family:var(--font-sans);}
 .fmt-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-bottom:8px;
   border-bottom:1px solid var(--rule);margin-bottom:4px;}
 .fmt-btn{min-width:30px;height:30px;padding:0 8px;border-radius:7px;border:1px solid var(--rule);
-  background:var(--paper-card);color:var(--ink-soft);font-size:13px;display:flex;align-items:center;justify-content:center;}
+  background:var(--paper-card);color:var(--ink-soft);font-size:13px;display:flex;align-items:center;justify-content:center;flex:none;}
 .fmt-btn:hover{border-color:var(--accent);color:var(--ink);}
+
+/* ---------- Write mode: fixed floating editor toolbar ---------- */
+/* Holds every editing / customization control — incl. Save — so it stays
+   reachable no matter how far the user has scrolled into a long entry.
+   Hides while scrolling down, reappears on scroll-up (like a browser address bar). */
+.write-fixed-bar{position:fixed;top:0;left:230px;right:0;z-index:38;
+  background:var(--paper-card);border-bottom:1px solid var(--rule);box-shadow:var(--shadow);
+  padding:9px 20px;display:none;align-items:center;gap:8px;
+  overflow-x:auto;white-space:nowrap;-ms-overflow-style:none;scrollbar-width:none;
+  transform:translateY(-100%);transition:transform .22s ease;}
+.write-fixed-bar::-webkit-scrollbar{display:none;}
+.write-fixed-bar.active{display:flex;}
+.write-fixed-bar.show{transform:translateY(0);}
+.write-fixed-bar .wfb-group{display:flex;align-items:center;gap:6px;flex:none;}
+.write-fixed-bar .btn,.write-fixed-bar .fmt-btn{flex:none;}
+.write-fixed-bar .wfb-sep{width:1px;height:22px;background:var(--rule);flex:none;}
+.write-fixed-bar .wfb-spacer{flex:1 0 auto;min-width:16px;}
+.write-fixed-bar input[type="date"]{border:1px solid var(--rule);background:var(--paper-card);
+  color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12.5px;flex:none;}
+.write-fixed-bar .word-count,.write-fixed-bar .draft-status{flex:none;}
+body.write-mode .main{padding-top:98px;}
+@media (max-width:860px){
+  .write-fixed-bar{left:0;top:52px;padding:8px 12px;}
+  body.write-mode .main{padding-top:150px;}
+}
 .content-preview{min-height:340px;padding:6px 0;font-family:var(--font-serif);font-size:17px;line-height:1.75;color:var(--ink);}
 .content-preview .empty{text-align:left;}
 
@@ -376,6 +401,12 @@ input,textarea,select{font-family:var(--font-sans);}
   <span style="width:20px"></span>
 </div>
 <div class="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ============ WRITE MODE: FIXED FLOATING TOOLBAR ============ -->
+<!-- Populated by renderWrite(); shown only in the write/edit view; slides
+     away on scroll-down and reappears on scroll-up so every editing control
+     (incl. Save) stays reachable at any scroll position. -->
+<div class="write-fixed-bar" id="writeFixedBar"></div>
 
 <div id="app">
   <aside class="sidebar" id="sidebar">
@@ -901,7 +932,53 @@ function render(){
   updateStreak();
   if(state.view==='write') refreshAIPreview(true);
   if(state.view==='insights') refreshWeeklyAI();
+  syncWriteFixedBarVisibility();
 }
+
+/* ---------------- Module: fixed floating write-toolbar show/hide on scroll ----------------
+   The bar (populated inside renderWrite()) stays mounted at position:fixed. It is only
+   switched "active" while the user is on the write/edit view, and within that view it
+   slides in when the user scrolls UP and slides away when they scroll DOWN — so it never
+   permanently blocks content, but is always one small scroll away. */
+let __wfbLastY = 0;
+function syncWriteFixedBarVisibility(){
+  const wfb = document.getElementById('writeFixedBar');
+  if(!wfb) return;
+  if(state.view === 'write'){
+    document.body.classList.add('write-mode');
+    wfb.classList.add('active');
+    wfb.classList.add('show'); // visible the moment you enter the editor
+    __wfbLastY = window.scrollY || document.documentElement.scrollTop || 0;
+  } else {
+    document.body.classList.remove('write-mode');
+    wfb.classList.remove('active');
+    wfb.classList.remove('show');
+  }
+}
+(function initWriteFixedBarScroll(){
+  let ticking = false;
+  window.addEventListener('scroll', function(){
+    if(state.view !== 'write') return;
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      const wfb = document.getElementById('writeFixedBar');
+      if(wfb){
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        const delta = y - __wfbLastY;
+        if(y < 40){
+          wfb.classList.add('show'); // near the very top — keep it visible
+        } else if(delta > 4){
+          wfb.classList.remove('show'); // scrolling down (reading/writing further) — hide
+        } else if(delta < -4){
+          wfb.classList.add('show'); // scrolling up — reveal
+        }
+        __wfbLastY = y;
+      }
+      ticking = false;
+    });
+  }, {passive:true});
+})();
 
 /* ---------------- DASHBOARD (Module 02) ---------------- */
 function getStreak(){
@@ -1019,6 +1096,40 @@ function renderWrite(){
   }
   window.__draft = draft;
 
+  // ---- populate the fixed floating toolbar (date, flags, formatting,
+  // preview toggle, word count, cancel & save) — this is the single source
+  // of these controls now, reachable at any scroll position. ----
+  const wfb = document.getElementById('writeFixedBar');
+  if(wfb){
+    wfb.innerHTML = `
+      <div class="wfb-group">
+        <input type="date" value="${draft.date}" onchange="window.__draft.date=this.value; scheduleAutosave();">
+      </div>
+      <div class="wfb-group">
+        <button class="btn btn-sm" id="favBtn" onclick="toggleDraftFlag('favorite')">${draft.favorite?'★ Favorited':'☆ Favorite'}</button>
+        <button class="btn btn-sm" id="impBtn" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
+      </div>
+      <div class="wfb-sep"></div>
+      <div class="wfb-group">
+        <button type="button" class="fmt-btn" title="Bold" onclick="wrapSelection('**','**')"><b>B</b></button>
+        <button type="button" class="fmt-btn" title="Italic" onclick="wrapSelection('*','*')"><i>I</i></button>
+        <button type="button" class="fmt-btn" title="Heading" onclick="prefixLine('## ')">H</button>
+        <button type="button" class="fmt-btn" title="Bulleted list" onclick="prefixLine('- ')">• List</button>
+        <button type="button" class="fmt-btn" title="Link" onclick="insertLink()">🔗</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="previewToggleBtn" onclick="togglePreview()">👁 Preview</button>
+      </div>
+      <div class="wfb-spacer"></div>
+      <div class="wfb-group" style="gap:12px;">
+        <span style="display:flex;flex-direction:column;gap:1px;line-height:1.2;">
+          <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
+          <span class="draft-status" id="draftStatus"></span>
+        </span>
+        <button class="btn btn-sm" onclick="cancelWrite()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="saveDraft()">Save Journal</button>
+      </div>
+    `;
+  }
+
   return `
     <div class="page-head">
       <div><h1>${entry?'Edit Entry':'Write Journal'}</h1><div class="sub date-tag">${fmtDate(draft.date,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${draft.archived?' · <span class="archived-pill">🗄 Archived</span>':''}</div></div>
@@ -1040,25 +1151,8 @@ function renderWrite(){
     </div>` : ''}
 
     <div class="card">
-      <div class="editor-top">
-        <input type="date" class="btn btn-sm" style="border-radius:8px;" value="${draft.date}" onchange="window.__draft.date=this.value; scheduleAutosave();">
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm" id="favBtn" onclick="toggleDraftFlag('favorite')">${draft.favorite?'★ Favorited':'☆ Favorite'}</button>
-          <button class="btn btn-sm" id="impBtn" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
-        </div>
-      </div>
-
       <input class="title-input" id="titleInput" placeholder="Give today a title…" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();">
 
-      <div class="fmt-toolbar">
-        <button type="button" class="fmt-btn" title="Bold" onclick="wrapSelection('**','**')"><b>B</b></button>
-        <button type="button" class="fmt-btn" title="Italic" onclick="wrapSelection('*','*')"><i>I</i></button>
-        <button type="button" class="fmt-btn" title="Heading" onclick="prefixLine('## ')">H</button>
-        <button type="button" class="fmt-btn" title="Bulleted list" onclick="prefixLine('- ')">• List</button>
-        <button type="button" class="fmt-btn" title="Link" onclick="insertLink()">🔗</button>
-        <span style="flex:1"></span>
-        <button type="button" class="btn btn-sm btn-ghost" id="previewToggleBtn" onclick="togglePreview()">👁 Preview</button>
-      </div>
       <textarea class="content-input" id="contentInput" placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="window.__draft.content=this.value; updateWordCount(); refreshAIPreview(); scheduleAutosave();">${escapeHtml(draft.content)}</textarea>
 
       <div class="section-title" style="margin-top:18px;">Mood</div>
@@ -1070,17 +1164,6 @@ function renderWrite(){
       <div class="tag-input-wrap" id="tagWrap">
         ${(draft.tags||[]).map(t=>tagChip(t)).join('')}
         <input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">
-      </div>
-
-      <div class="editor-footer">
-        <div style="display:flex;flex-direction:column;gap:2px;">
-          <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
-          <span class="draft-status" id="draftStatus"></span>
-        </div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn" onclick="cancelWrite()">Cancel</button>
-          <button class="btn btn-primary" onclick="saveDraft()">Save Journal</button>
-        </div>
       </div>
 
       <div class="ai-box">
