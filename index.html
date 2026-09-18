@@ -219,7 +219,7 @@ input,textarea,select{font-family:var(--font-sans);}
 
 /* ---------- Journal list / timeline ---------- */
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
-.filter-row select,.filter-row input[type=text]{padding:7px 10px;border-radius:7px;border:1px solid var(--rule);
+.filter-row select,.filter-row input[type=text],.filter-row input[type=date]{padding:7px 10px;border-radius:7px;border:1px solid var(--rule);
   background:var(--paper-card);color:var(--ink);font-size:13px;}
 .entry-row{display:flex;gap:14px;padding:14px 4px;border-bottom:1px solid var(--rule);align-items:flex-start;
   cursor:pointer;}
@@ -233,6 +233,7 @@ input,textarea,select{font-family:var(--font-sans);}
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .entry-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 .entry-star{color:var(--accent);font-size:15px;}
+.intensity-tag{font-size:11px;color:var(--ink-faint);}
 
 /* ---------- Calendar ---------- */
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
@@ -244,7 +245,16 @@ input,textarea,select{font-family:var(--font-sans);}
 .cal-cell.has-entry{cursor:pointer;}
 .cal-cell.has-entry:hover{border-color:var(--accent);}
 .cal-cell.today{box-shadow:inset 0 0 0 2px var(--accent);}
-.cal-dot{width:7px;height:7px;border-radius:99px;align-self:flex-end;}
+.cal-cell.has-archived{border-style:dashed;}
+.cal-dot{width:7px;height:7px;border-radius:99px;align-self:flex-end;flex:none;}
+.cal-dot-row{display:flex;gap:3px;align-self:flex-end;align-items:center;}
+.cal-dot-mini{width:6px;height:6px;border-radius:99px;flex:none;}
+.cal-more{font-size:8.5px;color:var(--ink-faint);margin-left:1px;}
+.cal-pin{position:absolute;top:4px;left:5px;font-size:9px;line-height:1;}
+.cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--rule);font-size:11.5px;color:var(--ink-faint);}
+.cal-legend span.dot{width:8px;height:8px;border-radius:99px;display:inline-block;margin-right:4px;}
+.cal-legend .item{display:inline-flex;align-items:center;}
 
 /* ---------- Editor ---------- */
 .editor-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
@@ -260,6 +270,8 @@ input,textarea,select{font-family:var(--font-sans);}
 .mood-opt{padding:6px 13px;border-radius:99px;border:1px solid var(--rule);background:var(--paper-card);
   font-size:13px;color:var(--ink-soft);}
 .mood-opt.selected{border-color:var(--accent);color:var(--ink);font-weight:600;background:var(--accent-soft);}
+.intensity-row{margin-top:12px;}
+.intensity-row input[type=range]{width:100%;accent-color:var(--accent);height:4px;display:block;}
 .tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--rule);border-radius:8px;
   background:var(--paper-card);}
 .tag-input-wrap input{border:none;background:none;flex:1;min-width:90px;font-size:13px;color:var(--ink);}
@@ -507,6 +519,13 @@ body.write-mode .main{padding-top:98px;}
     <div class="sheet-handle"></div>
     <div class="sheet-title">আজ কেমন লাগছে?</div>
     <div class="quick-mood-grid" id="quickMoodGrid"></div>
+    <div class="intensity-row" style="padding:2px 6px 10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-faint);margin-bottom:5px;">
+        <span>কতটা তীব্র?</span><span id="quickIntensityVal"><b>5</b>/10</span>
+      </div>
+      <input type="range" min="1" max="10" value="5" id="quickIntensitySlider"
+        oninput="document.getElementById('quickIntensityVal').innerHTML='<b>'+this.value+'</b>/10';">
+    </div>
   </div>
 </div>
 
@@ -520,6 +539,15 @@ body.write-mode .main{padding-top:98px;}
       <button class="btn" onclick="closeConfirm()">বাতিল</button>
       <button class="btn btn-danger" id="confirmBtn">নিশ্চিত করুন</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ CALENDAR: DAY WITH MULTIPLE ENTRIES ============ -->
+<div class="modal-backdrop" id="dayEntriesModal" onclick="if(event.target===this) closeDayEntries()">
+  <div class="modal" style="max-width:420px;">
+    <h3 id="dayEntriesTitle">Entries</h3>
+    <div id="dayEntriesList" style="display:flex;flex-direction:column;gap:4px;max-height:52vh;overflow-y:auto;margin-bottom:14px;"></div>
+    <div class="row"><button class="btn" onclick="closeDayEntries()">Close</button></div>
   </div>
 </div>
 
@@ -578,7 +606,17 @@ let unsubEntries = null, unsubUserDoc = null;
 function attachEntriesListener(){
   if(unsubEntries) unsubEntries();
   unsubEntries = entriesColRef().orderBy('date','desc').onSnapshot(snap=>{
-    state.entries = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    // Normalize older docs that predate moodIntensity / archived so the rest
+    // of the app (mood slider, filters, calendar dots) can rely on both
+    // fields always being present and correctly typed.
+    state.entries = snap.docs.map(d=>{
+      const data = d.data();
+      return {
+        id: d.id, ...data,
+        moodIntensity: (typeof data.moodIntensity === 'number' && data.moodIntensity>=1 && data.moodIntensity<=10) ? data.moodIntensity : 5,
+        archived: !!data.archived
+      };
+    });
     if(['dashboard','timeline','calendar','search','insights','archive'].includes(state.view)) render();
     else updateStreak();
   }, err=>{ console.error('entries listener error', err); toast('এন্ট্রি লোড করতে সমস্যা হয়েছে।'); });
@@ -622,6 +660,19 @@ const MOODS = [
   {id:'neutral', label:'Neutral', emoji:'😐', cls:'mood-neutral'}
 ];
 function moodInfo(id){ return MOODS.find(m=>m.id===id) || MOODS[5]; }
+// Reuses the exact hues already used for each mood's chip text color, so the
+// Calendar's mood dots stay visually consistent with the rest of the app
+// instead of inventing a second color language.
+function moodDotColor(id){
+  switch(id){
+    case 'happy': return '#8A6A1E';
+    case 'calm': return 'var(--sage)';
+    case 'sad': return 'var(--sky)';
+    case 'stressed': return 'var(--rust)';
+    case 'angry': return '#93342A';
+    default: return 'var(--ink-faint)';
+  }
+}
 
 /* ---------------- AI LAYER (Gemini API) ---------------- */
 async function callGemini(prompt){
@@ -692,7 +743,10 @@ function extractInformation(text){
 }
 
 /* ---------------- STATE ---------------- */
-let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date(), draftRecoveryResolved:false, appliedDraftData:null };
+let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null,
+  filters:{mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'},
+  calMonth:new Date(), calendarShowArchived:false,
+  draftRecoveryResolved:false, appliedDraftData:null };
 
 /* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
 function draftDocRef(){ return userDocRef().collection('meta').doc('draft'); }
@@ -866,6 +920,7 @@ function go(view, param){
   document.querySelector('.overlay').classList.remove('show');
   closeQuickAdd();
   closeMoodSheet();
+  closeDayEntries();
   document.getElementById('main').scrollTop = 0;
   window.scrollTo(0,0);
 }
@@ -879,6 +934,11 @@ function openQuickAdd(){ document.getElementById('quickAddSheet').classList.add(
 function closeQuickAdd(){ document.getElementById('quickAddSheet').classList.remove('show'); }
 function openMoodSheet(){
   closeQuickAdd();
+  // reset the intensity slider to a neutral default each time the sheet opens
+  const slider = document.getElementById('quickIntensitySlider');
+  const val = document.getElementById('quickIntensityVal');
+  if(slider) slider.value = 5;
+  if(val) val.innerHTML = '<b>5</b>/10';
   document.getElementById('moodSheet').classList.add('show');
 }
 function closeMoodSheet(){ document.getElementById('moodSheet').classList.remove('show'); }
@@ -894,17 +954,21 @@ function startQuickWrite(){
   go('write', existing ? existing.id : null);
 }
 async function quickLogMood(moodId){
+  // Read the intensity slider before the sheet closes/resets, so a one-tap
+  // mood log can still carry an (optional, quietly-defaulted) intensity.
+  const sliderEl = document.getElementById('quickIntensitySlider');
+  const intensity = sliderEl ? (parseInt(sliderEl.value,10) || 5) : 5;
   closeMoodSheet();
   if(!state.user) return;
   try{
     const today = todayISO();
     const existing = state.entries.find(e=>e.date===today && !e.archived);
     if(existing){
-      await entriesColRef().doc(existing.id).set({mood:moodId, updatedAt:new Date().toISOString()}, {merge:true});
+      await entriesColRef().doc(existing.id).set({mood:moodId, moodIntensity:intensity, updatedAt:new Date().toISOString()}, {merge:true});
     } else {
       await entriesColRef().add({
-        date:today, title:'', content:'', mood:moodId, moodIntensity:5,
-        tags:[], favorite:false, important:false,
+        date:today, title:'', content:'', mood:moodId, moodIntensity:intensity,
+        tags:[], favorite:false, important:false, archived:false,
         createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
       });
     }
@@ -1072,6 +1136,8 @@ function renderWrite(){
     id: null, date: todayISO(), title:'', content:'', mood:'neutral', moodIntensity:5,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
+  // Safety net for entries saved before Module 03 (or drafts missing the field).
+  if(typeof draft.moodIntensity !== 'number' || draft.moodIntensity<1 || draft.moodIntensity>10) draft.moodIntensity = 5;
 
   // ---- Module 02: draft recovery check ----
   const targetId = state.editingId || null;
@@ -1158,6 +1224,12 @@ function renderWrite(){
       <div class="section-title" style="margin-top:18px;">Mood</div>
       <div class="mood-picker" id="moodPicker">
         ${MOODS.map(m=>`<button type="button" class="mood-opt ${draft.mood===m.id?'selected':''}" data-mood="${m.id}" onclick="setDraftMood('${m.id}')">${m.emoji} ${m.label}</button>`).join('')}
+      </div>
+      <div class="intensity-row" id="intensityRow">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;">
+          <span>Intensity</span><span id="intensityVal"><b>${draft.moodIntensity||5}</b>/10</span>
+        </div>
+        <input type="range" min="1" max="10" step="1" value="${draft.moodIntensity||5}" id="intensitySlider" oninput="setDraftIntensity(this.value)">
       </div>
 
       <div class="section-title" style="margin-top:18px;">Tags</div>
@@ -1260,6 +1332,13 @@ function setDraftMood(m){
   window.__draft.mood = m;
   document.querySelectorAll('.mood-opt').forEach(b=>b.classList.toggle('selected', b.dataset.mood===m));
   refreshAIPreview();
+  scheduleAutosave();
+}
+function setDraftIntensity(v){
+  const n = parseInt(v,10) || 5;
+  window.__draft.moodIntensity = n;
+  const el = document.getElementById('intensityVal');
+  if(el) el.innerHTML = `<b>${n}</b>/10`;
   scheduleAutosave();
 }
 function toggleDraftFlag(flag){
@@ -1381,13 +1460,42 @@ function renderArchive(){
   `;
 }
 
+/* ---------------- FILTER ARCHITECTURE (Module 03) ----------------
+   Predicate-based so future extracted-data filters (Achievement, Plan,
+   Quote, Idea, Lesson, Person, Place, Event — Module 06/08+) can be added
+   later just by pushing one more predicate here, without touching the
+   filtering call sites or rebuilding this system. */
+function buildFilterPredicates(f){
+  const preds = [];
+  if(f.archived==='active') preds.push(e=>!e.archived);
+  else if(f.archived==='archived') preds.push(e=>!!e.archived);
+  // f.archived==='all' -> no predicate, both included
+  if(f.mood) preds.push(e=>e.mood===f.mood);
+  if(f.tag) preds.push(e=>(e.tags||[]).includes(f.tag));
+  if(f.favOnly) preds.push(e=>!!e.favorite);
+  if(f.importantOnly) preds.push(e=>!!e.important);
+  if(f.dateFrom) preds.push(e=>e.date >= f.dateFrom);
+  if(f.dateTo) preds.push(e=>e.date <= f.dateTo);
+  // Future category filters plug in here, e.g.:
+  // if(f.category && f.categoryValue) preds.push(e=>(e.extracted && e.extracted[f.category]||[]).includes(f.categoryValue));
+  return preds;
+}
+function applyFilters(entries, f){
+  const preds = buildFilterPredicates(f);
+  return entries.filter(e=>preds.every(p=>p(e)));
+}
+function isLibraryFiltered(f){
+  return !!(f.mood || f.tag || f.favOnly || f.importantOnly || f.dateFrom || f.dateTo || f.archived!=='active');
+}
+function clearLibraryFilters(){
+  state.filters = {mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'};
+  render();
+}
+
 /* ---------------- TIMELINE / LIBRARY (Module 05) ---------------- */
 function renderTimeline(){
   const f = state.filters;
-  let list = state.entries.filter(e=>!e.archived).sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
-  if(f.mood) list = list.filter(e=>e.mood===f.mood);
-  if(f.tag) list = list.filter(e=>(e.tags||[]).includes(f.tag));
-  if(f.favOnly) list = list.filter(e=>e.favorite);
+  let list = applyFilters(state.entries, f).sort((a,b)=> b.date.localeCompare(a.date) || (b.createdAt||'').localeCompare(a.createdAt||''));
 
   const allTags = [...new Set(state.entries.filter(e=>!e.archived).flatMap(e=>e.tags||[]))];
 
@@ -1407,9 +1515,20 @@ function renderTimeline(){
         ${allTags.map(t=>`<option value="${escapeHtml(t)}" ${f.tag===t?'selected':''}>#${escapeHtml(t)}</option>`).join('')}
       </select>
       <label class="pill" style="cursor:pointer;">
-        <input type="checkbox" ${f.favOnly?'checked':''} onchange="state.filters.favOnly=this.checked; render();" style="margin:0;"> Favorites only
+        <input type="checkbox" ${f.favOnly?'checked':''} onchange="state.filters.favOnly=this.checked; render();" style="margin:0;"> Favorites
       </label>
-      ${(f.mood||f.tag||f.favOnly) ? `<button class="btn btn-ghost btn-sm" onclick="state.filters={mood:'',tag:'',favOnly:false}; render();">Clear filters</button>` : ''}
+      <label class="pill" style="cursor:pointer;">
+        <input type="checkbox" ${f.importantOnly?'checked':''} onchange="state.filters.importantOnly=this.checked; render();" style="margin:0;"> Important
+      </label>
+      <input type="date" value="${f.dateFrom||''}" title="From date" onchange="state.filters.dateFrom=this.value; render();">
+      <span style="color:var(--ink-faint);font-size:12px;">–</span>
+      <input type="date" value="${f.dateTo||''}" title="To date" onchange="state.filters.dateTo=this.value; render();">
+      <select onchange="state.filters.archived=this.value; render();" title="Archived">
+        <option value="active" ${f.archived==='active'?'selected':''}>Active only</option>
+        <option value="all" ${f.archived==='all'?'selected':''}>Include archived</option>
+        <option value="archived" ${f.archived==='archived'?'selected':''}>Archived only</option>
+      </select>
+      ${isLibraryFiltered(f) ? `<button class="btn btn-ghost btn-sm" onclick="clearLibraryFilters()">Clear filters</button>` : ''}
     </div>
 
     <div class="card">
@@ -1417,10 +1536,11 @@ function renderTimeline(){
         <div class="entry-row" onclick="go('write','${e.id}')">
           <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
           <div class="entry-body">
-            <h3>${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''}</h3>
+            <h3>${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄 Archived</span>':''}</h3>
             <p>${escapeHtml(e.content||'')}</p>
             <div class="entry-meta">
               <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
+              <span class="intensity-tag">${e.moodIntensity||5}/10</span>
               ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
               ${e.favorite?`<span class="entry-star">★</span>`:''}
             </div>
@@ -1438,25 +1558,56 @@ function renderCalendar(){
   const first = new Date(year, month, 1);
   const startDow = first.getDay();
   const daysInMonth = new Date(year, month+1, 0).getDate();
-  const entryByDate = {};
-  state.entries.forEach(e=>{ if(!e.archived) entryByDate[e.date] = e; });
+  const showArchived = state.calendarShowArchived;
+
+  // Group by date instead of overwriting — a date can have more than one entry.
+  const entriesByDate = {};
+  state.entries.forEach(e=>{
+    if(e.archived && !showArchived) return; // archived stays out of normal calendar activity unless explicitly shown
+    (entriesByDate[e.date] = entriesByDate[e.date] || []).push(e);
+  });
+  window.__calEntriesByDate = entriesByDate; // read by openDayEntries()
   const today = todayISO();
 
   let cells = '';
   for(let i=0;i<startDow;i++) cells += `<div class="cal-cell empty"></div>`;
   for(let day=1; day<=daysInMonth; day++){
     const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const e = entryByDate[iso];
+    const dayEntries = entriesByDate[iso] || [];
     const isToday = iso===today;
-    cells += `<div class="cal-cell ${e?'has-entry':''} ${isToday?'today':''}" ${e?`onclick="go('write','${e.id}')"`:''}>
+    const hasImportant = dayEntries.some(e=>e.important);
+    const allArchived = dayEntries.length>0 && dayEntries.every(e=>e.archived);
+
+    let clickAttr = '', dotsHtml = '';
+    if(dayEntries.length===1){
+      const e = dayEntries[0];
+      clickAttr = `onclick="go('write','${e.id}')"`;
+      const op = (0.45 + ((e.moodIntensity||5)/10)*0.55).toFixed(2);
+      dotsHtml = `<span class="cal-dot" style="background:${moodDotColor(e.mood)};opacity:${op}"></span>`;
+    } else if(dayEntries.length>1){
+      clickAttr = `onclick="openDayEntries('${iso}')"`;
+      const mini = dayEntries.slice(0,3).map(e=>{
+        const op = (0.45 + ((e.moodIntensity||5)/10)*0.55).toFixed(2);
+        return `<span class="cal-dot-mini" style="background:${moodDotColor(e.mood)};opacity:${op}"></span>`;
+      }).join('');
+      dotsHtml = `<span class="cal-dot-row">${mini}${dayEntries.length>3?`<span class="cal-more">+${dayEntries.length-3}</span>`:''}</span>`;
+    }
+
+    cells += `<div class="cal-cell ${dayEntries.length?'has-entry':''} ${isToday?'today':''} ${allArchived?'has-archived':''}" ${clickAttr} ${dayEntries.length? `title="${dayEntries.length} entr${dayEntries.length>1?'ies':'y'}"`:''}>
+      ${hasImportant?'<span class="cal-pin">📌</span>':''}
       <span>${day}</span>
-      ${e ? `<span class="cal-dot" style="background:var(--accent)"></span>` : ''}
+      ${dotsHtml}
     </div>`;
   }
   const dows = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
   return `
-    <div class="page-head"><h1>Calendar</h1></div>
+    <div class="page-head">
+      <h1>Calendar</h1>
+      <label class="pill" style="cursor:pointer;">
+        <input type="checkbox" ${showArchived?'checked':''} onchange="state.calendarShowArchived=this.checked; render();" style="margin:0;"> Show archived
+      </label>
+    </div>
     <div class="card">
       <div class="cal-head">
         <button class="btn btn-sm" onclick="shiftMonth(-1)">← Prev</button>
@@ -1467,6 +1618,11 @@ function renderCalendar(){
         ${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}
         ${cells}
       </div>
+      <div class="cal-legend">
+        ${MOODS.map(m=>`<span class="item"><span class="dot" style="background:${moodDotColor(m.id)}"></span>${m.emoji} ${m.label}</span>`).join('')}
+        <span class="item">📌 Important</span>
+        ${showArchived ? `<span class="item">┄ Archived-only day</span>` : ''}
+      </div>
     </div>
   `;
 }
@@ -1474,6 +1630,32 @@ function shiftMonth(n){
   state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()+n, 1);
   render();
 }
+
+/* ---- Day popover: a date with 2+ entries opens a small list instead of
+   silently jumping into (or hiding) just one of them. ---- */
+function openDayEntries(iso){
+  const entries = (window.__calEntriesByDate && window.__calEntriesByDate[iso]) || [];
+  const titleEl = document.getElementById('dayEntriesTitle');
+  if(titleEl) titleEl.textContent = fmtDate(iso, {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  const listEl = document.getElementById('dayEntriesList');
+  if(listEl){
+    listEl.innerHTML = entries.map(e=>`
+      <div class="entry-row" style="padding:10px 6px;" onclick="closeDayEntries(); go('write','${e.id}')">
+        <div class="entry-body">
+          <h3 style="font-size:14px;">${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄</span>':''}</h3>
+          <p style="margin:0 0 6px;">${escapeHtml((e.content||'').slice(0,90))}${(e.content||'').length>90?'…':''}</p>
+          <div class="entry-meta">
+            <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
+            <span class="intensity-tag">${e.moodIntensity||5}/10</span>
+            ${e.favorite?'<span class="entry-star">★</span>':''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('dayEntriesModal').classList.add('show');
+}
+function closeDayEntries(){ document.getElementById('dayEntriesModal').classList.remove('show'); }
 
 /* ---------------- SEARCH (Module 21 — basic) ---------------- */
 function renderSearch(){
