@@ -648,7 +648,7 @@ function extractInformation(text){
 }
 
 /* ---------------- STATE ---------------- */
-let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date(), draftRecoveryResolved:false };
+let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date(), draftRecoveryResolved:false, appliedDraftData:null };
 
 /* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
 function draftDocRef(){ return userDocRef().collection('meta').doc('draft'); }
@@ -716,9 +716,10 @@ function timeAgo(iso){
 function continueDraft(){
   const d = window.__pendingRecoveryDraft;
   if(!d) return;
-  window.__draft = {...window.__draft, title:d.title||'', content:d.content||'', date:d.date||window.__draft.date,
-    mood:d.mood||window.__draft.mood, moodIntensity:d.moodIntensity||window.__draft.moodIntensity,
-    tags:d.tags||window.__draft.tags, favorite:!!d.favorite, important:!!d.important};
+  // Stash the recovered fields on state (not window.__draft) — renderWrite() runs again
+  // right after this and rebuilds window.__draft from scratch, so it needs a place to
+  // read the recovered content back from *while* building that object, not after.
+  state.appliedDraftData = {...d};
   state.draftRecoveryResolved = true;
   render();
 }
@@ -726,12 +727,14 @@ function discardDraftRecovery(){
   clearLocalDraft();
   clearRemoteDraft();
   state.draftRecoveryResolved = true;
+  state.appliedDraftData = null;
   window.__pendingRecoveryDraft = null;
   render();
 }
 function cancelWrite(){
   clearLocalDraft();
   clearRemoteDraft();
+  state.appliedDraftData = null;
   go('dashboard');
 }
 
@@ -811,7 +814,7 @@ function logout(){
 function go(view, param){
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
-  if(view==='write') state.draftRecoveryResolved = false; // re-check for a recoverable draft on every fresh entry into the editor
+  if(view==='write'){ state.draftRecoveryResolved = false; state.appliedDraftData = null; } // re-check for a recoverable draft on every fresh entry into the editor
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   render();
@@ -979,7 +982,6 @@ function renderWrite(){
     id: null, date: todayISO(), title:'', content:'', mood:'neutral', moodIntensity:5,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
-  window.__draft = draft;
 
   // ---- Module 02: draft recovery check ----
   const targetId = state.editingId || null;
@@ -987,6 +989,22 @@ function renderWrite(){
   const recoverable = (!state.draftRecoveryResolved && localDraft && localDraft.entryId===targetId && isDraftMeaningful(localDraft)
     && (localDraft.title!==draft.title || localDraft.content!==draft.content)) ? localDraft : null;
   window.__pendingRecoveryDraft = recoverable;
+
+  // If the user just clicked "Continue draft", state.appliedDraftData holds the recovered
+  // fields — merge them onto the freshly-built draft *before* it's used to render the
+  // inputs below, otherwise this rebuild would silently wipe what was just recovered.
+  if(state.appliedDraftData && state.appliedDraftData.entryId===targetId){
+    const a = state.appliedDraftData;
+    draft.title = a.title || '';
+    draft.content = a.content || '';
+    draft.date = a.date || draft.date;
+    draft.mood = a.mood || draft.mood;
+    draft.moodIntensity = a.moodIntensity || draft.moodIntensity;
+    draft.tags = a.tags || draft.tags;
+    draft.favorite = !!a.favorite;
+    draft.important = !!a.important;
+  }
+  window.__draft = draft;
 
   return `
     <div class="page-head">
@@ -1196,6 +1214,7 @@ async function saveDraft(){
     clearLocalDraft();
     clearRemoteDraft();
     state.draftRecoveryResolved = true;
+    state.appliedDraftData = null;
     toast('জার্নাল সংরক্ষিত হয়েছে।');
     go('dashboard');
   }catch(err){
