@@ -197,10 +197,8 @@ input,textarea,select{font-family:var(--font-sans);}
   .dock-toggle{display:none;}
 }
 
-.main{padding:88px 32px 92px;max-width:960px;width:100%;margin:0 auto;
-  transition:margin-left .32s var(--ease);}
-body:not(.sb-expanded) .main{margin-left:calc(var(--dock-collapsed) + 30px);}
-body.sb-expanded .main{margin-left:calc(var(--dock-expanded) + 30px);}
+.main{padding:88px 32px 92px;max-width:960px;width:100%;margin:0 auto;}
+.main{margin-left:calc(var(--dock-expanded) + 30px);}
 #main.view-anim{animation:viewIn .32s var(--ease);}
 @keyframes viewIn{ from{opacity:0;transform:translateY(7px);} to{opacity:1;transform:translateY(0);} }
 @media (max-width:860px){ .main{padding:78px 18px 118px;max-width:100%;margin-left:auto!important;} }
@@ -249,7 +247,7 @@ body.sb-expanded .main{margin-left:calc(var(--dock-expanded) + 30px);}
 .overlay.show{display:block;}
 
 /* ---------- Profile popover (opened from the profile chip) ---------- */
-.profile-menu{position:fixed;top:60px;right:14px;width:230px;z-index:80;
+.profile-menu{position:fixed;top:60px;right:14px;width:252px;z-index:80;
   background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border:1px solid var(--glass-border);
   border-radius:18px;box-shadow:var(--shadow-float);padding:8px;
@@ -267,6 +265,7 @@ body.sb-expanded .main{margin-left:calc(var(--dock-expanded) + 30px);}
   transition:background .15s,color .15s;}
 .pm-item:hover{background:rgba(255,255,255,.2);color:var(--ink);}
 :root[data-theme="dark"] .pm-item:hover{background:rgba(255,255,255,.07);}
+.pm-sep{height:1px;background:var(--glass-border);margin:6px 6px;opacity:.8;}
 
 /* ---------- Mobile bottom app-nav ---------- */
 .bottom-nav{display:none;}
@@ -528,13 +527,11 @@ body.sb-expanded .main{margin-left:calc(var(--dock-expanded) + 30px);}
 /* Holds every editing / customization control — incl. Save — so it stays
    reachable no matter how far the user has scrolled into a long entry.
    Hides while scrolling down, reappears on scroll-up (like a browser address bar). */
-.write-fixed-bar{position:fixed;top:0;left:0;right:0;z-index:38;
+.write-fixed-bar{position:fixed;top:0;left:calc(var(--dock-expanded) + 30px);right:0;z-index:38;
   background:var(--paper-card);border-bottom:1px solid var(--rule);box-shadow:var(--shadow);
   padding:9px 20px;display:none;align-items:center;gap:8px;
   overflow-x:auto;white-space:nowrap;-ms-overflow-style:none;scrollbar-width:none;
-  transform:translateY(-100%);transition:transform .22s ease,left .32s var(--ease);}
-body:not(.sb-expanded) .write-fixed-bar{left:calc(var(--dock-collapsed) + 30px);}
-body.sb-expanded .write-fixed-bar{left:calc(var(--dock-expanded) + 30px);}
+  transform:translateY(-100%);transition:transform .22s ease;}
 .write-fixed-bar::-webkit-scrollbar{display:none;}
 .write-fixed-bar.active{display:flex;}
 .write-fixed-bar.show{transform:translateY(0);}
@@ -620,8 +617,9 @@ body.write-mode .main{padding-top:100px;}
   </div>
   <button class="pm-item" onclick="closeProfileMenu();go('settings')">
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.5 1 .51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    Settings
+    Customization &amp; Settings
   </button>
+  <div class="pm-sep"></div>
   <button class="pm-item" onclick="closeProfileMenu();logout()">
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
     Log out
@@ -669,12 +667,6 @@ body.write-mode .main{padding-top:100px;}
     <button class="nav-item" data-view="insights" onclick="go('insights')">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 15l4-6 3 3 5-8"/></svg></span>
       <span class="lbl">Mood &amp; Writing</span><span class="tip">Mood &amp; Writing</span>
-    </button>
-
-    <div class="nav-sep"></div>
-    <button class="nav-item" data-view="settings" onclick="go('settings')">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.5 1 .51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
-      <span class="lbl">Settings</span><span class="tip">Settings</span>
     </button>
 
     <div class="sidebar-foot">
