@@ -152,12 +152,17 @@ input,textarea,select{font-family:var(--font-sans);}
 .nav-item.active .ic{background:var(--accent);color:#fff;box-shadow:0 4px 12px -3px rgba(180,114,44,.55);}
 :root[data-theme="dark"] .nav-item.active .ic{color:#1B1B17;}
 
-/* Tooltip label shown on hover while the dock is collapsed (icon-only) */
-.nav-item .tip{position:absolute;left:52px;top:50%;transform:translateY(-50%) translateX(-4px);
-  background:var(--ink);color:var(--paper);font-size:12px;font-weight:500;padding:6px 10px;
-  border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;box-shadow:var(--shadow-float);
-  transition:opacity .15s,transform .15s;z-index:5;}
-:root[data-theme="dark"] .nav-item .tip{background:var(--accent);color:#1B1B17;}
+/* Tooltip label shown on hover while the dock is collapsed (icon-only).
+   position:fixed + JS-computed coordinates (see initSidebarTooltips) so the
+   label escapes the sidebar's own overflow/scroll box and always renders on
+   top of every other floating chip — a soft glassy chip, matching the rest
+   of the dock's frosted-glass language. */
+.nav-item .tip{position:fixed;top:0;left:0;transform:translateY(-50%) translateX(-4px);
+  background:var(--glass-bg-strong);color:var(--ink);font-size:12px;font-weight:600;padding:7px 13px;
+  border-radius:10px;white-space:nowrap;opacity:0;pointer-events:none;
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.6);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.6);
+  box-shadow:var(--shadow-float);transition:opacity .15s,transform .15s;z-index:9999;}
 .sidebar:not(.expanded):not(.open) .nav-item:hover .tip{opacity:1;transform:translateY(-50%) translateX(0);}
 .sidebar.expanded .nav-item .tip,.sidebar.open .nav-item .tip{display:none;}
 
@@ -1052,6 +1057,7 @@ function boot(){
   const sbExpanded = localStorage.getItem('sidebarExpanded') === '1';
   document.getElementById('sidebar').classList.toggle('expanded', sbExpanded);
   document.body.classList.toggle('sb-expanded', sbExpanded);
+  initSidebarTooltips();
   renderAuthForm();
 
   auth.onAuthStateChanged(function(user){
@@ -1141,6 +1147,25 @@ function go(view, param){
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
   document.querySelector('.overlay').classList.toggle('show');
+}
+
+/* Sidebar hover-tooltips: positioned via JS (not pure CSS) so the label is
+   a position:fixed element placed next to the button's real on-screen
+   location. This lets it escape the sidebar's own overflow box entirely —
+   that overflow was previously clipping/hiding the tooltip — and guarantees
+   it always paints above every other floating glass chip on the page. */
+function initSidebarTooltips(){
+  const sidebar = document.getElementById('sidebar');
+  if(!sidebar) return;
+  sidebar.querySelectorAll('.nav-item').forEach(item=>{
+    const tip = item.querySelector('.tip');
+    if(!tip) return;
+    item.addEventListener('mouseenter', ()=>{
+      const r = item.getBoundingClientRect();
+      tip.style.top = (r.top + r.height/2) + 'px';
+      tip.style.left = (r.right + 12) + 'px';
+    });
+  });
 }
 
 /* ---------------- DOCK collapse / expand (desktop & laptop) ---------------- */
