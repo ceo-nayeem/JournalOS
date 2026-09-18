@@ -321,6 +321,27 @@ input,textarea,select{font-family:var(--font-sans);}
 .modal .row{display:flex;gap:10px;justify-content:flex-end;}
 
 .scroll-x{overflow-x:auto;}
+
+/* ---------- Module 02: Draft banner + status ---------- */
+.draft-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  background:var(--sky-soft);border:1px dashed var(--sky);border-radius:9px;padding:12px 14px;margin-bottom:16px;}
+.draft-banner span{font-size:13px;color:var(--ink);}
+.draft-banner .row{display:flex;gap:8px;flex-wrap:wrap;}
+.draft-status{font-size:12px;color:var(--ink-faint);}
+.draft-status.saving{color:var(--accent);}
+
+/* ---------- Module 02: Lightweight formatting toolbar ---------- */
+.fmt-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-bottom:8px;
+  border-bottom:1px solid var(--rule);margin-bottom:4px;}
+.fmt-btn{min-width:30px;height:30px;padding:0 8px;border-radius:7px;border:1px solid var(--rule);
+  background:var(--paper-card);color:var(--ink-soft);font-size:13px;display:flex;align-items:center;justify-content:center;}
+.fmt-btn:hover{border-color:var(--accent);color:var(--ink);}
+.content-preview{min-height:340px;padding:6px 0;font-family:var(--font-serif);font-size:17px;line-height:1.75;color:var(--ink);}
+.content-preview .empty{text-align:left;}
+
+/* ---------- Module 02: Archive ---------- */
+.archived-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11.5px;
+  background:var(--rust-soft);color:var(--rust);}
 </style>
 </head>
 <body>
@@ -368,6 +389,10 @@ input,textarea,select{font-family:var(--font-sans);}
     <button class="nav-item" data-view="search" onclick="go('search')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       Search
+    </button>
+    <button class="nav-item" data-view="archive" onclick="go('archive')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+      Archive
     </button>
 
     <div class="nav-label">Insights</div>
@@ -510,7 +535,7 @@ function attachEntriesListener(){
   if(unsubEntries) unsubEntries();
   unsubEntries = entriesColRef().orderBy('date','desc').onSnapshot(snap=>{
     state.entries = snap.docs.map(d=>({id:d.id, ...d.data()}));
-    if(['dashboard','timeline','calendar','search','insights'].includes(state.view)) render();
+    if(['dashboard','timeline','calendar','search','insights','archive'].includes(state.view)) render();
     else updateStreak();
   }, err=>{ console.error('entries listener error', err); toast('এন্ট্রি লোড করতে সমস্যা হয়েছে।'); });
 }
@@ -623,7 +648,92 @@ function extractInformation(text){
 }
 
 /* ---------------- STATE ---------------- */
-let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date() };
+let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null, filters:{mood:'',tag:'',favOnly:false}, calMonth:new Date(), draftRecoveryResolved:false };
+
+/* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
+function draftDocRef(){ return userDocRef().collection('meta').doc('draft'); }
+function draftLSKey(){ return 'journalos_draft_' + (state.user ? state.user.uid : 'anon'); }
+function readLocalDraft(){
+  try{ const raw = localStorage.getItem(draftLSKey()); return raw ? JSON.parse(raw) : null; }
+  catch(e){ return null; }
+}
+function writeLocalDraft(d){ try{ localStorage.setItem(draftLSKey(), JSON.stringify(d)); }catch(e){} }
+function clearLocalDraft(){ try{ localStorage.removeItem(draftLSKey()); }catch(e){} }
+let draftFirestoreDebounce = null;
+function persistDraftToFirestore(d){
+  clearTimeout(draftFirestoreDebounce);
+  draftFirestoreDebounce = setTimeout(()=>{
+    if(!state.user) return;
+    draftDocRef().set(d).catch(err=>console.error('draft save failed', err));
+  }, 3000); // debounced — avoids a Firestore write on every keystroke
+}
+async function clearRemoteDraft(){
+  clearTimeout(draftFirestoreDebounce);
+  if(!state.user) return;
+  try{ await draftDocRef().delete(); }catch(e){ /* fine if it never existed */ }
+}
+function isDraftMeaningful(d){
+  if(!d) return false;
+  return !!((d.title && d.title.trim()) || (d.content && d.content.trim().length>3) || (d.tags && d.tags.length));
+}
+async function seedDraftFromRemoteIfNeeded(){
+  if(!state.user || readLocalDraft()) return; // local already covers this device
+  try{
+    const snap = await draftDocRef().get();
+    if(snap.exists){
+      const d = snap.data();
+      if(isDraftMeaningful(d)) writeLocalDraft(d);
+    }
+  }catch(err){ console.error('draft fetch failed', err); }
+}
+let autosaveIndicatorTimer = null;
+function scheduleAutosave(){
+  if(!window.__draft) return;
+  const snapshot = {...window.__draft, entryId: window.__draft.id || null, savedAt: new Date().toISOString()};
+  delete snapshot.id;
+  if(!isDraftMeaningful(snapshot)){ clearLocalDraft(); return; } // never persist an empty draft
+  writeLocalDraft(snapshot);
+  showDraftStatus('saving');
+  persistDraftToFirestore(snapshot);
+  clearTimeout(autosaveIndicatorTimer);
+  autosaveIndicatorTimer = setTimeout(()=> showDraftStatus('saved', snapshot.savedAt), 600);
+}
+function showDraftStatus(mode, savedAt){
+  const el = document.getElementById('draftStatus');
+  if(!el) return;
+  if(mode==='saving'){ el.textContent='Saving draft…'; el.classList.add('saving'); }
+  else{ el.textContent='Draft saved '+new Date(savedAt||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); el.classList.remove('saving'); }
+}
+function timeAgo(iso){
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const mins = Math.round(diff/60000);
+  if(mins < 1) return 'একটু আগে';
+  if(mins < 60) return mins + ' মিনিট আগে';
+  const hrs = Math.round(mins/60);
+  if(hrs < 24) return hrs + ' ঘন্টা আগে';
+  return new Date(iso).toLocaleDateString();
+}
+function continueDraft(){
+  const d = window.__pendingRecoveryDraft;
+  if(!d) return;
+  window.__draft = {...window.__draft, title:d.title||'', content:d.content||'', date:d.date||window.__draft.date,
+    mood:d.mood||window.__draft.mood, moodIntensity:d.moodIntensity||window.__draft.moodIntensity,
+    tags:d.tags||window.__draft.tags, favorite:!!d.favorite, important:!!d.important};
+  state.draftRecoveryResolved = true;
+  render();
+}
+function discardDraftRecovery(){
+  clearLocalDraft();
+  clearRemoteDraft();
+  state.draftRecoveryResolved = true;
+  window.__pendingRecoveryDraft = null;
+  render();
+}
+function cancelWrite(){
+  clearLocalDraft();
+  clearRemoteDraft();
+  go('dashboard');
+}
 
 /* ---------------- BOOT ---------------- */
 function boot(){
@@ -652,6 +762,7 @@ function boot(){
 
       attachUserDocListener();
       attachEntriesListener();
+      seedDraftFromRemoteIfNeeded();
       showApp();
     } else {
       state.user = null;
@@ -700,6 +811,7 @@ function logout(){
 function go(view, param){
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
+  if(view==='write') state.draftRecoveryResolved = false; // re-check for a recoverable draft on every fresh entry into the editor
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   render();
@@ -731,7 +843,7 @@ function renderQuickMoodOptions(){
 function startQuickWrite(){
   closeQuickAdd();
   const today = todayISO();
-  const existing = state.entries.find(e=>e.date===today);
+  const existing = state.entries.find(e=>e.date===today && !e.archived);
   go('write', existing ? existing.id : null);
 }
 async function quickLogMood(moodId){
@@ -739,7 +851,7 @@ async function quickLogMood(moodId){
   if(!state.user) return;
   try{
     const today = todayISO();
-    const existing = state.entries.find(e=>e.date===today);
+    const existing = state.entries.find(e=>e.date===today && !e.archived);
     if(existing){
       await entriesColRef().doc(existing.id).set({mood:moodId, updatedAt:new Date().toISOString()}, {merge:true});
     } else {
@@ -765,6 +877,7 @@ function render(){
     timeline: renderTimeline,
     calendar: renderCalendar,
     search: renderSearch,
+    archive: renderArchive,
     insights: renderInsights,
     settings: renderSettings
   };
@@ -788,10 +901,11 @@ function updateStreak(){ document.getElementById('streakNum').textContent = getS
 
 function renderDashboard(){
   const today = todayISO();
-  const todayEntry = state.entries.find(e=>e.date===today);
-  const totalWords = state.entries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
-  const recentPlans = state.entries.slice().reverse().flatMap(e=>extractInformation(e.content).plans.map(p=>({p,date:e.date}))).slice(0,3);
-  const recentAch = state.entries.slice().reverse().flatMap(e=>extractInformation(e.content).achievements.map(a=>({a,date:e.date}))).slice(0,3);
+  const activeEntries = state.entries.filter(e=>!e.archived);
+  const todayEntry = activeEntries.find(e=>e.date===today);
+  const totalWords = activeEntries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
+  const recentPlans = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).plans.map(p=>({p,date:e.date}))).slice(0,3);
+  const recentAch = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).achievements.map(a=>({a,date:e.date}))).slice(0,3);
 
   return `
     <div class="page-head">
@@ -820,7 +934,7 @@ function renderDashboard(){
     </div>
 
     <div class="grid grid-3" style="margin-top:16px;">
-      <div class="card"><div class="stat"><b>${state.entries.length}</b><span>Total entries</span></div></div>
+      <div class="card"><div class="stat"><b>${activeEntries.length}</b><span>Total entries</span></div></div>
       <div class="card"><div class="stat"><b>${getStreak()}</b><span>Day streak</span></div></div>
       <div class="card"><div class="stat"><b>${totalWords}</b><span>Words written</span></div></div>
     </div>
@@ -861,29 +975,60 @@ function dayPart(){ const h=new Date().getHours(); return h<12?'morning':h<17?'a
 /* ---------------- DAILY JOURNAL / WRITE (Module 03) ---------------- */
 function renderWrite(){
   const entry = state.editingId ? state.entries.find(e=>e.id===state.editingId) : null;
-  const draft = entry ? {...entry} : {
+  const draft = entry ? {...entry, tags: entry.tags||[]} : {
     id: null, date: todayISO(), title:'', content:'', mood:'neutral', moodIntensity:5,
-    tags:[], favorite:false, important:false, createdAt:new Date().toISOString()
+    tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
   window.__draft = draft;
 
+  // ---- Module 02: draft recovery check ----
+  const targetId = state.editingId || null;
+  const localDraft = readLocalDraft();
+  const recoverable = (!state.draftRecoveryResolved && localDraft && localDraft.entryId===targetId && isDraftMeaningful(localDraft)
+    && (localDraft.title!==draft.title || localDraft.content!==draft.content)) ? localDraft : null;
+  window.__pendingRecoveryDraft = recoverable;
+
   return `
     <div class="page-head">
-      <div><h1>${entry?'Edit Entry':'Write Journal'}</h1><div class="sub date-tag">${fmtDate(draft.date,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div></div>
-      ${entry ? `<button class="btn btn-ghost btn-sm btn-danger" onclick="deleteEntry('${entry.id}')">Delete</button>` : ''}
+      <div><h1>${entry?'Edit Entry':'Write Journal'}</h1><div class="sub date-tag">${fmtDate(draft.date,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${draft.archived?' · <span class="archived-pill">🗄 Archived</span>':''}</div></div>
+      ${entry ? `<div style="display:flex;gap:8px;">
+        ${draft.archived
+          ? `<button class="btn btn-ghost btn-sm" onclick="restoreEntry('${entry.id}')">↺ Restore from Archive</button>`
+          : `<button class="btn btn-ghost btn-sm" onclick="archiveEntry('${entry.id}')">🗄 Archive</button>`}
+        <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteEntry('${entry.id}')">Delete</button>
+      </div>` : ''}
     </div>
+
+    ${recoverable ? `
+    <div class="draft-banner" id="draftBanner">
+      <span>✏️ একটি unsaved draft পাওয়া গেছে (${timeAgo(recoverable.savedAt)}) — চালিয়ে যাবে নাকি বাদ দেবে?</span>
+      <div class="row">
+        <button class="btn btn-sm btn-primary" onclick="continueDraft()">Continue draft</button>
+        <button class="btn btn-sm btn-ghost" onclick="discardDraftRecovery()">Discard</button>
+      </div>
+    </div>` : ''}
 
     <div class="card">
       <div class="editor-top">
-        <input type="date" class="btn btn-sm" style="border-radius:8px;" value="${draft.date}" onchange="window.__draft.date=this.value">
+        <input type="date" class="btn btn-sm" style="border-radius:8px;" value="${draft.date}" onchange="window.__draft.date=this.value; scheduleAutosave();">
         <div style="display:flex;gap:8px;">
           <button class="btn btn-sm" id="favBtn" onclick="toggleDraftFlag('favorite')">${draft.favorite?'★ Favorited':'☆ Favorite'}</button>
           <button class="btn btn-sm" id="impBtn" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
         </div>
       </div>
 
-      <input class="title-input" id="titleInput" placeholder="Give today a title…" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value">
-      <textarea class="content-input" id="contentInput" placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="window.__draft.content=this.value; updateWordCount(); refreshAIPreview();">${escapeHtml(draft.content)}</textarea>
+      <input class="title-input" id="titleInput" placeholder="Give today a title…" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();">
+
+      <div class="fmt-toolbar">
+        <button type="button" class="fmt-btn" title="Bold" onclick="wrapSelection('**','**')"><b>B</b></button>
+        <button type="button" class="fmt-btn" title="Italic" onclick="wrapSelection('*','*')"><i>I</i></button>
+        <button type="button" class="fmt-btn" title="Heading" onclick="prefixLine('## ')">H</button>
+        <button type="button" class="fmt-btn" title="Bulleted list" onclick="prefixLine('- ')">• List</button>
+        <button type="button" class="fmt-btn" title="Link" onclick="insertLink()">🔗</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn btn-sm btn-ghost" id="previewToggleBtn" onclick="togglePreview()">👁 Preview</button>
+      </div>
+      <textarea class="content-input" id="contentInput" placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="window.__draft.content=this.value; updateWordCount(); refreshAIPreview(); scheduleAutosave();">${escapeHtml(draft.content)}</textarea>
 
       <div class="section-title" style="margin-top:18px;">Mood</div>
       <div class="mood-picker" id="moodPicker">
@@ -892,14 +1037,17 @@ function renderWrite(){
 
       <div class="section-title" style="margin-top:18px;">Tags</div>
       <div class="tag-input-wrap" id="tagWrap">
-        ${draft.tags.map(t=>tagChip(t)).join('')}
+        ${(draft.tags||[]).map(t=>tagChip(t)).join('')}
         <input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">
       </div>
 
       <div class="editor-footer">
-        <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
+          <span class="draft-status" id="draftStatus"></span>
+        </div>
         <div style="display:flex;gap:10px;">
-          <button class="btn" onclick="go('dashboard')">Cancel</button>
+          <button class="btn" onclick="cancelWrite()">Cancel</button>
           <button class="btn btn-primary" onclick="saveDraft()">Save Journal</button>
         </div>
       </div>
@@ -915,9 +1063,81 @@ function renderWrite(){
     </div>
   `;
 }
+
+/* ---------------- MODULE 02: lightweight formatting ---------------- */
+function getContentTextarea(){ return document.getElementById('contentInput'); }
+function wrapSelection(before, after){
+  const ta = getContentTextarea(); if(!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const val = ta.value;
+  const selected = val.slice(start,end) || 'text';
+  ta.value = val.slice(0,start) + before + selected + after + val.slice(end);
+  window.__draft.content = ta.value;
+  ta.focus();
+  ta.selectionStart = start + before.length;
+  ta.selectionEnd = start + before.length + selected.length;
+  updateWordCount(); refreshAIPreview(); scheduleAutosave();
+}
+function prefixLine(prefix){
+  const ta = getContentTextarea(); if(!ta) return;
+  const start = ta.selectionStart;
+  const val = ta.value;
+  const lineStart = val.lastIndexOf('\n', start-1)+1;
+  ta.value = val.slice(0,lineStart) + prefix + val.slice(lineStart);
+  window.__draft.content = ta.value;
+  ta.focus();
+  const newPos = start + prefix.length;
+  ta.selectionStart = ta.selectionEnd = newPos;
+  updateWordCount(); refreshAIPreview(); scheduleAutosave();
+}
+function insertLink(){
+  const ta = getContentTextarea(); if(!ta) return;
+  const url = prompt('লিংক (URL) দাও:');
+  if(!url) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const val = ta.value;
+  const label = val.slice(start,end) || 'link';
+  ta.value = val.slice(0,start) + `[${label}](${url})` + val.slice(end);
+  window.__draft.content = ta.value;
+  ta.focus();
+  updateWordCount(); refreshAIPreview(); scheduleAutosave();
+}
+function inlineMd(s){
+  return s
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">$1</a>');
+}
+function renderMarkdownLite(text){
+  if(!text || !text.trim()) return '<p class="empty">এখনো কিছু লেখা হয়নি।</p>';
+  const lines = escapeHtml(text).split(/\n/);
+  let html=''; let inList=false;
+  lines.forEach(line=>{
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    if(h){ if(inList){html+='</ul>';inList=false;} html += `<h4 style="margin:14px 0 6px;">${inlineMd(h[2])}</h4>`; return; }
+    const li = line.match(/^[-*]\s+(.*)$/);
+    if(li){ if(!inList){html+='<ul style="margin:6px 0;padding-left:20px;">';inList=true;} html += `<li>${inlineMd(li[1])}</li>`; return; }
+    if(inList){ html+='</ul>'; inList=false; }
+    html += line.trim()==='' ? '<br>' : `<p style="margin:0 0 10px;">${inlineMd(line)}</p>`;
+  });
+  if(inList) html+='</ul>';
+  return html;
+}
+function togglePreview(){
+  const ta = getContentTextarea();
+  const btn = document.getElementById('previewToggleBtn');
+  const existing = document.getElementById('contentPreview');
+  if(existing){ existing.remove(); ta.style.display=''; btn.textContent='👁 Preview'; return; }
+  const div = document.createElement('div');
+  div.id = 'contentPreview'; div.className = 'content-preview';
+  div.innerHTML = renderMarkdownLite(ta.value);
+  ta.style.display = 'none';
+  ta.insertAdjacentElement('afterend', div);
+  btn.textContent = '✎ Edit';
+}
 function tagChip(t){ return `<span class="tag-chip">${escapeHtml(t)}<button onclick="removeTag('${escapeHtml(t)}')">×</button></span>`; }
-function addTag(v){ v=v.trim(); if(!v) return; if(!window.__draft.tags.includes(v)) window.__draft.tags.push(v); rerenderTagWrap(); }
-function removeTag(t){ window.__draft.tags = window.__draft.tags.filter(x=>x!==t); rerenderTagWrap(); }
+function addTag(v){ v=v.trim(); if(!v) return; if(!window.__draft.tags.includes(v)) window.__draft.tags.push(v); rerenderTagWrap(); scheduleAutosave(); }
+function removeTag(t){ window.__draft.tags = window.__draft.tags.filter(x=>x!==t); rerenderTagWrap(); scheduleAutosave(); }
 function rerenderTagWrap(){
   const wrap = document.getElementById('tagWrap');
   wrap.innerHTML = window.__draft.tags.map(t=>tagChip(t)).join('') + `<input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">`;
@@ -926,11 +1146,13 @@ function setDraftMood(m){
   window.__draft.mood = m;
   document.querySelectorAll('.mood-opt').forEach(b=>b.classList.toggle('selected', b.dataset.mood===m));
   refreshAIPreview();
+  scheduleAutosave();
 }
 function toggleDraftFlag(flag){
   window.__draft[flag] = !window.__draft[flag];
   document.getElementById(flag==='favorite'?'favBtn':'impBtn').textContent =
     flag==='favorite' ? (window.__draft.favorite?'★ Favorited':'☆ Favorite') : (window.__draft.important?'🔖 Important':'🏷️ Mark important');
+  scheduleAutosave();
 }
 function updateWordCount(){
   document.getElementById('wordCount').textContent = (window.__draft.content||'').trim().split(/\s+/).filter(Boolean).length + ' words';
@@ -965,11 +1187,15 @@ async function saveDraft(){
     } else {
       d.createdAt = new Date().toISOString();
       d.updatedAt = d.createdAt;
+      if(d.archived===undefined) d.archived = false;
       const {id, ...data} = d;
       const ref = await entriesColRef().add(data);
       d.id = ref.id;
     }
     state.editingId = d.id;
+    clearLocalDraft();
+    clearRemoteDraft();
+    state.draftRecoveryResolved = true;
     toast('জার্নাল সংরক্ষিত হয়েছে।');
     go('dashboard');
   }catch(err){
@@ -978,7 +1204,7 @@ async function saveDraft(){
   }
 }
 function deleteEntry(id){
-  confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে।', async ()=>{
+  confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে। এটি Archive থেকে আলাদা — একবার মুছে ফেললে ফেরানো যাবে না।', async ()=>{
     try{
       await entriesColRef().doc(id).delete();
       toast('এন্ট্রি মুছে ফেলা হয়েছে।');
@@ -990,15 +1216,65 @@ function deleteEntry(id){
   }, 'মুছে ফেলুন');
 }
 
+/* ---------------- MODULE 02: ARCHIVE ---------------- */
+function archiveEntry(id){
+  confirmAction('এন্ট্রিটি আর্কাইভ করবেন?', 'আর্কাইভ করা এন্ট্রি Journal Library ও Calendar থেকে সরে যাবে, কিন্তু Firebase-এ নিরাপদে থেকে যাবে। Archive পেজ থেকে যেকোনো সময় ফিরিয়ে আনতে পারবে।', async ()=>{
+    try{
+      await entriesColRef().doc(id).set({archived:true, updatedAt:new Date().toISOString()}, {merge:true});
+      toast('এন্ট্রি আর্কাইভ করা হয়েছে।');
+      go('timeline');
+    }catch(err){
+      console.error(err);
+      toast('আর্কাইভ ব্যর্থ হয়েছে: ' + err.message);
+    }
+  }, 'আর্কাইভ করুন');
+}
+async function restoreEntry(id){
+  try{
+    await entriesColRef().doc(id).set({archived:false, updatedAt:new Date().toISOString()}, {merge:true});
+    toast('এন্ট্রি Journal Library-তে ফিরিয়ে আনা হয়েছে।');
+  }catch(err){
+    console.error(err);
+    toast('ফিরিয়ে আনা ব্যর্থ হয়েছে: ' + err.message);
+  }
+}
+function renderArchive(){
+  const list = state.entries.filter(e=>e.archived).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+    <div class="page-head">
+      <div><h1>Archive</h1><div class="sub">আর্কাইভ করা এন্ট্রিগুলো এখানে নিরাপদে থাকে — ডিলিট হয় না, চাইলে ফিরিয়ে আনতে পারবে।</div></div>
+    </div>
+    <div class="card">
+      ${list.length ? list.map(e=>`
+        <div class="entry-row" style="cursor:default;">
+          <div class="entry-date" onclick="go('write','${e.id}')" style="cursor:pointer;"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
+          <div class="entry-body" onclick="go('write','${e.id}')" style="cursor:pointer;">
+            <h3>${escapeHtml(e.title || 'Untitled')}</h3>
+            <p>${escapeHtml(e.content||'')}</p>
+            <div class="entry-meta">
+              <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
+              ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-direction:column;flex:none;">
+            <button class="btn btn-sm" onclick="restoreEntry('${e.id}')">↺ Restore</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteEntry('${e.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : `<div class="empty">এখনো কোনো এন্ট্রি আর্কাইভ করা হয়নি।</div>`}
+    </div>
+  `;
+}
+
 /* ---------------- TIMELINE / LIBRARY (Module 05) ---------------- */
 function renderTimeline(){
   const f = state.filters;
-  let list = state.entries.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+  let list = state.entries.filter(e=>!e.archived).sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   if(f.mood) list = list.filter(e=>e.mood===f.mood);
   if(f.tag) list = list.filter(e=>(e.tags||[]).includes(f.tag));
   if(f.favOnly) list = list.filter(e=>e.favorite);
 
-  const allTags = [...new Set(state.entries.flatMap(e=>e.tags||[]))];
+  const allTags = [...new Set(state.entries.filter(e=>!e.archived).flatMap(e=>e.tags||[]))];
 
   return `
     <div class="page-head">
@@ -1048,7 +1324,7 @@ function renderCalendar(){
   const startDow = first.getDay();
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const entryByDate = {};
-  state.entries.forEach(e=>{ entryByDate[e.date] = e; });
+  state.entries.forEach(e=>{ if(!e.archived) entryByDate[e.date] = e; });
   const today = todayISO();
 
   let cells = '';
@@ -1101,6 +1377,7 @@ function doSearch(q){
   q = q.trim().toLowerCase();
   if(!q){ box.innerHTML = `<div class="search-empty"><div class="mark serif">”</div>খোঁজার জন্য কিছু টাইপ করো।</div>`; return; }
   const results = state.entries.filter(e=>{
+    if(e.archived) return false;
     return (e.title||'').toLowerCase().includes(q) ||
            (e.content||'').toLowerCase().includes(q) ||
            (e.tags||[]).some(t=>t.toLowerCase().includes(q)) ||
@@ -1120,19 +1397,20 @@ function doSearch(q){
 
 /* ---------------- INSIGHTS (Mood Analytics §27 + Writing Analytics §28, lightweight) ---------------- */
 function renderInsights(){
-  const total = state.entries.length;
+  const activeEntries = state.entries.filter(e=>!e.archived);
+  const total = activeEntries.length;
   const moodCount = {};
   MOODS.forEach(m=>moodCount[m.id]=0);
-  state.entries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
-  const totalWords = state.entries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
+  activeEntries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
+  const totalWords = activeEntries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
   const avgWords = total ? Math.round(totalWords/total) : 0;
-  const longest = state.entries.reduce((max,e)=>{
+  const longest = activeEntries.reduce((max,e)=>{
     const wc = (e.content||'').trim().split(/\s+/).filter(Boolean).length;
     return wc > max.wc ? {wc, e} : max;
   }, {wc:0, e:null});
 
   const now = new Date(); const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
-  const weekEntries = state.entries.filter(e=> new Date(e.date) >= weekAgo);
+  const weekEntries = activeEntries.filter(e=> new Date(e.date) >= weekAgo);
 
   return `
     <div class="page-head"><h1>Mood &amp; Writing Insights</h1></div>
