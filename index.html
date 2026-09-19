@@ -424,6 +424,64 @@ input,textarea,select{font-family:var(--font-sans);}
 .entry-star{color:var(--accent);font-size:15px;}
 .intensity-tag{font-size:11px;color:var(--ink-faint);}
 
+/* ---------- Module 07: Insights / Analytics ---------- */
+.period-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.period-tabs .btn{padding:7px 13px;}
+.ins-section{margin-top:22px;}
+.ins-section:first-child{margin-top:0;}
+.ins-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.ins-section-head h2{font-size:16.5px;margin:0;font-family:var(--font-serif);}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media (max-width:760px){ .stat-grid{grid-template-columns:1fr 1fr;} }
+.stat-card{background:var(--paper-card);border:1px solid var(--rule);border-radius:var(--radius-sm);padding:14px 16px;}
+.stat-card b{display:block;font-family:var(--font-serif);font-size:22px;line-height:1.15;}
+.stat-card span{font-size:11.5px;color:var(--ink-faint);}
+.bar-row{margin-bottom:10px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-row .bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;}
+.bar-row .bar-label .n{color:var(--ink-faint);}
+.bar-track{height:7px;background:var(--paper-dim);border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--accent);border-radius:99px;}
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:90px;padding-top:6px;}
+.mini-chart .col{flex:1;min-width:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.mini-chart .col .b{width:100%;border-radius:3px 3px 0 0;background:var(--accent-soft);min-height:2px;}
+.mini-chart .col .b.hi{background:var(--accent);}
+.mini-chart-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-faint);margin-top:4px;}
+.trend-badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:3px;}
+.trend-up{background:var(--sage-soft);color:var(--sage);}
+.trend-down{background:var(--rust-soft);color:var(--rust);}
+.trend-flat{background:var(--paper-dim);color:var(--ink-faint);}
+.compare-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13px;}
+.compare-row:last-child{border-bottom:none;}
+.compare-row .lbl{color:var(--ink-soft);}
+.compare-row .vals{display:flex;align-items:center;gap:8px;}
+.compare-row .vals .now{font-weight:600;font-family:var(--font-serif);font-size:14.5px;}
+.compare-row .vals .prev{color:var(--ink-faint);font-size:12px;}
+.life-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media (max-width:760px){ .life-mini-grid{grid-template-columns:1fr 1fr;} }
+.life-mini{text-align:center;padding:12px 8px;border-radius:9px;background:var(--paper-dim);}
+.life-mini b{display:block;font-family:var(--font-serif);font-size:20px;}
+.life-mini span{font-size:11px;color:var(--ink-faint);}
+.ai-status-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.ai-status-badge{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--paper-dim);color:var(--ink-faint);}
+.ai-status-badge.ready{background:var(--sage-soft);color:var(--sage);}
+.ai-status-badge.failed{background:var(--rust-soft);color:var(--rust);}
+.ai-status-badge.generating{background:var(--sky-soft);color:var(--sky);}
+.ai-reflect h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);margin:14px 0 6px;}
+.ai-reflect h4:first-child{margin-top:0;}
+.ai-reflect p{font-size:13.5px;color:var(--ink-soft);line-height:1.65;margin:0 0 4px;white-space:pre-wrap;}
+.pattern-card{border:1px solid var(--rule);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;}
+.pattern-card:last-child{margin-bottom:0;}
+.pattern-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px;}
+.pattern-head h4{margin:0;font-size:14px;}
+.conf-badge{font-size:10.5px;padding:2px 8px;border-radius:99px;flex:none;white-space:nowrap;font-weight:600;}
+.conf-high{background:var(--sage-soft);color:var(--sage);}
+.conf-medium{background:var(--accent-soft);color:var(--accent);}
+.conf-low{background:var(--paper-dim);color:var(--ink-faint);}
+.pattern-sources{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.month-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
+.month-nav .lbl{font-family:var(--font-serif);font-size:17px;}
+
 /* ---------- Calendar ---------- */
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
@@ -835,10 +893,15 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 
    AI LAYER
    ----------------------------------------------------------------
-   `generateDailySummary()` / `generateWeeklySummary()` call the
-   Gemini API (generateContent) using the API key saved in
-   Settings. `extractInformation()` stays a fast local keyword
+   `generateDailySummary()` calls the Gemini API (generateContent)
+   using the API key saved in Settings, for the Write page's daily
+   preview. `extractInformation()` stays a fast local keyword
    heuristic (no API call) since it runs on every dashboard render.
+   `localWeeklySummary()`/`generateWeeklySummary()` are kept as
+   general-purpose helpers but are no longer wired into the UI —
+   Module 07's Insights → AI Insights tab replaced the old single
+   weekly-summary card with cached weekly/monthly/yearly reflections
+   (see PERIOD ANALYSIS CACHE below runLifeExtraction/Module 06).
    ================================================================ */
 
 const THEME_CACHE_KEY = 'journalos_theme_cache'; // local-only, avoids a flash of wrong theme before Firebase responds
@@ -1286,6 +1349,374 @@ async function cascadeDeleteLifeData(entryId){
   }catch(err){ console.error('cascadeDeleteLifeData failed', err); }
 }
 
+/* ================================================================
+   MODULE 07 — TIME-BASED INSIGHTS & ANALYTICS
+   ----------------------------------------------------------------
+   Architecture: Journal Entries -> (Module 05/06 structured data) ->
+   this local analytics engine -> Insights UI. All BASIC statistics
+   here are computed purely from state.entries / state.life in the
+   browser — zero AI calls, always available, always fast, always
+   correct even with zero Gemini key. AI is layered on top only for
+   the reflective/narrative + pattern-detection sections, and is
+   cached in Firestore (users/{uid}/analytics/*) so it is generated
+   on request, not on every render (see PERIOD ANALYSIS CACHE below).
+   ================================================================ */
+
+const PERIODS = [
+  {key:'7d', label:'7D', days:7},
+  {key:'30d', label:'30D', days:30},
+  {key:'3m', label:'3M', days:90},
+  {key:'6m', label:'6M', days:182},
+  {key:'1y', label:'1Y', days:365},
+  {key:'all', label:'All', days:null}
+];
+function periodRange(key){
+  const now = new Date(); now.setHours(23,59,59,999);
+  const p = PERIODS.find(x=>x.key===key) || PERIODS[1];
+  if(!p.days) return {start:null, end:now};
+  const start = new Date(now); start.setDate(start.getDate() - p.days + 1); start.setHours(0,0,0,0);
+  return {start, end:now};
+}
+// Previous equivalent period, for comparisons (e.g. this 30d vs prior 30d).
+function previousPeriodRange(key){
+  const {start} = periodRange(key);
+  if(!start) return {start:null, end:null}; // "all" has no meaningful predecessor
+  const p = PERIODS.find(x=>x.key===key);
+  const prevEnd = new Date(start); prevEnd.setDate(prevEnd.getDate()-1); prevEnd.setHours(23,59,59,999);
+  const prevStart = new Date(prevEnd); prevStart.setDate(prevStart.getDate() - p.days + 1); prevStart.setHours(0,0,0,0);
+  return {start:prevStart, end:prevEnd};
+}
+function entriesInRange(entries, start, end){
+  return entries.filter(e=>{
+    if(e.archived) return false;
+    const d = new Date(e.date+'T12:00:00');
+    if(start && d < start) return false;
+    if(end && d > end) return false;
+    return true;
+  });
+}
+function wordCount(text){ return (text||'').trim() ? (text||'').trim().split(/\s+/).filter(Boolean).length : 0; }
+
+// ---- Streak helpers reusable for any date set (not just "today back") ----
+function computeStreaksFromDates(dateSet){
+  const dates = Array.from(dateSet).sort();
+  if(!dates.length) return {longest:0, current:0};
+  let longest=1, run=1;
+  for(let i=1;i<dates.length;i++){
+    const prev = new Date(dates[i-1]+'T00:00:00'), cur = new Date(dates[i]+'T00:00:00');
+    const diffDays = Math.round((cur-prev)/86400000);
+    run = diffDays===1 ? run+1 : 1;
+    if(run>longest) longest = run;
+  }
+  return {longest, current:getStreak()};
+}
+
+// ---- Core writing/mood analytics for a set of entries within [start,end] ----
+function computeCoreStats(entries){
+  const total = entries.length;
+  const words = entries.map(e=>wordCount(e.content));
+  const totalWords = words.reduce((a,b)=>a+b,0);
+  const avgWords = total ? Math.round(totalWords/total) : 0;
+  const longest = total ? Math.max(...words) : 0;
+  const shortest = total ? Math.min(...words) : 0;
+  const activeDays = new Set(entries.map(e=>e.date));
+  const dayCount = activeDays.size;
+
+  // consistency: active days / calendar days spanned by the entries themselves
+  let consistency = 0;
+  if(dayCount>1){
+    const sorted = Array.from(activeDays).sort();
+    const span = Math.round((new Date(sorted[sorted.length-1]+'T00:00:00') - new Date(sorted[0]+'T00:00:00'))/86400000) + 1;
+    consistency = span>0 ? Math.round((dayCount/span)*100) : 100;
+  } else if(dayCount===1){ consistency = 100; }
+
+  const weeksSpanned = dayCount ? Math.max(1, Math.ceil((entries.length ? (()=>{
+    const sorted = Array.from(activeDays).sort();
+    return (new Date(sorted[sorted.length-1]+'T00:00:00') - new Date(sorted[0]+'T00:00:00'))/86400000 + 1;
+  })() : 7)/7)) : 1;
+  const avgEntriesPerWeek = total ? +(total/weeksSpanned).toFixed(1) : 0;
+
+  const streaks = computeStreaksFromDates(activeDays);
+
+  // mood distribution + intensity
+  const moodCount = {}; MOODS.forEach(m=>moodCount[m.id]=0);
+  let intensitySum=0, intensityN=0, intensityMax=null, intensityMin=null;
+  const moodWords = {}; MOODS.forEach(m=>moodWords[m.id]={sum:0,n:0});
+  entries.forEach(e=>{
+    if(moodCount[e.mood]===undefined) moodCount[e.mood]=0;
+    moodCount[e.mood]++;
+    const wc = wordCount(e.content);
+    if(moodWords[e.mood]){ moodWords[e.mood].sum += wc; moodWords[e.mood].n++; }
+    if(typeof e.moodIntensity==='number'){
+      intensitySum += e.moodIntensity; intensityN++;
+      intensityMax = intensityMax===null ? e.moodIntensity : Math.max(intensityMax, e.moodIntensity);
+      intensityMin = intensityMin===null ? e.moodIntensity : Math.min(intensityMin, e.moodIntensity);
+    }
+  });
+  const avgIntensity = intensityN ? +(intensitySum/intensityN).toFixed(1) : null;
+
+  // most active day / week / month + highest word-count period, from actual data
+  const byDay = {}; entries.forEach(e=>{ byDay[e.date] = (byDay[e.date]||0)+1; });
+  const mostActiveDay = Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0] || null;
+  const byWeek = {}, wordsByWeek = {};
+  entries.forEach(e=>{
+    const wk = isoWeekKey(e.date);
+    byWeek[wk] = (byWeek[wk]||0)+1;
+    wordsByWeek[wk] = (wordsByWeek[wk]||0) + wordCount(e.content);
+  });
+  const mostActiveWeek = Object.entries(byWeek).sort((a,b)=>b[1]-a[1])[0] || null;
+  const byMonth = {}, wordsByMonth = {};
+  entries.forEach(e=>{
+    const mk = e.date.slice(0,7);
+    byMonth[mk] = (byMonth[mk]||0)+1;
+    wordsByMonth[mk] = (wordsByMonth[mk]||0) + wordCount(e.content);
+  });
+  const mostActiveMonth = Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0] || null;
+  const highestWordWeek = Object.entries(wordsByWeek).sort((a,b)=>b[1]-a[1])[0] || null;
+
+  return {
+    total, totalWords, avgWords, longest, shortest, dayCount, consistency, avgEntriesPerWeek,
+    longestStreak: streaks.longest, currentStreak: streaks.current,
+    moodCount, avgIntensity, intensityMax, intensityMin, moodWords,
+    mostActiveDay, mostActiveWeek, mostActiveMonth, highestWordWeek
+  };
+}
+function isoWeekKey(dateISO){
+  const d = new Date(dateISO+'T00:00:00');
+  const day = (d.getDay()+6)%7; // Mon=0
+  d.setDate(d.getDate()-day);
+  return d.toISOString().slice(0,10); // Monday of that week, as a stable key
+}
+
+// ---- Activity trend buckets (daily/weekly/monthly depending on span) ----
+function activityTrend(entries, periodKey){
+  const granularity = (periodKey==='7d'||periodKey==='30d') ? 'day' : (periodKey==='3m'||periodKey==='6m') ? 'week' : 'month';
+  const buckets = {};
+  entries.forEach(e=>{
+    const key = granularity==='day' ? e.date : granularity==='week' ? isoWeekKey(e.date) : e.date.slice(0,7);
+    if(!buckets[key]) buckets[key] = {entries:0, words:0};
+    buckets[key].entries++;
+    buckets[key].words += wordCount(e.content);
+  });
+  const keys = Object.keys(buckets).sort();
+  return {granularity, points: keys.map(k=>({key:k, ...buckets[k]}))};
+}
+// Mood trend over the same buckets — dominant mood + avg intensity per bucket.
+function moodTrend(entries, periodKey){
+  const granularity = (periodKey==='7d'||periodKey==='30d') ? 'day' : (periodKey==='3m'||periodKey==='6m') ? 'week' : 'month';
+  const buckets = {};
+  entries.forEach(e=>{
+    const key = granularity==='day' ? e.date : granularity==='week' ? isoWeekKey(e.date) : e.date.slice(0,7);
+    if(!buckets[key]) buckets[key] = {counts:{}, intSum:0, intN:0};
+    buckets[key].counts[e.mood] = (buckets[key].counts[e.mood]||0)+1;
+    if(typeof e.moodIntensity==='number'){ buckets[key].intSum += e.moodIntensity; buckets[key].intN++; }
+  });
+  const keys = Object.keys(buckets).sort();
+  return {granularity, points: keys.map(k=>{
+    const b = buckets[k];
+    const dominant = Object.entries(b.counts).sort((a,b2)=>b2[1]-a[1])[0];
+    return {key:k, dominant: dominant ? dominant[0] : null, avgIntensity: b.intN ? +(b.intSum/b.intN).toFixed(1) : null};
+  })};
+}
+
+// ---- Life Organization counts for a period (Module 06 data, filtered by sourceDate) ----
+function lifeCountsInRange(start, end){
+  const inRange = (d)=>{
+    if(!d) return false;
+    const dt = new Date(d+'T12:00:00');
+    if(start && dt<start) return false;
+    if(end && dt>end) return false;
+    return true;
+  };
+  const life = state.life || {};
+  return {
+    achievements: (life.achievements||[]).filter(x=>inRange(x.sourceDate)).length,
+    plans: (life.plans||[]).filter(x=>inRange(x.sourceDate)).length,
+    challenges: (life.challenges||[]).filter(x=>inRange(x.sourceDate)).length,
+    ideas: (life.ideas||[]).filter(x=>inRange(x.sourceDate)).length,
+    lessons: (life.lessons||[]).filter(x=>inRange(x.sourceDate)).length,
+    moments: (life.moments||[]).filter(x=>inRange(x.sourceDate)).length,
+    quotes: (life.quotes||[]).filter(x=>inRange(x.sourceDate)).length,
+    events: (life.events||[]).filter(x=>inRange(x.sourceDate)).length
+  };
+}
+
+// ---- Full analytics bundle for a given period key, used by the Insights page ----
+function computeAnalytics(periodKey){
+  const activeEntries = state.entries.filter(e=>!e.archived);
+  const {start, end} = periodRange(periodKey);
+  const inPeriod = entriesInRange(activeEntries, start, end);
+  const core = computeCoreStats(inPeriod);
+  const trend = activityTrend(inPeriod, periodKey);
+  const mTrend = moodTrend(inPeriod, periodKey);
+  const life = lifeCountsInRange(start, end);
+
+  let comparison = null;
+  if(periodKey!=='all'){
+    const prev = previousPeriodRange(periodKey);
+    if(prev.start){
+      const prevEntries = entriesInRange(activeEntries, prev.start, prev.end);
+      if(prevEntries.length>0 || inPeriod.length>0){
+        const prevCore = computeCoreStats(prevEntries);
+        comparison = { current: core, previous: prevCore,
+          hasEnoughData: prevEntries.length>0,
+          pct: (a,b)=> b>0 ? Math.round(((a-b)/b)*100) : (a>0 ? 100 : 0) };
+      }
+    }
+  }
+  return {periodKey, start, end, entries:inPeriod, core, trend, mTrend, life, comparison};
+}
+
+/* ---------------- PERIOD ANALYSIS CACHE (Firestore-backed AI layer) ----------------
+   AI reflections/patterns are expensive and must NOT be regenerated on every
+   Insights render (Module 07 requirement). Each cached doc carries status
+   (idle/generating/ready/failed), generatedAt, and the entry count it was
+   built from — so we know to offer "Regenerate" rather than silently reuse
+   stale analysis after new journals are written, without ever auto-firing
+   another Gemini call on our own. */
+function analyticsColRef(){ return userDocRef().collection('analytics'); }
+function patternsDocRef(){ return userDocRef().collection('analytics').doc('patterns'); }
+
+function weeklyPeriodId(d){ return 'weekly_' + isoWeekKey(d.toISOString().slice(0,10)); }
+function monthlyPeriodId(d){ return 'monthly_' + d.toISOString().slice(0,7); }
+function yearlyPeriodId(y){ return 'yearly_' + y; }
+
+async function loadCachedAnalysis(periodId){
+  if(state.analysisCache[periodId]) return state.analysisCache[periodId];
+  if(!state.user) return null;
+  try{
+    const doc = await analyticsColRef().doc(periodId).get();
+    const data = doc.exists ? doc.data() : {status:'idle'};
+    state.analysisCache[periodId] = data;
+    return data;
+  }catch(err){ console.error('loadCachedAnalysis failed', err); return {status:'failed'}; }
+}
+async function saveCachedAnalysis(periodId, data){
+  state.analysisCache[periodId] = data;
+  if(!state.user) return;
+  try{ await analyticsColRef().doc(periodId).set(data, {merge:true}); }
+  catch(err){ console.error('saveCachedAnalysis failed', err); }
+}
+
+// Builds a compact, structured (not raw-dump) context from Module 05/06 data
+// for a date range, so AI prompts summarize facts rather than re-reading
+// full journal text wherever structured data already exists.
+function buildStructuredContext(start, end, entries){
+  const inRange = (d)=>{
+    if(!d) return false; const dt = new Date(d+'T12:00:00');
+    return (!start || dt>=start) && (!end || dt<=end);
+  };
+  const life = state.life || {};
+  const pick = (arr, mapFn, limit)=> (arr||[]).filter(x=>inRange(x.sourceDate)).slice(0,limit||25).map(mapFn);
+  return {
+    entryCount: entries.length,
+    moodCounts: (()=>{ const c={}; entries.forEach(e=>c[e.mood]=(c[e.mood]||0)+1); return c; })(),
+    avgIntensity: (()=>{ const vals=entries.filter(e=>typeof e.moodIntensity==='number').map(e=>e.moodIntensity);
+      return vals.length ? +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : null; })(),
+    achievements: pick(life.achievements, x=>x.text),
+    plans: pick(life.plans, x=>`${x.text}${x.status?' ('+x.status+')':''}`),
+    challenges: pick(life.challenges, x=>x.text),
+    ideas: pick(life.ideas, x=>x.text),
+    lessons: pick(life.lessons, x=>x.text),
+    moments: pick(life.moments, x=>x.text),
+    entries: entries.slice(0,60).map(e=>({date:e.date, mood:e.mood, intensity:e.moodIntensity, excerpt:(e.content||'').slice(0,300)}))
+  };
+}
+
+async function generatePeriodReflection(kind, periodId, start, end, entries, label){
+  await saveCachedAnalysis(periodId, {status:'generating', period:kind, periodStart: start?start.toISOString().slice(0,10):null, periodEnd: end?end.toISOString().slice(0,10):null});
+  if(!state.settings || !state.settings.apiKey){
+    await saveCachedAnalysis(periodId, {status:'failed', reason:'no-key', period:kind});
+    return state.analysisCache[periodId];
+  }
+  if(!entries.length){
+    await saveCachedAnalysis(periodId, {status:'failed', reason:'no-data', period:kind});
+    return state.analysisCache[periodId];
+  }
+  const ctx = buildStructuredContext(start, end, entries);
+  const sections = kind==='weekly'
+    ? 'Observed Facts, Possible Patterns, Reflection'
+    : kind==='monthly'
+    ? 'Month in Review, Highlights, Challenges, Themes, Mood, Progress, Looking Ahead'
+    : 'Your Year, Major Themes, Key Moments, Achievements, Challenges, Lessons, Mood & Emotional Patterns, How Your Year Changed Over Time, Looking Forward';
+  const prompt = `তুমি একজন সতর্ক ব্যক্তিগত জার্নাল বিশ্লেষক। নিচে ${label} সময়ের জার্নাল থেকে বের করা কাঠামোবদ্ধ (structured) তথ্য দেওয়া আছে — এটাই তোমার একমাত্র সোর্স।
+
+কড়া নিয়ম:
+- শুধু নিচের ডেটাতে যা স্পষ্টভাবে আছে তাই ব্যবহার করো — কিছু আবিষ্কার/অনুমান কোরো না।
+- কোনো মেডিক্যাল/মানসিক রোগ নির্ণয় কখনো কোরো না (যেমন depression, anxiety, ADHD) — শুধু observable pattern বর্ণনা করো ("sad mood entries appeared more frequently" ধরনের ভাষায়)।
+- কোনো plan উল্লেখ না থাকলে "Looking Ahead"/"Looking Forward" এ নিজে কোনো plan বানিয়ো না — বরং লেখো যে কোনো plan উল্লেখ নেই।
+- কার্যকারণ (causation) দাবি কোরো না — যেমন "স্ট্রেস তোমাকে কম লিখতে বাধ্য করেছে" বোলো না; বরং শুধু co-occurrence বর্ণনা করো।
+- আউটপুট বাংলা অথবা ইংরেজি যেটাতে বেশিরভাগ জার্নাল লেখা সেই ভাষাতেই দাও।
+- আউটপুট এই সেকশনগুলো দিয়ে markdown heading (##) আকারে সাজাও, প্রতিটির নিচে সংক্ষিপ্ত অনুচ্ছেদ: ${sections}
+
+Structured data (JSON):
+${JSON.stringify(ctx).slice(0,10000)}`;
+
+  const raw = await callGemini(prompt);
+  if(!raw){
+    await saveCachedAnalysis(periodId, {status:'failed', reason:'api-error', period:kind});
+    return state.analysisCache[periodId];
+  }
+  await saveCachedAnalysis(periodId, {
+    status:'ready', period:kind, text: raw,
+    periodStart: start?start.toISOString().slice(0,10):null, periodEnd: end?end.toISOString().slice(0,10):null,
+    generatedAt: new Date().toISOString(), entryCountAtGeneration: entries.length
+  });
+  return state.analysisCache[periodId];
+}
+
+// ---- Pattern detection (Module 07 §12-14): cached, source-traceable ----
+async function generatePatterns(){
+  state.patternsCache = {status:'generating'};
+  if(!state.settings || !state.settings.apiKey){
+    state.patternsCache = {status:'failed', reason:'no-key'};
+    await patternsDocRef().set(state.patternsCache, {merge:true}).catch(()=>{});
+    return state.patternsCache;
+  }
+  const activeEntries = state.entries.filter(e=>!e.archived).sort((a,b)=>a.date.localeCompare(b.date));
+  if(activeEntries.length<3){
+    state.patternsCache = {status:'failed', reason:'no-data'};
+    await patternsDocRef().set(state.patternsCache, {merge:true}).catch(()=>{});
+    return state.patternsCache;
+  }
+  const ctx = buildStructuredContext(null, null, activeEntries.slice(-120)); // most recent 120 entries is plenty signal, keeps prompt bounded
+  const prompt = `তুমি একজন সতর্ক প্যাটার্ন-বিশ্লেষক। নিচের ডায়েরি ডেটা থেকে পুনরাবৃত্ত (recurring) প্যাটার্ন খুঁজে বের করো — যেমন recurring topics, moods, challenges, goals, repeated people/places, writing frequency পরিবর্তন, ইত্যাদি।
+
+কড়া নিয়ম:
+- প্রতিটি প্যাটার্ন অন্তত ২টি ভিন্ন জার্নাল এন্ট্রি দ্বারা সমর্থিত হতে হবে (তারিখসহ)।
+- কোনো মেডিক্যাল/সাইকোলজিক্যাল নির্ণয় বা ব্যক্তিত্ব সংক্রান্ত সিদ্ধান্ত কখনো দিও না (যেমন "you are an anxious person")। শুধু observable pattern লেখো।
+- প্রতিটি প্যাটার্নে confidence দাও: "High" (অনেক এন্ট্রি সমর্থন করে), "Medium", বা "Low" — evidence-এর পরিমাণের ভিত্তিতে, নিজের মতামত অনুযায়ী নয়।
+- শুধু JSON আউটপুট দাও, markdown fence বা অন্য কিছু নয়। স্কিমা:
+{"patterns":[{"title":"","description":"","confidence":"High|Medium|Low","sourceDates":["YYYY-MM-DD"]}]}
+
+Structured data (JSON):
+${JSON.stringify(ctx).slice(0,12000)}`;
+
+  const raw = await callGemini(prompt);
+  let parsed = null;
+  if(raw){
+    try{
+      let t = raw.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+      const first=t.indexOf('{'), last=t.lastIndexOf('}');
+      if(first!==-1 && last!==-1) parsed = JSON.parse(t.slice(first,last+1));
+    }catch(e){ console.error('pattern JSON parse failed', e); }
+  }
+  if(!parsed || !Array.isArray(parsed.patterns)){
+    state.patternsCache = {status:'failed', reason:'api-error'};
+    await patternsDocRef().set(state.patternsCache, {merge:true}).catch(()=>{});
+    return state.patternsCache;
+  }
+  const patterns = parsed.patterns.map(p=>({
+    title: (p.title||'').trim(),
+    description: (p.description||'').trim(),
+    confidence: ['High','Medium','Low'].includes(p.confidence) ? p.confidence : 'Low',
+    sourceDates: Array.isArray(p.sourceDates) ? p.sourceDates.filter(isISODate) : []
+  })).filter(p=>p.title && p.description);
+  state.patternsCache = {status:'ready', patterns, generatedAt: new Date().toISOString(), entryCountAtGeneration: activeEntries.length};
+  await patternsDocRef().set(state.patternsCache, {merge:true}).catch(err=>console.error('save patterns failed', err));
+  return state.patternsCache;
+}
+
 /* ---------------- STATE ---------------- */
 let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null,
   filters:{mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'},
@@ -1293,7 +1724,13 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   draftRecoveryResolved:false, appliedDraftData:null,
   // Module 06: Life Organization — derived, source-linked data built from journals via AI.
   life:{achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]},
-  lifeTab:'achievements', memoryTab:'people', lifeFilters:{} };
+  lifeTab:'achievements', memoryTab:'people', lifeFilters:{},
+  // Module 07: Time-Based Insights & Analytics
+  insightsPeriod: '30d', insightsTab:'overview',
+  insightsMonth: new Date(), insightsYear: new Date().getFullYear(),
+  analysisCache: {}, // periodId -> {status, data, generatedAt} — local mirror of users/{uid}/analytics/*
+  patternsCache: null // {status, items, generatedAt}
+};
 
 /* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
 function draftDocRef(){ return userDocRef().collection('meta').doc('draft'); }
@@ -1625,6 +2062,8 @@ function render(){
     search: renderSearch,
     archive: renderArchive,
     insights: renderInsights,
+    monthly: renderMonthly,
+    yearly: renderYearly,
     life: renderLifeHub,
     settings: renderSettings
   };
@@ -1633,7 +2072,6 @@ function render(){
   requestAnimationFrame(()=>main.classList.add('view-anim'));
   updateStreak();
   if(state.view==='write') refreshAIPreview(true);
-  if(state.view==='insights') refreshWeeklyAI();
   if(state.view==='dashboard') refreshDashboardAISummary();
   syncWriteFixedBarVisibility();
 }
@@ -2659,71 +3097,474 @@ function doSearch(q){
 }
 
 /* ---------------- INSIGHTS (Mood Analytics §27 + Writing Analytics §28, lightweight) ---------------- */
-function renderInsights(){
-  const activeEntries = state.entries.filter(e=>!e.archived);
-  const total = activeEntries.length;
-  const moodCount = {};
-  MOODS.forEach(m=>moodCount[m.id]=0);
-  activeEntries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
-  const totalWords = activeEntries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
-  const avgWords = total ? Math.round(totalWords/total) : 0;
-  const longest = activeEntries.reduce((max,e)=>{
-    const wc = (e.content||'').trim().split(/\s+/).filter(Boolean).length;
-    return wc > max.wc ? {wc, e} : max;
-  }, {wc:0, e:null});
+/* ================================================================
+   MODULE 07 — INSIGHTS PAGE (rewritten)
+   Overview / Writing / Mood / Life sections are 100% local, instant,
+   and always correct — no AI required. AI Insights (reflections +
+   patterns) are a separate cached section with explicit status and
+   a manual Regenerate action; they are never auto-called on render.
+   ================================================================ */
+const INSIGHTS_TABS = [
+  {key:'overview', label:'Overview'},
+  {key:'writing', label:'Writing'},
+  {key:'mood', label:'Mood'},
+  {key:'life', label:'Life'},
+  {key:'ai', label:'AI Insights'}
+];
+function setInsightsPeriod(key){ state.insightsPeriod = key; render(); }
+function setInsightsTab(key){ state.insightsTab = key; render(); }
 
-  const now = new Date(); const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
-  const weekEntries = activeEntries.filter(e=> new Date(e.date) >= weekAgo);
+function trendBadge(pct){
+  if(pct===null || pct===undefined) return '';
+  if(pct>0) return `<span class="trend-badge trend-up">↑ ${pct}%</span>`;
+  if(pct<0) return `<span class="trend-badge trend-down">↓ ${Math.abs(pct)}%</span>`;
+  return `<span class="trend-badge trend-flat">— 0%</span>`;
+}
+function periodLabel(key){ return (PERIODS.find(p=>p.key===key)||{}).label || key; }
+function bucketLabel(key, granularity){
+  if(granularity==='month') return new Date(key+'-01T00:00:00').toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+  if(granularity==='week') return fmtDate(key,{month:'short',day:'numeric'});
+  return fmtDate(key,{day:'numeric'});
+}
 
+function renderMiniChart(points, granularity, valueKey){
+  if(!points.length) return `<div class="empty">এই সময়ে কোনো লেখা নেই।</div>`;
+  const max = Math.max(1, ...points.map(p=>p[valueKey]||0));
+  const showEvery = points.length>14 ? Math.ceil(points.length/7) : 1;
   return `
-    <div class="page-head"><h1>Mood &amp; Writing Insights</h1></div>
+    <div class="mini-chart">
+      ${points.map(p=>{
+        const h = Math.max(2, Math.round(((p[valueKey]||0)/max)*84));
+        const isHi = (p[valueKey]||0) === max && max>0;
+        return `<div class="col" title="${bucketLabel(p.key,granularity)}: ${p[valueKey]||0}"><div class="b ${isHi?'hi':''}" style="height:${h}px;"></div></div>`;
+      }).join('')}
+    </div>
+    <div class="mini-chart-labels">
+      ${points.map((p,i)=> (i%showEvery===0 || i===points.length-1) ? `<span>${bucketLabel(p.key,granularity)}</span>` : '<span></span>').join('')}
+    </div>`;
+}
 
-    <div class="grid grid-2">
+function renderInsights(){
+  const a = computeAnalytics(state.insightsPeriod);
+  const tab = state.insightsTab || 'overview';
+  return `
+    <div class="page-head">
+      <div><h1>Insights</h1><div class="sub">তোমার জার্নাল ও Life data থেকে তৈরি analytics — সবই আসল ডেটা থেকে।</div></div>
+    </div>
+    <div class="period-tabs" style="margin-bottom:14px;justify-content:space-between;">
+      <div class="period-tabs">${PERIODS.map(p=>`<button class="btn btn-sm ${state.insightsPeriod===p.key?'btn-primary':'btn-ghost'}" onclick="setInsightsPeriod('${p.key}')">${p.label}</button>`).join('')}</div>
+      <div class="period-tabs"><button class="btn btn-sm btn-ghost" onclick="go('monthly')">📆 Monthly view</button><button class="btn btn-sm btn-ghost" onclick="go('yearly')">🗓️ Yearly view</button></div>
+    </div>
+    <div class="filter-row" style="margin-bottom:6px;">
+      ${INSIGHTS_TABS.map(t=>`<button class="btn btn-sm ${tab===t.key?'btn-accent':'btn-ghost'}" onclick="setInsightsTab('${t.key}')">${t.label}</button>`).join('')}
+    </div>
+    ${tab==='overview' ? renderInsightsOverview(a)
+      : tab==='writing' ? renderInsightsWriting(a)
+      : tab==='mood' ? renderInsightsMood(a)
+      : tab==='life' ? renderInsightsLife(a)
+      : renderInsightsAI(a)}
+  `;
+}
+
+function renderInsightsOverview(a){
+  const c = a.core;
+  if(!c.total){
+    return `<div class="card"><div class="empty">এই সময়ের মধ্যে কোনো এন্ট্রি নেই। লিখতে থাকো — যত বেশি লিখবে, insights তত অর্থবহ হবে।</div></div>`;
+  }
+  return `
+    <div class="stat-grid">
+      <div class="stat-card"><b>${c.total}</b><span>Entries</span></div>
+      <div class="stat-card"><b>${c.totalWords}</b><span>Total words</span></div>
+      <div class="stat-card"><b>${c.dayCount}</b><span>Writing days</span></div>
+      <div class="stat-card"><b>${c.currentStreak}</b><span>Current streak</span></div>
+      <div class="stat-card"><b>${c.avgWords}</b><span>Avg words/entry</span></div>
+      <div class="stat-card"><b>${c.avgIntensity===null?'—':c.avgIntensity}</b><span>Avg mood intensity</span></div>
+      <div class="stat-card"><b>${c.consistency}%</b><span>Consistency</span></div>
+      <div class="stat-card"><b>${c.longestStreak}</b><span>Longest streak</span></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-title">Activity (${periodLabel(a.periodKey)})</div>
+        ${renderMiniChart(a.trend.points, a.trend.granularity, 'entries')}
+      </div>
       <div class="card">
         <div class="section-title">Mood Distribution</div>
-        ${total ? MOODS.map(m=>{
-          const pct = total ? Math.round((moodCount[m.id]/total)*100) : 0;
-          return `<div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
-              <span>${m.emoji} ${m.label}</span><span style="color:var(--ink-faint);">${pct}%</span>
-            </div>
-            <div style="height:7px;background:var(--paper-dim);border-radius:99px;overflow:hidden;">
-              <div style="height:100%;width:${pct}%;background:var(--accent);"></div>
-            </div>
-          </div>`;
-        }).join('') : `<div class="empty">এখনো ডেটা নেই।</div>`}
-      </div>
-      <div class="card">
-        <div class="section-title">Writing Stats</div>
-        <div class="grid grid-2" style="gap:12px;">
-          <div class="stat"><b>${total}</b><span>Total entries</span></div>
-          <div class="stat"><b>${totalWords}</b><span>Total words</span></div>
-          <div class="stat"><b>${avgWords}</b><span>Avg words / entry</span></div>
-          <div class="stat"><b>${longest.wc}</b><span>Longest entry</span></div>
-        </div>
+        ${MOODS.map(m=>{
+          const n = c.moodCount[m.id]||0;
+          const pct = c.total ? Math.round((n/c.total)*100) : 0;
+          return `<div class="bar-row"><div class="bar-label"><span>${m.emoji} ${m.label}</span><span class="n">${pct}% · ${n}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+        }).join('')}
       </div>
     </div>
+    ${a.comparison ? renderComparisonCard(a) : ''}
+  `;
+}
 
+function renderComparisonCard(a){
+  if(!a.comparison.hasEnoughData){
+    return `<div class="card" style="margin-top:16px;"><div class="section-title">তুলনা (আগের সমপরিমাণ সময়ের সাথে)</div><div class="empty">Not enough data for comparison.</div></div>`;
+  }
+  const {current, previous, pct} = a.comparison;
+  const rows = [
+    ['Entries', current.total, previous.total],
+    ['Words written', current.totalWords, previous.totalWords],
+    ['Avg words/entry', current.avgWords, previous.avgWords],
+    ['Writing days', current.dayCount, previous.dayCount],
+    ['Consistency %', current.consistency, previous.consistency],
+    ['Avg mood intensity', current.avgIntensity??'—', previous.avgIntensity??'—']
+  ];
+  return `
     <div class="card" style="margin-top:16px;">
-      <div class="head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="section-title" style="margin:0;">✦ This Week's AI Summary</div>
+      <div class="section-title">তুলনা (আগের সমপরিমাণ সময়ের সাথে)</div>
+      ${rows.map(([label,now,prev])=>{
+        const p = (typeof now==='number' && typeof prev==='number') ? pct(now,prev) : null;
+        return `<div class="compare-row"><span class="lbl">${label}</span><div class="vals"><span class="now">${now}</span><span class="prev">আগে ছিল ${prev}</span>${trendBadge(p)}</div></div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderInsightsWriting(a){
+  const c = a.core;
+  if(!c.total) return `<div class="card"><div class="empty">এই সময়ের মধ্যে কোনো এন্ট্রি নেই।</div></div>`;
+  return `
+    <div class="stat-grid">
+      <div class="stat-card"><b>${c.total}</b><span>Total entries</span></div>
+      <div class="stat-card"><b>${c.totalWords}</b><span>Total words</span></div>
+      <div class="stat-card"><b>${c.avgWords}</b><span>Avg words</span></div>
+      <div class="stat-card"><b>${c.longest}</b><span>Longest entry</span></div>
+      <div class="stat-card"><b>${c.shortest}</b><span>Shortest entry</span></div>
+      <div class="stat-card"><b>${c.avgEntriesPerWeek}</b><span>Avg entries/week</span></div>
+      <div class="stat-card"><b>${c.longestStreak}</b><span>Longest streak</span></div>
+      <div class="stat-card"><b>${c.consistency}%</b><span>Consistency</span></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Writing Activity — entries per ${a.trend.granularity}</div>
+      ${renderMiniChart(a.trend.points, a.trend.granularity, 'entries')}
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Word Count Trend</div>
+      ${renderMiniChart(a.trend.points, a.trend.granularity, 'words')}
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Most Active Periods</div>
+      <div class="grid grid-2" style="gap:12px;">
+        <div class="stat"><b>${c.mostActiveDay ? fmtDate(c.mostActiveDay[0]) : '—'}</b><span>Most active day${c.mostActiveDay?` (${c.mostActiveDay[1]} entries)`:''}</span></div>
+        <div class="stat"><b>${c.mostActiveMonth ? c.mostActiveMonth[0] : '—'}</b><span>Most active month${c.mostActiveMonth?` (${c.mostActiveMonth[1]} entries)`:''}</span></div>
+        <div class="stat"><b>${c.mostActiveWeek ? fmtDate(c.mostActiveWeek[0]) : '—'}</b><span>Most active week${c.mostActiveWeek?` (${c.mostActiveWeek[1]} entries)`:''}</span></div>
+        <div class="stat"><b>${c.highestWordWeek ? c.highestWordWeek[1] : '—'}</b><span>Highest word-count week${c.highestWordWeek?` (from ${fmtDate(c.highestWordWeek[0])})`:''}</span></div>
       </div>
-      <p id="weeklyAiPreview" style="font-size:13.5px;color:var(--ink-soft);line-height:1.6;">${escapeHtml(localWeeklySummary(weekEntries))}</p>
-      <div class="ai-note" id="weeklyAiNote">${(state.settings && state.settings.apiKey) ? 'Gemini দিয়ে তৈরি সারাংশ।' : 'Settings-এ তোমার Gemini API key বসালে এখানে গভীরতর সাপ্তাহিক analysis দেখাবে।'}</div>
     </div>
   `;
 }
-async function refreshWeeklyAI(){
-  if(!state.settings || !state.settings.apiKey) return;
-  const now = new Date(); const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
-  const weekEntries = state.entries.filter(e=> new Date(e.date) >= weekAgo);
-  const noteEl = document.getElementById('weeklyAiNote');
-  if(noteEl) noteEl.textContent = 'Gemini থেকে সাপ্তাহিক সারাংশ আনা হচ্ছে…';
-  const summary = await generateWeeklySummary(weekEntries);
-  const el = document.getElementById('weeklyAiPreview');
-  if(el && state.view==='insights') el.textContent = summary;
-  const noteEl2 = document.getElementById('weeklyAiNote');
-  if(noteEl2 && state.view==='insights') noteEl2.textContent = 'Gemini দিয়ে তৈরি সারাংশ।';
+
+function renderInsightsMood(a){
+  const c = a.core;
+  if(!c.total) return `<div class="card"><div class="empty">এই সময়ের মধ্যে কোনো এন্ট্রি নেই।</div></div>`;
+  return `
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">Mood Distribution</div>
+        ${MOODS.map(m=>{
+          const n = c.moodCount[m.id]||0;
+          const pct = c.total ? Math.round((n/c.total)*100) : 0;
+          return `<div class="bar-row"><div class="bar-label"><span>${m.emoji} ${m.label}</span><span class="n">${pct}% · ${n}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="section-title">Mood Intensity</div>
+        <div class="grid grid-2" style="gap:12px;">
+          <div class="stat"><b>${c.avgIntensity===null?'—':c.avgIntensity}</b><span>Average intensity</span></div>
+          <div class="stat"><b>${c.intensityMax===null?'—':c.intensityMax}</b><span>Highest recorded</span></div>
+          <div class="stat"><b>${c.intensityMin===null?'—':c.intensityMin}</b><span>Lowest recorded</span></div>
+          <div class="stat"><b>${c.total}</b><span>Entries considered</span></div>
+        </div>
+        <p style="font-size:12px;color:var(--ink-faint);margin-top:10px;">তীব্রতা (intensity) নিজে থেকে ভালো বা খারাপ কিছু বোঝায় না — এটা শুধু অনুভূতির প্রাবল্য নির্দেশ করে।</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Mood Trend — dominant mood per ${a.mTrend.granularity}</div>
+      ${a.mTrend.points.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${a.mTrend.points.map(p=>`<span class="pill" title="${bucketLabel(p.key,a.mTrend.granularity)}">${p.dominant?moodInfo(p.dominant).emoji:'—'} ${bucketLabel(p.key,a.mTrend.granularity)}${p.avgIntensity?` · ${p.avgIntensity}`:''}</span>`).join('')}
+      </div>` : `<div class="empty">ডেটা নেই।</div>`}
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Mood × Writing</div>
+      ${MOODS.filter(m=>(c.moodWords[m.id]||{}).n>0).map(m=>{
+        const mw = c.moodWords[m.id];
+        const avg = mw.n ? Math.round(mw.sum/mw.n) : 0;
+        return `<div class="compare-row"><span class="lbl">${m.emoji} ${m.label}</span><div class="vals"><span class="now">${avg} words</span><span class="prev">avg over ${mw.n} entr${mw.n===1?'y':'ies'}</span></div></div>`;
+      }).join('') || `<div class="empty">ডেটা নেই।</div>`}
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:10px;">এগুলো তোমার নিজের ডেটা থেকে observation — কার্যকারণ (causation) নির্দেশ করে না।</p>
+    </div>
+  `;
+}
+
+function renderInsightsLife(a){
+  const l = a.life;
+  const items = [
+    ['🏆','Achievements','achievements'], ['🗺️','Plans','plans'], ['⛰️','Challenges','challenges'],
+    ['💡','Ideas','ideas'], ['📚','Lessons','lessons'], ['✨','Moments','moments'],
+    ['💬','Quotes','quotes'], ['📅','Events','events']
+  ];
+  const total = Object.values(l).reduce((a,b)=>a+b,0);
+  return `
+    <div class="card">
+      <div class="section-title">Life Organization — ${periodLabel(a.periodKey)}</div>
+      ${total ? `<div class="life-mini-grid">
+        ${items.map(([icon,label,key])=>`<div class="life-mini"><b>${l[key]}</b><span>${icon} ${label}</span></div>`).join('')}
+      </div>` : `<div class="empty">এই সময়ে কোনো Life data নেই।</div>`}
+      <div class="row" style="margin-top:16px;"><button class="btn btn-sm" onclick="go('life')">Life হাবে দেখুন →</button></div>
+    </div>
+  `;
+}
+
+/* ---- AI Insights tab: weekly/monthly/yearly reflections + patterns ---- */
+function renderInsightsAI(a){
+  const noKey = !(state.settings && state.settings.apiKey);
+  const weeklyId = weeklyPeriodId(new Date());
+  const monthlyId = monthlyPeriodId(new Date());
+  const yearlyId = yearlyPeriodId(new Date().getFullYear());
+  // kick off (idempotent) background loads of cached docs the first time each renders
+  ['weekly','monthly','yearly'].forEach(kind=>{
+    const id = kind==='weekly'?weeklyId:kind==='monthly'?monthlyId:yearlyId;
+    if(state.analysisCache[id]===undefined){ state.analysisCache[id]=null; loadCachedAnalysis(id).then(()=>{ if(state.view==='insights' && state.insightsTab==='ai') render(); }); }
+  });
+  if(state.patternsCache===null && state.user){
+    state.patternsCache = undefined; // mark "loading" so we don't refetch every render
+    patternsDocRef().get().then(doc=>{
+      state.patternsCache = doc.exists ? doc.data() : {status:'idle'};
+      if(state.view==='insights' && state.insightsTab==='ai') render();
+    }).catch(()=>{ state.patternsCache = {status:'idle'}; });
+  }
+
+  return `
+    ${noKey ? `<div class="card" style="margin-bottom:16px;"><div class="empty">Settings-এ Gemini API key যোগ করলে এখানে weekly/monthly/yearly AI reflection এবং pattern detection দেখতে পাবে। <button class="btn btn-sm" onclick="go('settings')" style="margin-left:6px;">⚙️ Settings</button></div></div>` : ''}
+    ${renderReflectionCard('weekly', 'সাপ্তাহিক Reflection', weeklyId)}
+    ${renderReflectionCard('monthly', 'মাসিক Reflection', monthlyId)}
+    ${renderReflectionCard('yearly', 'বাৎসরিক Reflection', yearlyId)}
+    ${renderPatternsCard()}
+  `;
+}
+function statusBadge(status){
+  const map = {ready:['ready','Ready'], generating:['generating','Generating…'], failed:['failed','Failed'], idle:['','Not generated']};
+  const [cls,label] = map[status] || map.idle;
+  return `<span class="ai-status-badge ${cls}">${label}</span>`;
+}
+function renderReflectionCard(kind, title, periodId){
+  const cached = state.analysisCache[periodId];
+  const status = cached ? cached.status : 'idle';
+  return `
+    <div class="card ins-section">
+      <div class="ins-section-head">
+        <h2>${title}</h2>
+        <button class="btn btn-sm" onclick="runReflection('${kind}')" ${status==='generating'?'disabled':''}>↻ Regenerate</button>
+      </div>
+      <div class="ai-status-row">${statusBadge(status)}${cached && cached.generatedAt ? `<span style="font-size:11px;color:var(--ink-faint);">তৈরি: ${timeAgo(cached.generatedAt)}</span>` : ''}</div>
+      ${status==='ready' ? `<div class="ai-reflect">${formatReflectionText(cached.text)}</div>`
+        : status==='failed' ? `<div class="empty">${cached.reason==='no-key' ? 'AI key নেই।' : cached.reason==='no-data' ? 'এই সময়ে যথেষ্ট জার্নাল নেই।' : 'তৈরি করা যায়নি — আবার চেষ্টা করো।'}</div>`
+        : status==='generating' ? `<div class="empty">তৈরি হচ্ছে…</div>`
+        : `<div class="empty">No AI analysis yet. "Regenerate" চাপো।</div>`}
+    </div>`;
+}
+function formatReflectionText(text){
+  if(!text) return '';
+  // turns "## Heading" markdown-lite lines into styled h4s, rest into paragraphs
+  const lines = text.split(/\n+/);
+  let out = '';
+  lines.forEach(line=>{
+    const t = line.trim(); if(!t) return;
+    const h = t.match(/^#{1,3}\s*(.+)$/);
+    if(h) out += `<h4>${escapeHtml(h[1])}</h4>`;
+    else out += `<p>${escapeHtml(t)}</p>`;
+  });
+  return out;
+}
+async function runReflection(kind){
+  const now = new Date();
+  let periodId, start, end, entries, label;
+  if(kind==='weekly'){
+    periodId = weeklyPeriodId(now);
+    end = now; start = new Date(now); start.setDate(start.getDate()-6); start.setHours(0,0,0,0);
+    entries = entriesInRange(state.entries.filter(e=>!e.archived), start, end);
+    label = 'এই সপ্তাহের';
+  } else if(kind==='monthly'){
+    periodId = monthlyPeriodId(now);
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+    end = new Date(now.getFullYear(), now.getMonth()+1, 0, 23,59,59);
+    entries = entriesInRange(state.entries.filter(e=>!e.archived), start, end);
+    label = 'এই মাসের';
+  } else {
+    periodId = yearlyPeriodId(now.getFullYear());
+    start = new Date(now.getFullYear(),0,1); end = new Date(now.getFullYear(),11,31,23,59,59);
+    entries = entriesInRange(state.entries.filter(e=>!e.archived), start, end);
+    label = 'এই বছরের';
+  }
+  render(); // show "generating" immediately if already on this tab (status set inside generatePeriodReflection)
+  await generatePeriodReflection(kind, periodId, start, end, entries, label);
+  if(state.view==='insights' && state.insightsTab==='ai') render();
+}
+function renderPatternsCard(){
+  const cached = state.patternsCache;
+  const status = cached ? cached.status : 'idle';
+  return `
+    <div class="card ins-section">
+      <div class="ins-section-head">
+        <h2>Detected Patterns</h2>
+        <button class="btn btn-sm" onclick="runPatterns()" ${status==='generating'?'disabled':''}>↻ Regenerate</button>
+      </div>
+      <div class="ai-status-row">${statusBadge(status)}${cached && cached.generatedAt ? `<span style="font-size:11px;color:var(--ink-faint);">তৈরি: ${timeAgo(cached.generatedAt)}</span>` : ''}</div>
+      ${status==='ready' ? (cached.patterns.length ? cached.patterns.map(renderPatternItem).join('') : `<div class="empty">এখনো কোনো স্পষ্ট প্যাটার্ন পাওয়া যায়নি।</div>`)
+        : status==='failed' ? `<div class="empty">${cached.reason==='no-key' ? 'AI key নেই।' : cached.reason==='no-data' ? 'প্যাটার্ন খুঁজতে আরও জার্নাল দরকার (কমপক্ষে ৩টি)।' : 'তৈরি করা যায়নি — আবার চেষ্টা করো।'}</div>`
+        : status==='generating' ? `<div class="empty">প্যাটার্ন খোঁজা হচ্ছে…</div>`
+        : `<div class="empty">No AI analysis yet. "Regenerate" চাপো।</div>`}
+    </div>`;
+}
+function renderPatternItem(p){
+  const confCls = p.confidence==='High'?'conf-high':p.confidence==='Medium'?'conf-medium':'conf-low';
+  return `
+    <div class="pattern-card">
+      <div class="pattern-head"><h4>${escapeHtml(p.title)}</h4><span class="conf-badge ${confCls}">${p.confidence}</span></div>
+      <p style="margin:0;font-size:13px;color:var(--ink-soft);line-height:1.55;">${escapeHtml(p.description)}</p>
+      ${p.sourceDates.length ? `<div class="pattern-sources">
+        ${p.sourceDates.slice(0,12).map(d=>{
+          const e = state.entries.find(en=>en.date===d && !en.archived);
+          return e ? `<span class="tag" style="cursor:pointer;" onclick="go('write','${e.id}')">📓 ${fmtDate(d)}</span>` : `<span class="tag">${fmtDate(d)}</span>`;
+        }).join('')}
+      </div>` : ''}
+    </div>`;
+}
+async function runPatterns(){
+  render();
+  await generatePatterns();
+  if(state.view==='insights' && state.insightsTab==='ai') render();
+}
+
+/* ---------------- MODULE 07: MONTHLY / YEARLY NAVIGATOR VIEWS ---------------- */
+function shiftInsightsMonth(n){
+  const d = new Date(state.insightsMonth);
+  d.setMonth(d.getMonth()+n);
+  state.insightsMonth = d;
+  render();
+}
+function shiftInsightsYear(n){ state.insightsYear += n; render(); }
+
+function computeMonthAnalytics(d){
+  const start = new Date(d.getFullYear(), d.getMonth(), 1);
+  const end = new Date(d.getFullYear(), d.getMonth()+1, 0, 23,59,59,999);
+  const activeEntries = state.entries.filter(e=>!e.archived);
+  const inMonth = entriesInRange(activeEntries, start, end);
+  const core = computeCoreStats(inMonth);
+  const life = lifeCountsInRange(start, end);
+  return {start, end, entries:inMonth, core, life};
+}
+function computeYearAnalytics(year){
+  const start = new Date(year,0,1);
+  const end = new Date(year,11,31,23,59,59,999);
+  const activeEntries = state.entries.filter(e=>!e.archived);
+  const inYear = entriesInRange(activeEntries, start, end);
+  const core = computeCoreStats(inYear);
+  const life = lifeCountsInRange(start, end);
+  const trend = activityTrend(inYear, '1y');
+  const mTrend = moodTrend(inYear, '1y');
+  return {start, end, entries:inYear, core, life, trend, mTrend};
+}
+
+function renderMonthly(){
+  const d = state.insightsMonth;
+  const label = d.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+  const m = computeMonthAnalytics(d);
+  const c = m.core;
+  return `
+    <div class="page-head"><h1>Monthly Analytics</h1></div>
+    <div class="month-nav">
+      <button class="btn btn-sm" onclick="shiftInsightsMonth(-1)">← Previous Month</button>
+      <div class="lbl">${label}</div>
+      <button class="btn btn-sm" onclick="shiftInsightsMonth(1)">Next Month →</button>
+    </div>
+    ${!c.total ? `<div class="card"><div class="empty">এই মাসে কোনো এন্ট্রি নেই।</div></div>` : `
+    <div class="stat-grid">
+      <div class="stat-card"><b>${c.total}</b><span>Entries</span></div>
+      <div class="stat-card"><b>${c.totalWords}</b><span>Total words</span></div>
+      <div class="stat-card"><b>${c.avgWords}</b><span>Avg words</span></div>
+      <div class="stat-card"><b>${c.dayCount}</b><span>Writing days</span></div>
+      <div class="stat-card"><b>${c.longestStreak}</b><span>Longest streak (in month)</span></div>
+      <div class="stat-card"><b>${c.avgIntensity===null?'—':c.avgIntensity}</b><span>Avg mood intensity</span></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-title">Mood Distribution</div>
+        ${MOODS.map(mo=>{
+          const n=c.moodCount[mo.id]||0, pct=c.total?Math.round((n/c.total)*100):0;
+          return `<div class="bar-row"><div class="bar-label"><span>${mo.emoji} ${mo.label}</span><span class="n">${pct}% · ${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="section-title">Life Organization this month</div>
+        <div class="life-mini-grid">
+          <div class="life-mini"><b>${m.life.achievements}</b><span>🏆 Achievements</span></div>
+          <div class="life-mini"><b>${m.life.plans}</b><span>🗺️ Plans</span></div>
+          <div class="life-mini"><b>${m.life.challenges}</b><span>⛰️ Challenges</span></div>
+          <div class="life-mini"><b>${m.life.ideas}</b><span>💡 Ideas</span></div>
+          <div class="life-mini"><b>${m.life.lessons}</b><span>📚 Lessons</span></div>
+          <div class="life-mini"><b>${m.life.moments}</b><span>✨ Moments</span></div>
+        </div>
+      </div>
+    </div>
+    `}
+    <div class="row" style="margin-top:16px;"><button class="btn btn-sm" onclick="go('insights')">← Insights-এ ফিরুন</button></div>
+  `;
+}
+
+function renderYearly(){
+  const year = state.insightsYear;
+  const y = computeYearAnalytics(year);
+  const c = y.core;
+  return `
+    <div class="page-head"><h1>Yearly Analytics</h1></div>
+    <div class="month-nav">
+      <button class="btn btn-sm" onclick="shiftInsightsYear(-1)">← ${year-1}</button>
+      <div class="lbl">${year}</div>
+      <button class="btn btn-sm" onclick="shiftInsightsYear(1)">${year+1} →</button>
+    </div>
+    ${!c.total ? `<div class="card"><div class="empty">এই বছরে কোনো এন্ট্রি নেই।</div></div>` : `
+    <div class="stat-grid">
+      <div class="stat-card"><b>${c.total}</b><span>Total entries</span></div>
+      <div class="stat-card"><b>${c.totalWords}</b><span>Total words</span></div>
+      <div class="stat-card"><b>${c.avgWords}</b><span>Avg words</span></div>
+      <div class="stat-card"><b>${c.dayCount}</b><span>Active writing days</span></div>
+      <div class="stat-card"><b>${c.longestStreak}</b><span>Longest streak</span></div>
+      <div class="stat-card"><b>${c.avgEntriesPerWeek?(c.total/12).toFixed(1):0}</b><span>Avg entries/month</span></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="section-title">Monthly Activity</div>
+      ${renderMiniChart(y.trend.points, y.trend.granularity, 'entries')}
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-title">Yearly Mood Distribution</div>
+        ${MOODS.map(mo=>{
+          const n=c.moodCount[mo.id]||0, pct=c.total?Math.round((n/c.total)*100):0;
+          return `<div class="bar-row"><div class="bar-label"><span>${mo.emoji} ${mo.label}</span><span class="n">${pct}% · ${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
+        }).join('')}
+        <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px;">Avg intensity: ${c.avgIntensity===null?'—':c.avgIntensity}</p>
+      </div>
+      <div class="card">
+        <div class="section-title">Life Activity this year</div>
+        <div class="life-mini-grid">
+          <div class="life-mini"><b>${y.life.achievements}</b><span>🏆 Achievements</span></div>
+          <div class="life-mini"><b>${y.life.plans}</b><span>🗺️ Plans</span></div>
+          <div class="life-mini"><b>${y.life.challenges}</b><span>⛰️ Challenges</span></div>
+          <div class="life-mini"><b>${y.life.ideas}</b><span>💡 Ideas</span></div>
+          <div class="life-mini"><b>${y.life.lessons}</b><span>📚 Lessons</span></div>
+          <div class="life-mini"><b>${y.life.moments}</b><span>✨ Moments</span></div>
+        </div>
+      </div>
+    </div>
+    `}
+    <div class="row" style="margin-top:16px;"><button class="btn btn-sm" onclick="go('insights')">← Insights-এ ফিরুন</button></div>
+  `;
 }
 
 /* ---------------- SETTINGS (Module 33) ---------------- */
