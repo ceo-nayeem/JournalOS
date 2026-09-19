@@ -690,6 +690,12 @@ body.write-mode .main{padding-top:148px;}
       <span class="lbl">Mood &amp; Writing</span><span class="tip">Mood &amp; Writing</span>
     </button>
 
+    <div class="nav-label">Life</div>
+    <button class="nav-item" data-view="life" onclick="go('life')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5c4 0 6 1 8 3 2-2 4-3 8-3v13c-4 0-6 1-8 3-2-2-4-3-8-3V5z"/></svg></span>
+      <span class="lbl">Life</span><span class="tip">Life — Achievements, Plans &amp; Memories</span>
+    </button>
+
     <div class="sidebar-foot">
       <div class="streak-pill">
         <span>🔥</span>
@@ -769,6 +775,19 @@ body.write-mode .main{padding-top:148px;}
   </div>
 </div>
 
+<!-- ============ MODULE 06: LIFE ITEM EDIT MODAL ============ -->
+<div class="modal-backdrop" id="lifeEditModal" onclick="if(event.target===this) closeLifeEdit()">
+  <div class="modal" style="max-width:440px;">
+    <h3>Edit</h3>
+    <p style="margin-bottom:10px;">তোমার মূল জার্নাল এন্ট্রি অপরিবর্তিত থাকবে — এটি শুধু derived তথ্য সম্পাদনা করে।</p>
+    <div id="lifeEditFields"></div>
+    <div class="row">
+      <button class="btn" onclick="closeLifeEdit()">বাতিল</button>
+      <button class="btn btn-primary" onclick="saveLifeEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ CALENDAR: DAY WITH MULTIPLE ENTRIES ============ -->
 <div class="modal-backdrop" id="dayEntriesModal" onclick="if(event.target===this) closeDayEntries()">
   <div class="modal" style="max-width:420px;">
@@ -838,7 +857,26 @@ function dashSectionOn(key){
 function userDocRef(){ return db.collection('users').doc(state.user.uid); }
 function entriesColRef(){ return userDocRef().collection('entries'); }
 
-let unsubEntries = null, unsubUserDoc = null;
+// Module 06: Life Organization collections — users/{uid}/{achievements,plans,...}.
+// "moments" is the Firestore collection name for the Important Moments library.
+const LIFE_COLLECTIONS = ['achievements','plans','quotes','ideas','lessons','challenges','moments','events','people','places'];
+function lifeColRef(name){ return userDocRef().collection(name); }
+
+let unsubEntries = null, unsubUserDoc = null, unsubLife = {};
+
+function attachLifeListeners(){
+  detachLifeListeners();
+  LIFE_COLLECTIONS.forEach(name=>{
+    unsubLife[name] = lifeColRef(name).onSnapshot(snap=>{
+      state.life[name] = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      if(state.view==='life' || state.view==='dashboard') render();
+    }, err=>console.error(name+' listener error', err));
+  });
+}
+function detachLifeListeners(){
+  Object.values(unsubLife).forEach(u=>{ if(u) u(); });
+  unsubLife = {};
+}
 
 function attachEntriesListener(){
   if(unsubEntries) unsubEntries();
@@ -980,11 +1018,282 @@ function extractInformation(text){
   return out;
 }
 
+/* ================================================================
+   MODULE 06 — LIFE ORGANIZATION & LONG-TERM MEMORY
+   ----------------------------------------------------------------
+   Architecture: Journal -> AI Analysis (structured JSON, Gemini) ->
+   Life Organization libraries (Achievements/Plans/Quotes/Ideas/
+   Lessons/Challenges/Important Moments) + Memory (People/Places/
+   Events), all stored under users/{uid}/{collection} and always
+   carrying sourceEntryId + sourceDate back to the journal that is
+   the source of truth. The old keyword-based extractInformation()
+   above stays only as the cheap local Daily Overview heuristic —
+   it is never written into these libraries.
+
+   Extraction runs once per journal save (runLifeExtraction), only
+   when the user has an AI key configured and "AI Life Extraction"
+   is on (Settings). A failed/garbled AI call NEVER touches existing
+   derived data — we only replace a journal's derived items once we
+   have a successfully parsed result, so nothing is ever wiped by
+   a flaky network call.
+   ================================================================ */
+
+// UI metadata for the "simple" derived types (one doc per journal mention).
+// People/Places are handled separately below since they aggregate across journals.
+const LIFE_TYPES = {
+  achievements: {categories:['Work','Business','Study','Personal','Health','Skill','Other'], hasFavorite:true},
+  plans:        {statuses:['Planned','Completed','Cancelled','Postponed','Overdue'], hasFavorite:true},
+  quotes:       {hasFavorite:true},
+  ideas:        {categories:['Business','Product','Content','Personal','Creative','Other'], statuses:['New','Exploring','Planned','Implemented','Archived'], hasFavorite:true},
+  lessons:      {hasFavorite:true},
+  challenges:   {statuses:['Ongoing','Overcome','Unresolved'], hasFavorite:false},
+  moments:      {hasFavorite:true},
+  events:       {hasFavorite:false}
+};
+const LIFE_TABS = [
+  {key:'achievements', label:'Achievements', icon:'🏆'},
+  {key:'plans', label:'Plans', icon:'🗺️'},
+  {key:'quotes', label:'Quotes', icon:'💬'},
+  {key:'ideas', label:'Ideas', icon:'💡'},
+  {key:'lessons', label:'Lessons', icon:'📚'},
+  {key:'challenges', label:'Challenges', icon:'⛰️'},
+  {key:'memories', label:'Memories', icon:'🧠'}
+];
+const MEMORY_TABS = [
+  {key:'people', label:'People', icon:'🧑'},
+  {key:'places', label:'Places', icon:'📍'},
+  {key:'events', label:'Events', icon:'📅'},
+  {key:'moments', label:'Important Moments', icon:'✨'}
+];
+
+function buildLifeExtractionPrompt(entry){
+  return `তুমি একজন অত্যন্ত সতর্ক তথ্য-নিষ্কাশন (extraction) সহকারী। নিচের ডায়েরি এন্ট্রি থেকে শুধুমাত্র স্পষ্টভাবে লেখা তথ্য বের করে একটিমাত্র কড়াকড়ি JSON অবজেক্ট হিসেবে ফেরত দাও।
+
+নিয়ম (অত্যন্ত গুরুত্বপূর্ণ):
+- কিছুই আবিষ্কার/অনুমান কোরো না। কোনো ক্যাটাগরিতে কিছু না থাকলে খালি array দাও।
+- আউটপুটে শুধু JSON থাকবে — কোনো markdown code fence, ভূমিকা, ব্যাখ্যা বা মন্তব্য নয়।
+- প্রতিটি টেক্সট যে ভাষায় লেখা হয়েছে (বাংলা/ইংরেজি) সেই ভাষাতেই রাখো, নিজে অনুবাদ কোরো না।
+- তারিখ স্পষ্টভাবে উল্লেখ না থাকলে null দাও — কখনো অনুমান করে তারিখ বসিও না।
+- category/status শুধু দেওয়া তালিকা থেকেই বেছে নাও; নিশ্চিত না হলে null দাও, জোর করে বসিও না।
+- একই জার্নালের মধ্যে ডুপ্লিকেট/প্রায়-অভিন্ন আইটেম একবারই দাও।
+- সাধারণ, রোজকার কাজকে "important moment" বা "quote" বানিও না — user নিজে যেভাবে গুরুত্ব দিয়ে লিখেছে সেটুকুই।
+- quotes-এ শুধু প্রকৃত উক্তি বা quote-এর মতো স্পষ্ট বাক্য দাও, সাধারণ বাক্য থেকে motivational উক্তি বানিয়ো না।
+- people/places শুধু স্পষ্টভাবে উল্লেখিত নাম হলেই দাও — সম্পর্ক, পেশা, ব্যক্তিত্ব কখনো অনুমান কোরো না।
+- মেডিক্যাল বা মানসিক রোগ নির্ণয় কখনো কোরো না; challenges-এ শুধু user নিজে যা কঠিন বলে লিখেছে তাই লেখো, বাড়িয়ে বোলো না।
+
+ঠিক এই স্কিমা অনুযায়ী JSON দাও (কী-গুলো ঠিক এভাবেই থাকবে):
+{
+ "achievements":[{"text":"", "category": "Work|Business|Study|Personal|Health|Skill|Other|null"}],
+ "plans":[{"text":"", "plannedDate":"YYYY-MM-DD|null"}],
+ "quotes":[{"text":""}],
+ "ideas":[{"text":"", "category":"Business|Product|Content|Personal|Creative|Other|null"}],
+ "lessons":[{"text":"", "context":""}],
+ "challenges":[{"text":""}],
+ "people":[{"name":""}],
+ "places":[{"name":""}],
+ "events":[{"title":"", "date":"YYYY-MM-DD|null", "relatedPeople":[""], "relatedPlace":""}],
+ "moments":[{"text":"", "reason":""}]
+}
+
+ডায়েরি এন্ট্রির তারিখ: ${entry.date}
+ডায়েরি এন্ট্রি:
+"""${(entry.content||'').slice(0,8000)}"""`;
+}
+
+function parseLifeExtractionJSON(raw){
+  if(!raw) return null;
+  let t = raw.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  const first = t.indexOf('{'), last = t.lastIndexOf('}');
+  if(first===-1 || last===-1) return null;
+  t = t.slice(first, last+1);
+  try{
+    const obj = JSON.parse(t);
+    const arr = k=>Array.isArray(obj[k]) ? obj[k] : [];
+    return {
+      achievements: arr('achievements'), plans: arr('plans'), quotes: arr('quotes'),
+      ideas: arr('ideas'), lessons: arr('lessons'), challenges: arr('challenges'),
+      people: arr('people'), places: arr('places'), events: arr('events'), moments: arr('moments')
+    };
+  }catch(e){ console.error('life extraction JSON parse failed', e); return null; }
+}
+
+// De-dupe an array of {text:...} items by normalized text — mirrors the
+// "prevent obvious duplicates within the same journal" requirement.
+function dedupeByText(arr){
+  const seen = new Set(), out = [];
+  (arr||[]).forEach(x=>{
+    const key = ((x && x.text) || '').trim().toLowerCase();
+    if(!key || seen.has(key)) return;
+    seen.add(key); out.push(x);
+  });
+  return out;
+}
+function normalizeName(n){ return (n||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function isISODate(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
+
+// Deletes this journal's existing derived docs in `colName` and writes the
+// fresh set — this is the "update, don't append" behavior Module 06 requires
+// when a journal is edited and re-analyzed.
+async function replaceSimpleType(batch, colName, entry, items){
+  const col = lifeColRef(colName);
+  const existing = await col.where('sourceEntryId','==', entry.id).get();
+  existing.forEach(d=>batch.delete(d.ref));
+  items.forEach(item=>{
+    const ref = col.doc();
+    batch.set(ref, {
+      ...item, favorite: false,
+      sourceEntryId: entry.id, sourceDate: entry.date,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    });
+  });
+}
+// Plans get special handling: re-analysis must NEVER silently flip a plan to
+// "Completed" — status (and any user edits/favorite) survive across re-extraction
+// for a plan whose text still matches, by normalized text within this journal.
+async function replacePlans(batch, entry, rawItems){
+  const col = lifeColRef('plans');
+  const existing = await col.where('sourceEntryId','==', entry.id).get();
+  const priorByText = {};
+  existing.forEach(d=>{ priorByText[(d.data().text||'').trim().toLowerCase()] = d.data(); });
+  existing.forEach(d=>batch.delete(d.ref));
+  dedupeByText(rawItems).forEach(x=>{
+    const text = (x.text||'').trim(); if(!text) return;
+    const prior = priorByText[text.toLowerCase()];
+    const ref = col.doc();
+    batch.set(ref, {
+      text,
+      plannedDate: prior ? (prior.plannedDate||'') : (isISODate(x.plannedDate) ? x.plannedDate : ''),
+      status: prior ? (prior.status||'Planned') : 'Planned',
+      favorite: prior ? !!prior.favorite : false,
+      sourceEntryId: entry.id, sourceDate: entry.date,
+      createdAt: prior ? (prior.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  });
+}
+async function replaceEvents(batch, entry, rawItems){
+  const col = lifeColRef('events');
+  const existing = await col.where('sourceEntryId','==', entry.id).get();
+  existing.forEach(d=>batch.delete(d.ref));
+  const seen = new Set();
+  (rawItems||[]).forEach(x=>{
+    const title = ((x && x.title) || '').trim(); if(!title) return;
+    const key = title.toLowerCase(); if(seen.has(key)) return; seen.add(key);
+    const ref = col.doc();
+    batch.set(ref, {
+      title,
+      date: isISODate(x.date) ? x.date : entry.date,
+      relatedPeople: Array.isArray(x.relatedPeople) ? x.relatedPeople.map(p=>(p||'').trim()).filter(Boolean).slice(0,10) : [],
+      relatedPlace: (x.relatedPlace||'').trim(),
+      sourceEntryId: entry.id, sourceDate: entry.date,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    });
+  });
+}
+// People/Places aggregate across journals. A mention here updates
+// first/lastMentioned + the source journal list; a journal that no longer
+// mentions a person (after an edit) is unlinked, and the entity is only
+// ever deleted once NO journal supports it anymore — never orphaned.
+async function mergeEntities(batch, colName, entry, names){
+  const col = lifeColRef(colName);
+  const current = state.life[colName] || [];
+  const uniqueNames = [...new Set((names||[]).map(n=>(n||'').trim()).filter(Boolean))];
+  const stillMentioned = new Set(uniqueNames.map(normalizeName));
+
+  current.forEach(item=>{
+    const wasLinked = (item.sourceEntryIds||[]).includes(entry.id);
+    if(wasLinked && !stillMentioned.has(normalizeName(item.name))){
+      const ids = (item.sourceEntryIds||[]).filter(x=>x!==entry.id);
+      const ref = col.doc(item.id);
+      if(ids.length===0) batch.delete(ref);
+      else batch.set(ref, {sourceEntryIds:ids, mentionCount:ids.length, updatedAt:new Date().toISOString()}, {merge:true});
+    }
+  });
+
+  uniqueNames.forEach(name=>{
+    const norm = normalizeName(name);
+    const match = current.find(p=>normalizeName(p.name)===norm);
+    if(match){
+      const ids = new Set(match.sourceEntryIds||[]);
+      ids.add(entry.id);
+      const first = match.firstMentioned ? (match.firstMentioned < entry.date ? match.firstMentioned : entry.date) : entry.date;
+      const last = match.lastMentioned ? (match.lastMentioned > entry.date ? match.lastMentioned : entry.date) : entry.date;
+      batch.set(col.doc(match.id), {
+        firstMentioned:first, lastMentioned:last,
+        sourceEntryIds:Array.from(ids), mentionCount:ids.size,
+        updatedAt:new Date().toISOString()
+      }, {merge:true});
+    } else {
+      batch.set(col.doc(), {
+        name, firstMentioned:entry.date, lastMentioned:entry.date,
+        sourceEntryIds:[entry.id], mentionCount:1, notes:'',
+        createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+      });
+    }
+  });
+}
+async function applyLifeExtraction(entry, parsed){
+  const batch = db.batch();
+  await replaceSimpleType(batch, 'achievements', entry, dedupeByText(parsed.achievements).map(x=>({
+    text:(x.text||'').trim(), category: LIFE_TYPES.achievements.categories.includes(x.category) ? x.category : null
+  })).filter(x=>x.text));
+  await replaceSimpleType(batch, 'quotes', entry, dedupeByText(parsed.quotes).map(x=>({text:(x.text||'').trim()})).filter(x=>x.text));
+  await replaceSimpleType(batch, 'lessons', entry, dedupeByText(parsed.lessons).map(x=>({text:(x.text||'').trim(), context:(x.context||'').trim()})).filter(x=>x.text));
+  await replaceSimpleType(batch, 'challenges', entry, dedupeByText(parsed.challenges).map(x=>({text:(x.text||'').trim()})).filter(x=>x.text));
+  await replaceSimpleType(batch, 'moments', entry, dedupeByText(parsed.moments).map(x=>({text:(x.text||'').trim(), reason:(x.reason||'').trim()})).filter(x=>x.text));
+  await replaceSimpleType(batch, 'ideas', entry, dedupeByText(parsed.ideas).map(x=>({
+    text:(x.text||'').trim(), category: LIFE_TYPES.ideas.categories.includes(x.category) ? x.category : null
+  })).filter(x=>x.text));
+  await replacePlans(batch, entry, parsed.plans);
+  await replaceEvents(batch, entry, parsed.events);
+  await mergeEntities(batch, 'people', entry, (parsed.people||[]).map(p=>p && p.name));
+  await mergeEntities(batch, 'places', entry, (parsed.places||[]).map(p=>p && p.name));
+  await batch.commit();
+}
+async function runLifeExtraction(entry){
+  if(!state.user || !entry || !entry.id) return;
+  if(!state.settings || state.settings.aiExtraction===false) return; // user opted out in Settings
+  if(!state.settings.apiKey) return; // no Gemini key — nothing reliable to extract into Life Organization
+  try{
+    const raw = await callGemini(buildLifeExtractionPrompt(entry));
+    const parsed = parseLifeExtractionJSON(raw);
+    if(!parsed) return; // garbled/failed AI call — never wipe existing derived data
+    await applyLifeExtraction(entry, parsed);
+  }catch(err){ console.error('runLifeExtraction failed', err); }
+}
+// Called when a journal is permanently deleted — its derived data must never
+// become orphaned, so every simple item is removed and every Person/Place
+// loses this journal's mention (and is itself removed once no journal backs it).
+async function cascadeDeleteLifeData(entryId){
+  try{
+    const batch = db.batch();
+    const simple = ['achievements','plans','quotes','ideas','lessons','challenges','moments','events'];
+    for(const name of simple){
+      const snap = await lifeColRef(name).where('sourceEntryId','==', entryId).get();
+      snap.forEach(d=>batch.delete(d.ref));
+    }
+    ['people','places'].forEach(name=>{
+      (state.life[name]||[]).forEach(item=>{
+        if((item.sourceEntryIds||[]).includes(entryId)){
+          const ids = item.sourceEntryIds.filter(x=>x!==entryId);
+          const ref = lifeColRef(name).doc(item.id);
+          if(ids.length===0) batch.delete(ref);
+          else batch.set(ref, {sourceEntryIds:ids, mentionCount:ids.length, updatedAt:new Date().toISOString()}, {merge:true});
+        }
+      });
+    });
+    await batch.commit();
+  }catch(err){ console.error('cascadeDeleteLifeData failed', err); }
+}
+
 /* ---------------- STATE ---------------- */
 let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null,
   filters:{mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'},
   calMonth:new Date(), calendarShowArchived:false,
-  draftRecoveryResolved:false, appliedDraftData:null };
+  draftRecoveryResolved:false, appliedDraftData:null,
+  // Module 06: Life Organization — derived, source-linked data built from journals via AI.
+  life:{achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]},
+  lifeTab:'achievements', memoryTab:'people', lifeFilters:{} };
 
 /* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
 function draftDocRef(){ return userDocRef().collection('meta').doc('draft'); }
@@ -1089,11 +1398,13 @@ function boot(){
   auth.onAuthStateChanged(function(user){
     if(unsubEntries){ unsubEntries(); unsubEntries=null; }
     if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
+    detachLifeListeners();
 
     if(user){
       state.user = {uid:user.uid, name:user.displayName||'You', email:user.email||'', photoURL:user.photoURL||''};
       state.entries = [];
       state.settings = null;
+      state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
       syncProfileUI();
 
       const ref = userDocRef();
@@ -1108,12 +1419,14 @@ function boot(){
 
       attachUserDocListener();
       attachEntriesListener();
+      attachLifeListeners();
       seedDraftFromRemoteIfNeeded();
       showApp();
     } else {
       state.user = null;
       state.entries = [];
       state.settings = null;
+      state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
       showAuth();
     }
   });
@@ -1312,6 +1625,7 @@ function render(){
     search: renderSearch,
     archive: renderArchive,
     insights: renderInsights,
+    life: renderLifeHub,
     settings: renderSettings
   };
   main.innerHTML = (views[state.view] || renderDashboard)();
@@ -1389,9 +1703,18 @@ function renderDashboard(){
   const todayEntry = activeEntries.find(e=>e.date===today);
   const totalWords = activeEntries.reduce((s,e)=>s + (e.content||'').trim().split(/\s+/).filter(Boolean).length, 0);
   const todayWords = todayEntry ? (todayEntry.content||'').trim().split(/\s+/).filter(Boolean).length : 0;
-  const recentPlans = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).plans.map(p=>({p,date:e.date,id:e.id}))).slice(0,3);
-  const recentAch = activeEntries.slice().reverse().flatMap(e=>extractInformation(e.content).achievements.map(a=>({a,date:e.date,id:e.id}))).slice(0,3);
-  const todayInfo = todayEntry ? extractInformation(todayEntry.content) : {achievements:[], plans:[], quotes:[]};
+  // Module 06: Recent Activity + Daily Overview now read from the structured
+  // Life Organization libraries (AI-extracted, source-linked) rather than the
+  // old keyword heuristic — that heuristic remains only as a display fallback
+  // for local (no API key) daily summaries elsewhere.
+  const recentPlans = (state.life.plans||[]).slice().sort((a,b)=>(b.sourceDate||'').localeCompare(a.sourceDate||'')).slice(0,3)
+    .map(x=>({p:x.text, date:x.sourceDate, id:x.sourceEntryId}));
+  const recentAch = (state.life.achievements||[]).slice().sort((a,b)=>(b.sourceDate||'').localeCompare(a.sourceDate||'')).slice(0,3)
+    .map(x=>({a:x.text, date:x.sourceDate, id:x.sourceEntryId}));
+  const todayInfo = {
+    achievements: todayEntry ? (state.life.achievements||[]).filter(x=>x.sourceEntryId===todayEntry.id) : [],
+    plans: todayEntry ? (state.life.plans||[]).filter(x=>x.sourceEntryId===todayEntry.id) : []
+  };
   const streak = getStreak();
 
   // Short, calm supporting line under the date — only when it has something
@@ -1823,6 +2146,9 @@ async function saveDraft(){
     state.draftRecoveryResolved = true;
     state.appliedDraftData = null;
     toast('জার্নাল সংরক্ষিত হয়েছে।');
+    // Module 06: re-run structured AI extraction in the background so the
+    // journal (source of truth) is never blocked on the Life Organization update.
+    runLifeExtraction({id:d.id, content:d.content, date:d.date}).catch(err=>console.error(err));
     go('dashboard');
   }catch(err){
     console.error(err);
@@ -1833,6 +2159,7 @@ function deleteEntry(id){
   confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে। এটি Archive থেকে আলাদা — একবার মুছে ফেললে ফেরানো যাবে না।', async ()=>{
     try{
       await entriesColRef().doc(id).delete();
+      cascadeDeleteLifeData(id); // never leave orphaned Life Organization items behind
       toast('এন্ট্রি মুছে ফেলা হয়েছে।');
       go('timeline');
     }catch(err){
@@ -2089,6 +2416,213 @@ function openDayEntries(iso){
 }
 function closeDayEntries(){ document.getElementById('dayEntriesModal').classList.remove('show'); }
 
+/* ---------------- MODULE 06: LIFE ORGANIZATION — UI ----------------
+   Life
+   ├── Achievements / Plans / Quotes / Ideas / Lessons / Challenges  (renderLifeList)
+   └── Memories
+       ├── People / Places   (renderEntityLibrary — aggregate, cross-journal)
+       └── Events / Important Moments   (renderLifeList)
+   Every item card links back to its source journal (go('write', sourceEntryId)) —
+   the journal is always reachable and always the source of truth. ---------------- */
+function setLifeTab(key){ state.lifeTab = key; render(); }
+function setMemoryTab(key){ state.memoryTab = key; render(); }
+function getLifeFilter(type){
+  if(!state.lifeFilters[type]) state.lifeFilters[type] = {search:'', category:'', status:'', favOnly:false};
+  return state.lifeFilters[type];
+}
+function setLifeFilter(type, field, val){ getLifeFilter(type)[field] = val; render(); }
+function clearLifeFilter(type){ state.lifeFilters[type] = {search:'', category:'', status:'', favOnly:false}; render(); }
+function isLifeFiltered(f){ return !!(f.search || f.category || f.status || f.favOnly); }
+
+function renderLifeHub(){
+  const tab = state.lifeTab || 'achievements';
+  return `
+    <div class="page-head">
+      <div><h1>Life</h1><div class="sub">তোমার জার্নাল থেকে AI যা খুঁজে পেয়েছে — সবই মূল জার্নালের সাথে যুক্ত, কখনো এর বাইরের কিছু বানানো হয় না।</div></div>
+      ${!(state.settings && state.settings.apiKey) ? `<button class="btn btn-sm btn-ghost" onclick="go('settings')">⚙️ Gemini API key লাগবে</button>` : ''}
+    </div>
+    <div class="filter-row" style="margin-bottom:14px;">
+      ${LIFE_TABS.map(t=>`<button class="btn btn-sm ${tab===t.key?'btn-primary':'btn-ghost'}" onclick="setLifeTab('${t.key}')">${t.icon} ${t.label}</button>`).join('')}
+    </div>
+    ${tab==='memories' ? renderMemoriesSection() : renderLifeList(tab)}
+  `;
+}
+function renderMemoriesSection(){
+  const tab = state.memoryTab || 'people';
+  return `
+    <div class="filter-row" style="margin-bottom:14px;">
+      ${MEMORY_TABS.map(t=>`<button class="btn btn-sm ${tab===t.key?'btn-accent':'btn-ghost'}" onclick="setMemoryTab('${t.key}')">${t.icon} ${t.label}</button>`).join('')}
+    </div>
+    ${tab==='people' ? renderEntityLibrary('people') : tab==='places' ? renderEntityLibrary('places') : renderLifeList(tab)}
+  `;
+}
+
+function renderLifeList(type){
+  const cfg = LIFE_TYPES[type] || {};
+  const f = getLifeFilter(type);
+  let items = (state.life[type]||[]).slice();
+  if(f.search){ const q=f.search.toLowerCase(); items = items.filter(x=>((x.text||x.title||'')+' '+(x.context||'')+' '+(x.reason||'')).toLowerCase().includes(q)); }
+  if(f.category) items = items.filter(x=>x.category===f.category);
+  if(f.status) items = items.filter(x=>x.status===f.status);
+  if(f.favOnly) items = items.filter(x=>!!x.favorite);
+  items.sort((a,b)=>{
+    const ad = (type==='plans'&&a.plannedDate) || (type==='events'&&a.date) || a.sourceDate || '';
+    const bd = (type==='plans'&&b.plannedDate) || (type==='events'&&b.date) || b.sourceDate || '';
+    return bd.localeCompare(ad) || (b.createdAt||'').localeCompare(a.createdAt||'');
+  });
+
+  return `
+    <div class="filter-row">
+      <input type="text" placeholder="খুঁজুন…" value="${escapeHtml(f.search)}" oninput="setLifeFilter('${type}','search',this.value)" style="min-width:160px;">
+      ${cfg.categories ? `<select onchange="setLifeFilter('${type}','category',this.value)">
+        <option value="">All categories</option>
+        ${cfg.categories.map(c=>`<option value="${c}" ${f.category===c?'selected':''}>${c}</option>`).join('')}
+      </select>` : ''}
+      ${cfg.statuses ? `<select onchange="setLifeFilter('${type}','status',this.value)">
+        <option value="">All statuses</option>
+        ${cfg.statuses.map(c=>`<option value="${c}" ${f.status===c?'selected':''}>${c}</option>`).join('')}
+      </select>` : ''}
+      ${cfg.hasFavorite ? `<label class="pill" style="cursor:pointer;"><input type="checkbox" ${f.favOnly?'checked':''} onchange="setLifeFilter('${type}','favOnly',this.checked)" style="margin:0;"> Favorites</label>` : ''}
+      ${isLifeFiltered(f) ? `<button class="btn btn-ghost btn-sm" onclick="clearLifeFilter('${type}')">Clear filters</button>` : ''}
+    </div>
+    <div class="card">
+      ${items.length ? items.map(x=>renderLifeCard(type,x,cfg)).join('') : `<div class="empty">এখনো কিছু পাওয়া যায়নি। যত বেশি লিখবে, তত বেশি এখানে যুক্ত হবে।</div>`}
+    </div>
+  `;
+}
+function renderLifeCard(type, item, cfg){
+  const dateForDisplay = type==='plans' ? (item.plannedDate||'') : type==='events' ? (item.date||'') : (item.sourceDate||'');
+  const mainText = type==='events' ? item.title : item.text;
+  return `
+    <div class="entry-row" style="cursor:default;">
+      <div class="entry-date">
+        ${dateForDisplay ? `<div class="d">${new Date(dateForDisplay+'T00:00:00').getDate()}</div><div class="m">${fmtDate(dateForDisplay,{month:'short'})}</div>` : `<div class="m" style="padding-top:8px;">—</div>`}
+      </div>
+      <div class="entry-body">
+        <h3>${escapeHtml(mainText||'')} ${item.favorite?'<span class="entry-star">★</span>':''}</h3>
+        ${item.context ? `<p>${escapeHtml(item.context)}</p>` : ''}
+        ${item.reason ? `<p>${escapeHtml(item.reason)}</p>` : ''}
+        ${type==='events' && (item.relatedPeople||[]).length ? `<p style="margin:0 0 6px;color:var(--ink-faint);font-size:12.5px;">👥 ${item.relatedPeople.map(escapeHtml).join(', ')}</p>` : ''}
+        ${type==='events' && item.relatedPlace ? `<p style="margin:0 0 6px;color:var(--ink-faint);font-size:12.5px;">📍 ${escapeHtml(item.relatedPlace)}</p>` : ''}
+        <div class="entry-meta">
+          ${item.category ? `<span class="tag">${escapeHtml(item.category)}</span>` : ''}
+          ${item.status ? `<span class="pill">${escapeHtml(item.status)}</span>` : ''}
+          ${type==='plans' && item.plannedDate ? `<span class="intensity-tag">Planned: ${fmtDate(item.plannedDate)}</span>` : ''}
+          ${item.sourceEntryId ? `<span class="tag" style="cursor:pointer;" onclick="go('write','${item.sourceEntryId}')">📓 Source · ${item.sourceDate?fmtDate(item.sourceDate):''}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-direction:column;flex:none;">
+        ${cfg && cfg.hasFavorite ? `<button class="btn btn-sm" onclick="toggleLifeFavorite('${type}','${item.id}')">${item.favorite?'★':'☆'}</button>` : ''}
+        <button class="btn btn-sm" onclick="openLifeEdit('${type}','${item.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteLifeItem('${type}','${item.id}')">Delete</button>
+      </div>
+    </div>
+  `;
+}
+// People/Places aggregate across journals, so they get their own list view —
+// each entity links out to every journal that mentions it.
+function renderEntityLibrary(type){
+  const f = getLifeFilter(type);
+  let items = (state.life[type]||[]).slice();
+  if(f.search){ const q=f.search.toLowerCase(); items = items.filter(x=>(x.name||'').toLowerCase().includes(q)); }
+  items.sort((a,b)=>(b.lastMentioned||'').localeCompare(a.lastMentioned||''));
+  const label = type==='people' ? 'কোনো ব্যক্তি' : 'কোনো স্থান';
+  return `
+    <div class="filter-row">
+      <input type="text" placeholder="নাম খুঁজুন…" value="${escapeHtml(f.search)}" oninput="setLifeFilter('${type}','search',this.value)" style="min-width:160px;">
+      ${f.search ? `<button class="btn btn-ghost btn-sm" onclick="clearLifeFilter('${type}')">Clear filters</button>` : ''}
+    </div>
+    <div class="card">
+      ${items.length ? items.map(p=>`
+        <div class="entry-row" style="cursor:default;align-items:flex-start;">
+          <div class="entry-date"><div class="d" style="font-size:20px;">${type==='people'?'🧑':'📍'}</div></div>
+          <div class="entry-body">
+            <h3>${escapeHtml(p.name)}</h3>
+            <div class="entry-meta">
+              <span class="tag">First: ${p.firstMentioned?fmtDate(p.firstMentioned):'—'}</span>
+              <span class="tag">Latest: ${p.lastMentioned?fmtDate(p.lastMentioned):'—'}</span>
+              <span class="pill">${(p.sourceEntryIds||[]).length} journal${(p.sourceEntryIds||[]).length===1?'':'s'}</span>
+            </div>
+            ${(p.sourceEntryIds||[]).length ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">
+              ${(p.sourceEntryIds||[]).slice(0,10).map(id=>{
+                const e = state.entries.find(en=>en.id===id);
+                return e ? `<span class="tag" style="cursor:pointer;" onclick="go('write','${id}')">📓 ${fmtDate(e.date)}</span>` : '';
+              }).join('')}
+            </div>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;flex-direction:column;flex:none;">
+            <button class="btn btn-sm btn-danger" onclick="deleteLifeItem('${type}','${p.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : `<div class="empty">এখনো ${label} শনাক্ত হয়নি।</div>`}
+    </div>
+  `;
+}
+
+function toggleLifeFavorite(type, id){
+  const item = (state.life[type]||[]).find(x=>x.id===id);
+  if(!item) return;
+  lifeColRef(type).doc(id).set({favorite: !item.favorite, updatedAt:new Date().toISOString()}, {merge:true})
+    .catch(err=>{ console.error(err); toast('আপডেট ব্যর্থ হয়েছে: ' + err.message); });
+}
+function deleteLifeItem(type, id){
+  confirmAction('এই আইটেমটি মুছে ফেলবেন?', 'এটি শুধু এই Life আইটেমটি মুছবে — তোমার মূল জার্নাল এন্ট্রি অপরিবর্তিত ও নিরাপদে থাকবে।', async ()=>{
+    try{
+      await lifeColRef(type).doc(id).delete();
+      toast('মুছে ফেলা হয়েছে।');
+    }catch(err){ console.error(err); toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message); }
+  }, 'মুছে ফেলুন');
+}
+
+let __lifeEditCtx = null;
+function openLifeEdit(type, id){
+  const item = (state.life[type]||[]).find(x=>x.id===id);
+  if(!item) return;
+  __lifeEditCtx = {type, id};
+  const cfg = LIFE_TYPES[type] || {};
+  const mainField = type==='events' ? 'title' : 'text';
+  let fields = `<div class="field"><label>${type==='events'?'Title':'Text'}</label><textarea id="lifeEditMain" rows="3">${escapeHtml(item[mainField]||'')}</textarea></div>`;
+  if(cfg.categories){
+    fields += `<div class="field"><label>Category</label><select id="lifeEditCategory">
+      <option value="">—</option>
+      ${cfg.categories.map(c=>`<option value="${c}" ${item.category===c?'selected':''}>${c}</option>`).join('')}
+    </select></div>`;
+  }
+  if(cfg.statuses){
+    fields += `<div class="field"><label>Status</label><select id="lifeEditStatus">
+      ${cfg.statuses.map(c=>`<option value="${c}" ${item.status===c?'selected':''}>${c}</option>`).join('')}
+    </select></div>`;
+  }
+  if(type==='plans') fields += `<div class="field"><label>Planned date</label><input type="date" id="lifeEditPlannedDate" value="${item.plannedDate||''}"></div>`;
+  if(type==='lessons') fields += `<div class="field"><label>Context</label><input type="text" id="lifeEditContext" value="${escapeHtml(item.context||'')}"></div>`;
+  if(type==='moments') fields += `<div class="field"><label>Reason</label><input type="text" id="lifeEditReason" value="${escapeHtml(item.reason||'')}"></div>`;
+  if(type==='events') fields += `<div class="field"><label>Date</label><input type="date" id="lifeEditDate" value="${item.date||''}"></div>`;
+  document.getElementById('lifeEditFields').innerHTML = fields;
+  document.getElementById('lifeEditModal').classList.add('show');
+}
+function closeLifeEdit(){ document.getElementById('lifeEditModal').classList.remove('show'); __lifeEditCtx = null; }
+async function saveLifeEdit(){
+  if(!__lifeEditCtx) return;
+  const {type, id} = __lifeEditCtx;
+  const cfg = LIFE_TYPES[type] || {};
+  const mainField = type==='events' ? 'title' : 'text';
+  const mainEl = document.getElementById('lifeEditMain');
+  const mainVal = (mainEl ? mainEl.value : '').trim();
+  if(!mainVal){ toast('খালি রাখা যাবে না।'); return; }
+  const data = {[mainField]: mainVal, updatedAt: new Date().toISOString()};
+  if(cfg.categories){ const el=document.getElementById('lifeEditCategory'); if(el) data.category = el.value || null; }
+  if(cfg.statuses){ const el=document.getElementById('lifeEditStatus'); if(el) data.status = el.value; }
+  if(type==='plans'){ const el=document.getElementById('lifeEditPlannedDate'); if(el) data.plannedDate = el.value || ''; }
+  if(type==='lessons'){ const el=document.getElementById('lifeEditContext'); if(el) data.context = el.value || ''; }
+  if(type==='moments'){ const el=document.getElementById('lifeEditReason'); if(el) data.reason = el.value || ''; }
+  if(type==='events'){ const el=document.getElementById('lifeEditDate'); if(el) data.date = el.value || ''; }
+  try{
+    await lifeColRef(type).doc(id).set(data, {merge:true});
+    toast('সংরক্ষণ হয়েছে।');
+    closeLifeEdit();
+  }catch(err){ console.error(err); toast('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message); }
+}
+
 /* ---------------- SEARCH (Module 21 — basic) ---------------- */
 function renderSearch(){
   return `
@@ -2270,6 +2804,10 @@ function renderSettings(){
 
     <div class="settings-group card">
       <h3>AI Configuration</h3>
+      <div class="settings-row">
+        <div><div class="label">AI Life Extraction</div><div class="desc">জার্নাল থেকে Achievement, Plan, Quote, Idea, Lesson, Challenge, Person, Place, Event ও Important Moment স্বয়ংক্রিয়ভাবে খুঁজে "Life" লাইব্রেরিতে যুক্ত করবে (Gemini API key প্রয়োজন)।</div></div>
+        <label class="switch"><input type="checkbox" ${s.aiExtraction!==false?'checked':''} onchange="saveSettingField('aiExtraction',this.checked)"><span class="track"></span></label>
+      </div>
       <div class="field">
         <label>Gemini API Key</label>
         <input type="password" placeholder="তোমার Gemini API key এখানে বসাও" value="${escapeHtml(s.apiKey)}" onchange="saveSettingField('apiKey',this.value)">
@@ -2303,11 +2841,15 @@ function saveDashboardSection(key, val){
 function wipeAll(){
   confirmAction('সব ডেটা মুছে ফেলবেন?', 'এই অ্যাকাউন্টের সব জার্নাল এন্ট্রি ও সেটিংস Firebase থেকে স্থায়ীভাবে মুছে যাবে। এটি ফেরানো যাবে না।', async ()=>{
     try{
-      const snap = await entriesColRef().get();
-      const batch = db.batch();
-      snap.docs.forEach(d=>batch.delete(d.ref));
-      batch.delete(userDocRef());
-      await batch.commit();
+      const colNames = ['entries', ...LIFE_COLLECTIONS];
+      for(const name of colNames){
+        const snap = await userDocRef().collection(name).get();
+        if(snap.empty) continue;
+        const batch = db.batch();
+        snap.docs.forEach(d=>batch.delete(d.ref));
+        await batch.commit();
+      }
+      await userDocRef().delete();
       toast('ডেটা মুছে ফেলা হয়েছে।');
       auth.signOut();
     }catch(err){
