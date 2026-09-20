@@ -531,6 +531,47 @@ input,textarea,select{font-family:var(--font-sans);}
   padding-top:16px;border-top:1px solid var(--rule);flex-wrap:wrap;gap:10px;}
 .word-count{font-size:12.5px;color:var(--ink-faint);}
 
+/* ---------- Module 09: Media (images/voice) in the journal editor ---------- */
+.media-toolbar{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+.media-toolbar input[type=file]{display:none;}
+.media-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:12px;}
+.media-thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--rule);
+  background:var(--paper-dim);cursor:pointer;}
+.media-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.media-thumb .rm{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;
+  background:rgba(20,18,12,.55);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;line-height:1;}
+.media-thumb .state{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(20,18,12,.4);color:#fff;font-size:11px;flex-direction:column;gap:4px;text-align:center;padding:4px;}
+.media-thumb .state.fail{background:rgba(166,80,59,.72);}
+.media-thumb .cap{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(20,18,12,.7));
+  color:#fff;font-size:10.5px;padding:10px 6px 4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;}
+.voice-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.voice-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;
+  background:var(--paper-dim);flex-wrap:wrap;}
+.voice-row .dur{font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;min-width:44px;}
+.voice-row audio{flex:1;min-width:160px;height:32px;}
+.voice-row .vstate{font-size:11px;color:var(--ink-faint);}
+.voice-row .vstate.fail{color:var(--rust);}
+.voice-transcript{margin-top:6px;width:100%;font-size:12.5px;color:var(--ink-soft);background:var(--paper-card);
+  border:1px dashed var(--rule);border-radius:8px;padding:8px 10px;line-height:1.55;}
+.voice-transcript textarea{width:100%;border:none;background:none;font-family:inherit;font-size:inherit;color:inherit;
+  resize:vertical;min-height:44px;}
+.recording-bar{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;
+  background:var(--rust-soft);border:1px solid var(--rust);margin-top:12px;flex-wrap:wrap;}
+.rec-dot{width:9px;height:9px;border-radius:50%;background:var(--rust);flex:none;animation:recpulse 1.1s infinite;}
+@keyframes recpulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.rec-time{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);}
+.lightbox{position:fixed;inset:0;background:rgba(10,9,6,.88);z-index:90;display:none;align-items:center;
+  justify-content:center;padding:24px;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:100%;max-height:85vh;border-radius:8px;object-fit:contain;}
+.lightbox .lb-close{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.14);color:#fff;font-size:18px;}
+.lightbox .lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;
+  border:none;background:rgba(255,255,255,.14);color:#fff;font-size:20px;}
+.lightbox .lb-prev{left:16px;} .lightbox .lb-next{right:16px;}
+.lightbox .lb-cap{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#fff;font-size:13px;opacity:.85;}
+
 .ai-box{border:1px dashed var(--rule);border-radius:9px;padding:14px 16px;margin-top:18px;background:var(--paper-dim);}
 .ai-box .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .ai-box .head span{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
@@ -826,6 +867,15 @@ body.write-mode .main{padding-top:148px;}
 
 <div class="toast" id="toast"></div>
 
+<!-- ============ MODULE 09: image lightbox (full-screen preview + nav) ============ -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this) closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">×</button>
+  <button class="lb-nav lb-prev" onclick="lightboxNav(-1)">‹</button>
+  <img id="lightboxImg" src="" alt="">
+  <button class="lb-nav lb-next" onclick="lightboxNav(1)">›</button>
+  <div class="lb-cap" id="lightboxCap"></div>
+</div>
+
 <div class="modal-backdrop" id="confirmModal">
   <div class="modal">
     <h3 id="confirmTitle">আপনি কি নিশ্চিত?</h3>
@@ -833,6 +883,22 @@ body.write-mode .main{padding-top:148px;}
     <div class="row">
       <button class="btn" onclick="closeConfirm()">বাতিল</button>
       <button class="btn btn-danger" id="confirmBtn">নিশ্চিত করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODULE 09: type-to-confirm modal for destructive actions ============ -->
+<div class="modal-backdrop" id="typeConfirmModal">
+  <div class="modal">
+    <h3 id="typeConfirmTitle">Delete all JournalOS data?</h3>
+    <p id="typeConfirmBody">This action cannot be undone.</p>
+    <div class="field" style="margin-bottom:14px;">
+      <label id="typeConfirmLabel">Type DELETE to confirm</label>
+      <input id="typeConfirmInput" placeholder="DELETE" oninput="document.getElementById('typeConfirmBtn').disabled = (this.value !== 'DELETE');">
+    </div>
+    <div class="row">
+      <button class="btn" onclick="closeTypeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="typeConfirmBtn" disabled>Delete Everything</button>
     </div>
   </div>
 </div>
@@ -910,6 +976,12 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 const THEME_CACHE_KEY = 'journalos_theme_cache'; // local-only, avoids a flash of wrong theme before Firebase responds
 const DEFAULT_SETTINGS = {theme:'light', apiKey:'', dailyReminder:true, weeklySummary:true, aiExtraction:true,
+  // Module 09 §12/§37: schedule for the two reminder types. Times are
+  // "HH:MM" in the user's local time (browser timezone) — never UTC.
+  dailyReminderTime: '20:00',
+  weeklyReminderDay: 0, // 0=Sunday .. 6=Saturday
+  weeklyReminderTime: '21:00',
+  aiInsightNotify: true,
   // Module 04: which Dashboard sections the user wants to see, synced through
   // the same Firestore user-settings doc as every other preference (not
   // localStorage-only) so it follows the user across devices.
@@ -928,6 +1000,100 @@ function entriesColRef(){ return userDocRef().collection('entries'); }
 // "moments" is the Firestore collection name for the Important Moments library.
 const LIFE_COLLECTIONS = ['achievements','plans','quotes','ideas','lessons','challenges','moments','events','people','places'];
 function lifeColRef(name){ return userDocRef().collection(name); }
+
+// ================================================================
+// MODULE 09 — Media (images/audio/video) data layer
+// ----------------------------------------------------------------
+// users/{uid}/media/{mediaId} — one doc per attachment, kept in its own
+// collection (not inside the journal doc) so journal documents stay
+// small, per Module 09 §3/§11. Each doc:
+//   { id, journalId, kind:'image'|'audio'|'video', storagePath,
+//     url, caption, duration, mimeType, size, transcript,
+//     transcriptStatus, createdAt }
+// TODO(storage): storagePath/url are placeholders until Firebase Storage
+// is wired in (see uploadMediaFile() below) — for now files live only as
+// in-memory object URLs (state.mediaBlobs) for local preview/playback and
+// are NOT durable across reloads. Nothing here is exported as a real
+// downloadable file yet; the export system links to media metadata only.
+function mediaColRef(){ return userDocRef().collection('media'); }
+let unsubMedia = null;
+// entryId -> [{...mediaDoc}] — local mirror of users/{uid}/media, grouped
+// by journalId for fast lookup while rendering the editor/gallery.
+function mediaForEntry(entryId){
+  return (state.media || []).filter(m=>m.journalId===entryId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+}
+function attachMediaListener(){
+  unsubMedia = mediaColRef().orderBy('createdAt','asc').onSnapshot(snap=>{
+    state.media = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    if(state.view==='write') render();
+    if(state.view==='settings' || state.view==='privacy') render();
+  }, err=>console.error('media listener error', err));
+}
+function detachMediaListener(){ if(unsubMedia){ unsubMedia(); unsubMedia=null; } }
+
+// TODO(storage): replace this stub with real Firebase Storage upload once
+// firebase-storage-compat is added and Storage security rules are deployed
+// (rules should scope reads/writes to request.auth.uid === the media
+// owner's uid, mirroring Firestore's per-user isolation). Expected shape:
+//   const path = `users/${uid}/media/${mediaId}.${ext}`;
+//   const task = storage.ref(path).put(file);
+//   ...track task.on('state_changed', progress, error, complete)...
+//   const url = await task.snapshot.ref.getDownloadURL();
+// Until then this only creates a local object URL so the editor UI is
+// fully testable; nothing is uploaded anywhere.
+function uploadMediaFile(file, kind){
+  return new Promise((resolve)=>{
+    const blobUrl = URL.createObjectURL(file);
+    state.mediaBlobs = state.mediaBlobs || {};
+    const localId = 'local_' + uid();
+    state.mediaBlobs[localId] = blobUrl;
+    // Simulated progress so the UI's upload-state machine (§5) is real and
+    // reusable once actual Storage upload replaces this stub.
+    resolve({localId, url: blobUrl, size: file.size, mimeType: file.type});
+  });
+}
+
+const MEDIA_LIMITS = {
+  imageMaxBytes: 8 * 1024 * 1024,      // 8MB per image, configurable (§31)
+  audioMaxBytes: 25 * 1024 * 1024,     // 25MB per recording
+  imageTypes: ['image/jpeg','image/png','image/webp','image/gif'],
+  audioTypes: ['audio/webm','audio/mp4','audio/mpeg','audio/wav','audio/ogg']
+};
+
+// Compress/resize an image client-side before upload (§5) — draws to a
+// canvas capped at 1600px on the long edge and re-encodes as JPEG/WebP.
+// Falls back to the original file if canvas processing fails for any
+// reason (e.g. unsupported type), per §5 "do not destroy the original
+// unnecessarily if the architecture requires it".
+function compressImage(file, maxDim=1600, quality=0.82){
+  return new Promise((resolve)=>{
+    try{
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = e=>{
+        img.onload = ()=>{
+          let {width, height} = img;
+          if(width>maxDim || height>maxDim){
+            const scale = maxDim / Math.max(width,height);
+            width = Math.round(width*scale); height = Math.round(height*scale);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(blob=>{
+            if(!blob){ resolve(file); return; }
+            resolve(new File([blob], file.name, {type: blob.type || file.type}));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = ()=>resolve(file);
+        img.src = e.target.result;
+      };
+      reader.onerror = ()=>resolve(file);
+      reader.readAsDataURL(file);
+    }catch(e){ resolve(file); }
+  });
+}
 
 let unsubEntries = null, unsubUserDoc = null, unsubLife = {}, unsubSearchIndex = null;
 
@@ -1399,6 +1565,27 @@ async function cascadeDeleteLifeData(entryId){
   }catch(err){ console.error('cascadeDeleteLifeData failed', err); }
 }
 
+// Module 09 §29: when a journal is permanently deleted, remove its media
+// metadata docs too (and, once real Storage is wired, the underlying
+// files at each doc's storagePath) so nothing orphaned is left behind.
+async function cascadeDeleteMedia(entryId){
+  try{
+    const items = mediaForEntry(entryId);
+    if(!items.length) return;
+    const batch = db.batch();
+    items.forEach(m=>{
+      batch.delete(mediaColRef().doc(m.id));
+      // TODO(storage): also delete storage.ref(m.storagePath) here once
+      // real Firebase Storage upload is wired in.
+      if(m.id && state.mediaBlobs && state.mediaBlobs[m.id]){
+        try{ URL.revokeObjectURL(state.mediaBlobs[m.id]); }catch(e){}
+        delete state.mediaBlobs[m.id];
+      }
+    });
+    await batch.commit();
+  }catch(err){ console.error('cascadeDeleteMedia failed', err); }
+}
+
 /* ================================================================
    MODULE 07 — TIME-BASED INSIGHTS & ANALYTICS
    ----------------------------------------------------------------
@@ -1712,6 +1899,7 @@ ${JSON.stringify(ctx).slice(0,10000)}`;
     periodStart: start?start.toISOString().slice(0,10):null, periodEnd: end?end.toISOString().slice(0,10):null,
     generatedAt: new Date().toISOString(), entryCountAtGeneration: entries.length
   });
+  notifyInsightReady(kind); // Module 09 §16 — foreground-only, best-effort
   return state.analysisCache[periodId];
 }
 
@@ -1785,7 +1973,11 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   indexBuild: {status:'idle', done:0, total:0},
   searchMode: 'text', searchQuery: '', searchResults: null,
   searchFilters: {dateRange:'any', dateFrom:'', dateTo:'', moods:[], favOnly:false, importantOnly:false, archived:false, types:[]},
-  askConversation: [], askBusy:false
+  askConversation: [], askBusy:false,
+  // Module 09: media (images/voice/video) — local mirror of users/{uid}/media/*
+  media: [], mediaBlobs: {}, mediaUpload: {}, // mediaUpload: localId -> {status, progress, error}
+  recording: null, // {stream, recorder, chunks, startedAt, timerHandle, elapsedSec, paused}
+  notifPermission: (typeof Notification!=='undefined' ? Notification.permission : 'unsupported')
 };
 
 /* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
@@ -1893,6 +2085,8 @@ function boot(){
     if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
     detachLifeListeners();
     detachSearchIndexListener();
+    detachMediaListener();
+    stopVoiceRecording(true);
 
     if(user){
       state.user = {uid:user.uid, name:user.displayName||'You', email:user.email||'', photoURL:user.photoURL||''};
@@ -1901,6 +2095,7 @@ function boot(){
       state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
       state.searchIndex = {};
       state.askConversation = [];
+      state.media = []; state.mediaBlobs = {}; state.mediaUpload = {};
       syncProfileUI();
 
       const ref = userDocRef();
@@ -1917,7 +2112,9 @@ function boot(){
       attachEntriesListener();
       attachLifeListeners();
       attachSearchIndexListener();
+      attachMediaListener();
       seedDraftFromRemoteIfNeeded();
+      scheduleReminderCheck();
       showApp();
     } else {
       state.user = null;
@@ -1926,6 +2123,7 @@ function boot(){
       state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
       state.searchIndex = {};
       state.askConversation = [];
+      state.media = []; state.mediaBlobs = {}; state.mediaUpload = {};
       showAuth();
     }
   });
@@ -1967,6 +2165,10 @@ function logout(){
 
 /* ---------------- NAV ---------------- */
 function go(view, param){
+  // Module 09: leaving the write view mid-recording must not leave the
+  // microphone stream open — stop (don't save, since we're navigating away
+  // without an explicit Stop) whenever the destination isn't the editor.
+  if(state.recording && view!=='write'){ cancelVoiceRecording(); }
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
   if(view==='write'){ state.draftRecoveryResolved = false; state.appliedDraftData = null; } // re-check for a recoverable draft on every fresh entry into the editor
@@ -2129,6 +2331,7 @@ function render(){
     life: renderLifeHub,
     settings: renderSettings
   };
+  views.privacy = renderPrivacy; // Module 09: Settings → Data & Privacy
   main.innerHTML = (views[state.view] || renderDashboard)();
   main.classList.remove('view-anim');
   requestAnimationFrame(()=>main.classList.add('view-anim'));
@@ -2387,7 +2590,16 @@ function refreshDashboardAISummary(){
 
 /* ---------------- DAILY JOURNAL / WRITE (Module 03) ---------------- */
 function renderWrite(){
-  const entry = state.editingId ? state.entries.find(e=>e.id===state.editingId) : null;
+  let entry = state.editingId ? state.entries.find(e=>e.id===state.editingId) : null;
+  // Module 09: right after saveDraft() re-enters the editor for a brand-new
+  // entry, the entries onSnapshot listener may not have caught up yet —
+  // without this fallback, entry would be null and the draft below would
+  // reset to blank, silently losing the id saveDraft just assigned (and
+  // with it, the ability to attach media). window.__draft already holds
+  // the correct just-saved data in that window, so prefer it.
+  if(!entry && window.__draft && window.__draft.id === state.editingId && state.editingId){
+    entry = window.__draft;
+  }
   const draft = entry ? {...entry, tags: entry.tags||[]} : {
     id: null, date: todayISO(), title:'', content:'', mood:'neutral', moodIntensity:5,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
@@ -2494,6 +2706,8 @@ function renderWrite(){
         <input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">
       </div>
 
+      ${renderMediaSection(draft)}
+
       <div class="ai-box">
         <div class="head">
           <span>✦ AI Daily Summary</span>
@@ -2584,6 +2798,346 @@ function rerenderTagWrap(){
   const wrap = document.getElementById('tagWrap');
   wrap.innerHTML = window.__draft.tags.map(t=>tagChip(t)).join('') + `<input id="tagInput" placeholder="tag লিখে Enter চাপো" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">`;
 }
+
+/* ================================================================
+   MODULE 09 — MEDIA: images + voice recording, inside the editor
+   Write First. Everything Else Second. — media stays optional and
+   never blocks saving the text journal (§32).
+   ================================================================ */
+function mediaSrc(m){
+  // Prefer the real Storage URL once wired in; fall back to the local
+  // object URL created by the upload stub for same-session preview.
+  return m.url || (state.mediaBlobs && state.mediaBlobs[m.id]) || '';
+}
+function renderMediaSection(draft){
+  if(!draft.id){
+    // No journal saved yet — media needs a journalId to attach to, so ask
+    // the user to save the text first (keeps journalId stable and avoids
+    // orphaned media if they never finish the draft).
+    return `
+    <div class="section-title" style="margin-top:18px;">Attachments</div>
+    <div class="ai-note" style="margin-top:6px;">ছবি বা ভয়েস যোগ করার আগে একবার জার্নালটি Save করো — তাহলে attachment গুলো এই এন্ট্রির সাথে ঠিকভাবে যুক্ত থাকবে।</div>
+    `;
+  }
+  const images = mediaForEntry(draft.id).filter(m=>m.kind==='image');
+  const audios = mediaForEntry(draft.id).filter(m=>m.kind==='audio');
+  const rec = state.recording;
+  return `
+    <div class="section-title" style="margin-top:18px;">Attachments</div>
+    <div class="media-toolbar">
+      <label class="btn btn-sm" for="imagePickInput">🖼️ Add image</label>
+      <input type="file" id="imagePickInput" accept="image/*" multiple onchange="handleImagePick(this.files, '${draft.id}')">
+      ${rec ? '' : `<button type="button" class="btn btn-sm" onclick="startVoiceRecording('${draft.id}')">🎙 Add voice</button>`}
+    </div>
+
+    ${rec ? renderRecordingBar() : ''}
+
+    ${images.length ? `<div class="media-gallery" id="mediaGallery">${images.map((m,i)=>renderImageThumb(m,i,images)).join('')}</div>` : ''}
+
+    ${audios.length ? `<div class="voice-list" id="voiceList">${audios.map(m=>renderVoiceRow(m)).join('')}</div>` : ''}
+  `;
+}
+function renderImageThumb(m, index, all){
+  const up = state.mediaUpload[m.id] || {status:'done'};
+  let overlay = '';
+  if(up.status==='uploading') overlay = `<div class="state">⬆️ Uploading… ${up.progress||0}%</div>`;
+  else if(up.status==='failed') overlay = `<div class="state fail">⚠️ Failed<br><button class="btn btn-sm" onclick="event.stopPropagation();retryImageUpload('${m.id}')">Retry</button></div>`;
+  return `
+    <div class="media-thumb" onclick="${up.status==='done'?`openLightbox('${m.journalId}',${index})`:''}">
+      <img src="${mediaSrc(m)}" alt="${escapeHtml(m.caption||'')}" loading="lazy">
+      ${overlay}
+      ${m.caption ? `<div class="cap">${escapeHtml(m.caption)}</div>` : ''}
+      <button type="button" class="rm" title="Remove" onclick="event.stopPropagation();removeImage('${m.id}')">×</button>
+    </div>`;
+}
+function renderVoiceRow(m){
+  const up = state.mediaUpload[m.id] || {status:'done'};
+  const durStr = fmtDuration(m.duration||0);
+  let stateStr = '';
+  if(up.status==='uploading') stateStr = `<span class="vstate">Uploading… ${up.progress||0}%</span>`;
+  else if(up.status==='failed') stateStr = `<span class="vstate fail">Upload failed — <a href="javascript:void(0)" onclick="retryImageUpload('${m.id}')">retry</a></span>`;
+  else if(m.transcriptStatus==='transcribing') stateStr = `<span class="vstate">Transcribing…</span>`;
+  else if(m.transcriptStatus==='failed') stateStr = `<span class="vstate fail">Transcription failed — <a href="javascript:void(0)" onclick="transcribeVoice('${m.id}')">retry</a></span>`;
+  return `
+    <div class="voice-row" id="voiceRow_${m.id}">
+      <span>🎙</span>
+      <span class="dur">${durStr}</span>
+      <audio controls src="${mediaSrc(m)}"></audio>
+      ${stateStr}
+      ${!m.transcript && m.transcriptStatus!=='transcribing' ? `<button type="button" class="btn btn-sm" onclick="transcribeVoice('${m.id}')">Transcribe</button>` : ''}
+      <button type="button" class="btn btn-sm btn-danger" onclick="removeVoice('${m.id}')">Delete</button>
+      ${m.transcript ? `<div class="voice-transcript" style="width:100%;">
+        <div style="font-size:11px;color:var(--ink-faint);margin-bottom:4px;">✦ AI transcript — auto-generated, may contain errors. Edit if needed; your journal text is unaffected.</div>
+        <textarea onchange="editTranscript('${m.id}', this.value)">${escapeHtml(m.transcript)}</textarea>
+      </div>` : ''}
+    </div>`;
+}
+function fmtDuration(sec){
+  sec = Math.round(sec||0);
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function rerenderMediaSection(){
+  const d = window.__draft;
+  if(!d) return;
+  // Re-render just the attachments portion by re-rendering the whole editor
+  // card is simplest and safe here since renderMediaSection is pure w.r.t. draft.
+  const gallery = document.getElementById('mediaGallery');
+  const voiceList = document.getElementById('voiceList');
+  const toolbar = document.querySelector('.media-toolbar');
+  if(!toolbar) return;
+  const images = mediaForEntry(d.id).filter(m=>m.kind==='image');
+  const audios = mediaForEntry(d.id).filter(m=>m.kind==='audio');
+  if(gallery) gallery.outerHTML = images.length ? `<div class="media-gallery" id="mediaGallery">${images.map((m,i)=>renderImageThumb(m,i,images)).join('')}</div>` : '';
+  else if(images.length) toolbar.insertAdjacentHTML('afterend', `<div class="media-gallery" id="mediaGallery">${images.map((m,i)=>renderImageThumb(m,i,images)).join('')}</div>`);
+  if(voiceList) voiceList.outerHTML = audios.length ? `<div class="voice-list" id="voiceList">${audios.map(m=>renderVoiceRow(m)).join('')}</div>` : '';
+  else if(audios.length) (document.getElementById('mediaGallery')||toolbar).insertAdjacentHTML('afterend', `<div class="voice-list" id="voiceList">${audios.map(m=>renderVoiceRow(m)).join('')}</div>`);
+}
+
+/* ---------------- IMAGES ---------------- */
+async function handleImagePick(fileList, journalId){
+  const files = Array.from(fileList||[]);
+  document.getElementById('imagePickInput').value = ''; // allow re-picking same file
+  for(const file of files){
+    if(!MEDIA_LIMITS.imageTypes.includes(file.type)){
+      toast('অসমর্থিত ছবির ফরম্যাট: ' + (file.type||'unknown'));
+      continue;
+    }
+    if(file.size > MEDIA_LIMITS.imageMaxBytes){
+      toast(`ছবিটি খুব বড় (সর্বোচ্চ ${Math.round(MEDIA_LIMITS.imageMaxBytes/1024/1024)}MB)।`);
+      continue;
+    }
+    await uploadImage(file, journalId);
+  }
+}
+async function uploadImage(file, journalId){
+  let mediaId;
+  try{
+    const compressed = await compressImage(file);
+    const {localId, url, size, mimeType} = await uploadMediaFile(compressed, 'image');
+    const docData = {
+      journalId, kind:'image', storagePath: `users/${state.user.uid}/media/${localId}`, // TODO(storage): real path once Storage is wired
+      url: null, caption:'', size, mimeType, createdAt: new Date().toISOString()
+    };
+    const ref = await mediaColRef().add(docData);
+    mediaId = ref.id;
+    state.mediaBlobs[mediaId] = url; // local preview until real Storage URL exists
+    state.mediaUpload[mediaId] = {status:'done', progress:100};
+    rerenderMediaSection();
+  }catch(err){
+    console.error(err);
+    if(mediaId) state.mediaUpload[mediaId] = {status:'failed', error: err.message};
+    toast('ছবি আপলোড ব্যর্থ হয়েছে — জার্নাল টেক্সট নিরাপদ আছে, আবার চেষ্টা করো।');
+    rerenderMediaSection();
+  }
+}
+function retryImageUpload(mediaId){
+  // With the current local-preview stub there's nothing to retry (it never
+  // truly fails once compression succeeds) — this hook exists so real
+  // Storage retry logic can be dropped in without changing the UI.
+  state.mediaUpload[mediaId] = {status:'done', progress:100};
+  rerenderMediaSection();
+}
+function removeImage(mediaId){
+  confirmAction('ছবিটি মুছে ফেলবেন?', 'এই ছবিটি জার্নাল থেকে স্থায়ীভাবে সরিয়ে ফেলা হবে।', async ()=>{
+    try{
+      await mediaColRef().doc(mediaId).delete();
+      if(state.mediaBlobs[mediaId]){ URL.revokeObjectURL(state.mediaBlobs[mediaId]); delete state.mediaBlobs[mediaId]; }
+      delete state.mediaUpload[mediaId];
+      toast('ছবি মুছে ফেলা হয়েছে।');
+      rerenderMediaSection();
+    }catch(err){ console.error(err); toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message); }
+  }, 'মুছে ফেলুন');
+}
+
+/* ---------------- LIGHTBOX (full-screen image preview + nav, §4) ---------------- */
+function openLightbox(journalId, index){
+  const images = mediaForEntry(journalId).filter(m=>m.kind==='image');
+  if(!images.length) return;
+  window.__lightbox = {images, index};
+  renderLightbox();
+  document.getElementById('lightbox').classList.add('show');
+}
+function renderLightbox(){
+  const lb = window.__lightbox; if(!lb) return;
+  const m = lb.images[lb.index];
+  document.getElementById('lightboxImg').src = mediaSrc(m);
+  document.getElementById('lightboxCap').textContent = m.caption || '';
+}
+function lightboxNav(delta){
+  const lb = window.__lightbox; if(!lb) return;
+  lb.index = (lb.index + delta + lb.images.length) % lb.images.length;
+  renderLightbox();
+}
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); window.__lightbox = null; }
+
+/* ---------------- VOICE RECORDING (§6/§7) ---------------- */
+async function startVoiceRecording(journalId){
+  if(!navigator.mediaDevices || !window.MediaRecorder){
+    toast('এই ব্রাউজার/ডিভাইসে ভয়েস রেকর্ডিং সমর্থিত নয়।');
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e=>{ if(e.data.size>0) chunks.push(e.data); };
+    recorder.onstop = ()=>{ finishVoiceRecording(journalId, chunks, recorder.mimeType); };
+    recorder.start();
+    state.recording = {stream, recorder, chunks, startedAt:Date.now(), elapsedSec:0, paused:false, journalId};
+    state.recording.timerHandle = setInterval(()=>{
+      if(!state.recording || state.recording.paused) return;
+      state.recording.elapsedSec = Math.floor((Date.now()-state.recording.startedAt)/1000);
+      const el = document.getElementById('recTime');
+      if(el) el.textContent = fmtDuration(state.recording.elapsedSec);
+    }, 500);
+    rerenderMediaSection();
+    const bar = document.querySelector('.media-toolbar');
+    if(bar) bar.insertAdjacentHTML('afterend', renderRecordingBar());
+  }catch(err){
+    console.error(err);
+    toast('মাইক্রোফোন অ্যাক্সেস পাওয়া যায়নি। ব্রাউজার সেটিংসে অনুমতি দিন।');
+  }
+}
+function renderRecordingBar(){
+  const rec = state.recording; if(!rec) return '';
+  return `
+    <div class="recording-bar" id="recordingBar">
+      <span class="rec-dot"></span>
+      <span>🎙 Recording…</span>
+      <span class="rec-time" id="recTime">${fmtDuration(rec.elapsedSec)}</span>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button type="button" class="btn btn-sm" onclick="toggleRecordingPause()">${rec.paused?'Resume':'Pause'}</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="stopVoiceRecording()">Stop</button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="cancelVoiceRecording()">Cancel</button>
+      </div>
+    </div>`;
+}
+function toggleRecordingPause(){
+  const rec = state.recording; if(!rec) return;
+  if(rec.paused){ rec.recorder.resume(); rec.paused=false; rec.startedAt = Date.now() - rec.elapsedSec*1000; }
+  else { rec.recorder.pause(); rec.paused=true; }
+  const bar = document.getElementById('recordingBar');
+  if(bar) bar.outerHTML = renderRecordingBar();
+}
+function stopVoiceRecording(silent){
+  const rec = state.recording; if(!rec) return;
+  clearInterval(rec.timerHandle);
+  if(silent){
+    // App is tearing down (logout etc.) — just release the mic, discard audio.
+    try{ rec.recorder.stop(); }catch(e){}
+    rec.stream.getTracks().forEach(t=>t.stop());
+    state.recording = null;
+    return;
+  }
+  try{ rec.recorder.stop(); }catch(e){}
+  rec.stream.getTracks().forEach(t=>t.stop());
+}
+function cancelVoiceRecording(){
+  const rec = state.recording; if(!rec) return;
+  clearInterval(rec.timerHandle);
+  rec.recorder.onstop = null; // discard — don't save on cancel
+  try{ rec.recorder.stop(); }catch(e){}
+  rec.stream.getTracks().forEach(t=>t.stop());
+  state.recording = null;
+  const bar = document.getElementById('recordingBar');
+  if(bar) bar.remove();
+  rerenderMediaSection();
+}
+async function finishVoiceRecording(journalId, chunks, mimeType){
+  const rec = state.recording;
+  const duration = rec ? rec.elapsedSec : 0;
+  state.recording = null;
+  const bar = document.getElementById('recordingBar');
+  if(bar) bar.remove();
+  if(!chunks.length || duration<1){ toast('রেকর্ডিং খুব ছোট বা খালি — সংরক্ষণ করা হয়নি।'); rerenderMediaSection(); return; }
+  const blob = new Blob(chunks, {type: mimeType || 'audio/webm'});
+  const file = new File([blob], `voice-${Date.now()}.webm`, {type: blob.type});
+  if(file.size > MEDIA_LIMITS.audioMaxBytes){ toast('রেকর্ডিং খুব বড়, সংরক্ষণ করা যায়নি।'); return; }
+  let mediaId;
+  try{
+    const {localId, url, size, mimeType:mt} = await uploadMediaFile(file, 'audio');
+    const docData = {
+      journalId, kind:'audio', storagePath: `users/${state.user.uid}/media/${localId}`, // TODO(storage): real path once Storage is wired
+      url: null, duration, size, mimeType: mt, transcript:'', transcriptStatus:'none', createdAt: new Date().toISOString()
+    };
+    const ref = await mediaColRef().add(docData);
+    mediaId = ref.id;
+    state.mediaBlobs[mediaId] = url;
+    state.mediaUpload[mediaId] = {status:'done', progress:100};
+    toast('ভয়েস রেকর্ডিং সংরক্ষিত হয়েছে।');
+    rerenderMediaSection();
+  }catch(err){
+    console.error(err);
+    toast('ভয়েস সংরক্ষণ ব্যর্থ হয়েছে — আবার চেষ্টা করো।');
+  }
+}
+function removeVoice(mediaId){
+  confirmAction('রেকর্ডিংটি মুছে ফেলবেন?', 'এই ভয়েস রেকর্ডিং ও এর transcript (যদি থাকে) স্থায়ীভাবে মুছে যাবে।', async ()=>{
+    try{
+      await mediaColRef().doc(mediaId).delete();
+      if(state.mediaBlobs[mediaId]){ URL.revokeObjectURL(state.mediaBlobs[mediaId]); delete state.mediaBlobs[mediaId]; }
+      delete state.mediaUpload[mediaId];
+      toast('রেকর্ডিং মুছে ফেলা হয়েছে।');
+      rerenderMediaSection();
+    }catch(err){ console.error(err); toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message); }
+  }, 'মুছে ফেলুন');
+}
+
+/* ---------------- VOICE-TO-TEXT (§8/§9) ----------------
+   Uses the existing Module 05 Gemini integration (same API key from
+   Settings) when available. The original audio is never replaced or
+   removed — the transcript is stored as a separate, editable field, and
+   is clearly labeled as AI-generated (§9). Journal saving never depends
+   on transcription succeeding (§9/§36). */
+async function transcribeVoice(mediaId){
+  const m = (state.media||[]).find(x=>x.id===mediaId);
+  if(!m) return;
+  const apiKey = state.settings && state.settings.apiKey;
+  if(!apiKey){
+    toast('Transcription-এর জন্য Settings-এ একটা Gemini API key প্রয়োজন।');
+    return;
+  }
+  try{
+    await mediaColRef().doc(mediaId).set({transcriptStatus:'transcribing'}, {merge:true});
+    m.transcriptStatus = 'transcribing';
+    rerenderMediaSection();
+    const blobUrl = mediaSrc(m);
+    const audioBlob = await (await fetch(blobUrl)).blob();
+    const base64 = await new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onloadend = ()=>resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(audioBlob);
+    });
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[
+        {text:'Transcribe this audio recording verbatim. Output only the transcript text, no commentary.'},
+        {inline_data:{mime_type: audioBlob.type || 'audio/webm', data: base64}}
+      ]}]})
+    });
+    if(!resp.ok) throw new Error('Gemini API error ' + resp.status);
+    const data = await resp.json();
+    const text = (data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text || '').trim();
+    if(!text) throw new Error('empty transcript');
+    await mediaColRef().doc(mediaId).set({transcript:text, transcriptStatus:'done'}, {merge:true});
+    m.transcript = text; m.transcriptStatus = 'done';
+    toast('Transcript তৈরি হয়েছে।');
+    rerenderMediaSection();
+  }catch(err){
+    console.error(err);
+    await mediaColRef().doc(mediaId).set({transcriptStatus:'failed'}, {merge:true}).catch(()=>{});
+    m.transcriptStatus = 'failed';
+    toast('Transcription ব্যর্থ হয়েছে — অডিও নিরাপদ আছে, আবার চেষ্টা করতে পারো।');
+    rerenderMediaSection();
+  }
+}
+function editTranscript(mediaId, value){
+  mediaColRef().doc(mediaId).set({transcript:value}, {merge:true}).catch(err=>console.error(err));
+  const m = (state.media||[]).find(x=>x.id===mediaId);
+  if(m) m.transcript = value;
+}
 function setDraftMood(m){
   window.__draft.mood = m;
   document.querySelectorAll('.mood-opt').forEach(b=>b.classList.toggle('selected', b.dataset.mood===m));
@@ -2628,6 +3182,7 @@ function refreshAIPreview(force){
 async function saveDraft(){
   const d = window.__draft;
   if(!d.content || !d.content.trim()){ toast('আগে কিছু লিখো।'); return; }
+  const wasNew = !d.id;
   try{
     if(d.id){
       const {id, ...data} = d;
@@ -2653,7 +3208,13 @@ async function saveDraft(){
     // Module 08: keep the search index in sync — save first, index after, and
     // an embedding failure here must never affect the journal that just saved fine.
     updateSearchIndexForEntry(d.id).catch(err=>console.error(err));
-    go('dashboard');
+    // Module 09: a brand-new entry only gets a journalId once this first
+    // save completes, and media attachment needs that id — so stay on the
+    // editor (re-render in place) instead of navigating away, giving the
+    // user a chance to add images/voice right after writing. Edits to an
+    // already-saved entry keep the original "save and return" behavior.
+    if(wasNew){ go('write', d.id); }
+    else { go('dashboard'); }
   }catch(err){
     console.error(err);
     toast('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
@@ -2665,6 +3226,7 @@ function deleteEntry(id){
       await entriesColRef().doc(id).delete();
       cascadeDeleteLifeData(id); // never leave orphaned Life Organization items behind
       removeSearchIndexForEntry(id); // Module 08: no orphaned search index either
+      cascadeDeleteMedia(id); // Module 09: no orphaned images/audio/video either
       toast('এন্ট্রি মুছে ফেলা হয়েছে।');
       go('timeline');
     }catch(err){
@@ -4118,6 +4680,184 @@ function renderYearly(){
 }
 
 /* ---------------- SETTINGS (Module 33) ---------------- */
+/* ================================================================
+   MODULE 09 — NOTIFICATIONS (§12–§16, §37)
+   ----------------------------------------------------------------
+   Honest scope: this is a plain client-side page with no service
+   worker, so reminders can only fire while a JournalOS tab is open
+   in the browser (foreground). They are NOT delivered when the tab
+   or browser is closed — that would need a service worker + push
+   subscription + backend, which is out of scope for this module
+   (§39, §16 "document the limitation"). What IS implemented:
+     - real browser Notification permission request/handling (§13)
+     - a foreground scheduler that checks once a minute, in the
+       user's local timezone, whether it's time for the daily or
+       weekly reminder (§15)
+     - skips the daily reminder if today's journal already exists (§15)
+     - an "AI Insight ready" notification hook, fired right after a
+       period analysis finishes generating (§16), also foreground-only
+   ================================================================ */
+let reminderCheckHandle = null;
+function scheduleReminderCheck(){
+  if(reminderCheckHandle) clearInterval(reminderCheckHandle);
+  checkReminders(); // run once immediately, then every minute
+  reminderCheckHandle = setInterval(checkReminders, 60*1000);
+}
+function requestNotificationPermission(){
+  if(typeof Notification==='undefined'){ state.notifPermission='unsupported'; if(state.view==='settings') render(); return; }
+  if(Notification.permission==='granted' || Notification.permission==='denied'){
+    // §13: do not repeatedly ask once the user has answered.
+    state.notifPermission = Notification.permission;
+    if(state.view==='settings') render();
+    return;
+  }
+  Notification.requestPermission().then(perm=>{
+    state.notifPermission = perm;
+    if(state.view==='settings') render();
+  });
+}
+function sendNotification(title, body){
+  if(typeof Notification==='undefined' || Notification.permission!=='granted') return;
+  try{ new Notification(title, {body, icon: undefined}); }catch(e){ console.error('notify failed', e); }
+}
+function hasEntryOn(dateISO){
+  return (state.entries||[]).some(e=>e.date===dateISO && !e.archived);
+}
+function checkReminders(){
+  if(!state.settings || typeof Notification==='undefined' || Notification.permission!=='granted') return;
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const today = todayISO();
+  const lastKey = 'journalos_lastNotif_' + (state.user?state.user.uid:'anon');
+  let sentToday = {};
+  try{ sentToday = JSON.parse(localStorage.getItem(lastKey) || '{}'); }catch(e){}
+  if(sentToday.date !== today) sentToday = {date: today};
+
+  // Daily Journal Reminder — skip if today's journal already exists (§15).
+  if(state.settings.dailyReminder && (state.settings.dailyReminderTime||'20:00')===hhmm && !sentToday.daily){
+    if(!hasEntryOn(today)){
+      sendNotification('JournalOS', 'আজকের দিনটা নিয়ে কিছু লেখা হয়নি এখনো — এক মিনিট সময় নিয়ে লিখে ফেলো।');
+    }
+    sentToday.daily = true;
+  }
+  // Weekly Reflection Reminder — fires on the chosen weekday/time.
+  if(state.settings.weeklySummary && now.getDay()===(state.settings.weeklyReminderDay??0)
+     && (state.settings.weeklyReminderTime||'21:00')===hhmm && !sentToday.weekly){
+    sendNotification('JournalOS', 'এই সপ্তাহটা কেমন গেল? তোমার Weekly Reflection দেখে নাও।');
+    sentToday.weekly = true;
+  }
+  try{ localStorage.setItem(lastKey, JSON.stringify(sentToday)); }catch(e){}
+}
+// Module 09 §16: optional "AI Insight ready" notification — called from
+// the existing Module 07 period-analysis generator once a result lands,
+// without building any new background-processing system.
+function notifyInsightReady(label){
+  if(!state.settings || !state.settings.aiInsightNotify) return;
+  sendNotification('JournalOS', `তোমার ${label||''} insight তৈরি হয়ে গেছে।`.trim());
+}
+
+/* ================================================================
+   MODULE 09 — EXPORT / BACKUP (§17–§22, §36)
+   ----------------------------------------------------------------
+   Builds the export purely from data already held in state (Firestore's
+   local mirror via the existing onSnapshot listeners) — never regenerates
+   AI content, never modifies the journal, never invents fields (§20).
+   Downloads happen entirely client-side (Blob + <a download>), so export
+   never depends on AI/Gemini being online (§36). Raw search embeddings
+   are intentionally left out (§18).
+   ================================================================ */
+function buildExportData(){
+  const entries = (state.entries||[]).map(e=>({
+    id: e.id, title: e.title||'', content: e.content||'', date: e.date,
+    mood: e.mood, moodIntensity: e.moodIntensity, tags: e.tags||[],
+    favorite: !!e.favorite, important: !!e.important, archived: !!e.archived,
+    createdAt: e.createdAt, updatedAt: e.updatedAt,
+    media: mediaForEntry(e.id).map(m=>({
+      id:m.id, kind:m.kind, storagePath:m.storagePath, caption:m.caption||'',
+      duration:m.duration, mimeType:m.mimeType, transcript:m.transcript||'',
+      createdAt:m.createdAt
+      // TODO(storage): once real Firebase Storage is wired in, a ZIP export
+      // (§19) can additionally embed the actual files here — today only
+      // metadata/references are exported, per §18 "where practical".
+    }))
+  }));
+  const life = {};
+  LIFE_COLLECTIONS.forEach(name=>{ life[name] = state.life[name] || []; });
+  return {
+    exportedAt: new Date().toISOString(),
+    app: 'JournalOS', formatVersion: 1,
+    account: {name: state.user?.name||'', email: state.user?.email||''},
+    journals: entries,
+    lifeOrganization: life,
+    // Module 07: only stored, human-readable analytics — never regenerated here.
+    analytics: Object.entries(state.analysisCache||{}).filter(([,v])=>v && v.status==='ready')
+      .map(([periodId,v])=>({periodId, period:v.period, periodStart:v.periodStart, periodEnd:v.periodEnd, text:v.text, generatedAt:v.generatedAt}))
+  };
+}
+function downloadBlob(filename, content, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+async function exportDataJSON(){
+  toast('Preparing your export…');
+  try{
+    const data = buildExportData();
+    const filename = `journalos-export-${todayISO()}.json`;
+    downloadBlob(filename, JSON.stringify(data, null, 2), 'application/json');
+    toast('Export ready.');
+  }catch(err){ console.error(err); toast('Export ব্যর্থ হয়েছে: ' + err.message); }
+}
+function mdEscape(s){ return (s||'').replace(/\r/g,''); }
+function buildExportMarkdown(data){
+  const lines = [];
+  lines.push(`# JournalOS Export`, ``, `_Exported: ${data.exportedAt}_`, `_Account: ${data.account.name} (${data.account.email})_`, ``, `---`, ``);
+  lines.push(`## Journals (${data.journals.length})`, ``);
+  data.journals.forEach(e=>{
+    lines.push(`### ${e.title || 'Untitled'} — ${e.date}`);
+    lines.push(`*Mood: ${e.mood} (${e.moodIntensity}/10)${e.archived?' · Archived':''}${e.favorite?' · ★ Favorite':''}${e.important?' · 🔖 Important':''}*`);
+    if(e.tags.length) lines.push(`Tags: ${e.tags.map(t=>'#'+t).join(' ')}`);
+    lines.push(``, mdEscape(e.content), ``);
+    if(e.media.length){
+      lines.push(`**Attachments:**`);
+      e.media.forEach(m=>lines.push(`- ${m.kind}${m.caption?': '+m.caption:''}${m.transcript?` — transcript: "${mdEscape(m.transcript)}"`:''} (${m.storagePath})`));
+      lines.push(``);
+    }
+    lines.push(`---`, ``);
+  });
+  const sectionTitle = {achievements:'Achievements', plans:'Plans', quotes:'Quotes', ideas:'Ideas', lessons:'Lessons',
+    challenges:'Challenges', people:'People', places:'Places', events:'Events', moments:'Important Moments'};
+  LIFE_COLLECTIONS.forEach(key=>{
+    const items = data.lifeOrganization[key] || [];
+    if(!items.length) return;
+    lines.push(`## ${sectionTitle[key]||key} (${items.length})`, ``);
+    items.forEach(item=>{
+      const label = item.title || item.name || item.text || item.summary || JSON.stringify(item).slice(0,120);
+      lines.push(`- ${mdEscape(String(label))}`);
+    });
+    lines.push(``);
+  });
+  if(data.analytics.length){
+    lines.push(`## AI Insights`, ``);
+    data.analytics.forEach(a=>{
+      lines.push(`### ${a.period} (${a.periodStart||''} – ${a.periodEnd||''})`, ``, mdEscape(a.text), ``);
+    });
+  }
+  return lines.join('\n');
+}
+async function exportDataMarkdown(){
+  toast('Preparing your export…');
+  try{
+    const data = buildExportData();
+    const md = buildExportMarkdown(data);
+    downloadBlob(`journalos-export-${todayISO()}.md`, md, 'text/markdown');
+    toast('Export ready.');
+  }catch(err){ console.error(err); toast('Export ব্যর্থ হয়েছে: ' + err.message); }
+}
+
 function renderSettings(){
   const s = state.settings || DEFAULT_SETTINGS;
   return `
@@ -4136,8 +4876,8 @@ function renderSettings(){
         <button class="btn btn-sm" onclick="logout()">Log out</button>
       </div>
       <div class="settings-row">
-        <div><div class="label" style="color:var(--rust)">Delete all my data</div><div class="desc">সব এন্ট্রি ও সেটিংস Firebase থেকে স্থায়ীভাবে মুছে ফেলবে।</div></div>
-        <button class="btn btn-sm btn-danger" onclick="wipeAll()">Delete</button>
+        <div><div class="label" style="color:var(--rust)">Data &amp; Privacy</div><div class="desc">Export your data, review what's stored, or delete data/account.</div></div>
+        <button class="btn btn-sm" onclick="go('privacy')">Open</button>
       </div>
     </div>
 
@@ -4151,14 +4891,33 @@ function renderSettings(){
 
     <div class="settings-group card">
       <h3>Notifications</h3>
+      ${renderNotificationPermissionRow()}
       <div class="settings-row">
-        <div><div class="label">Daily reminder</div><div class="desc">"Write about your day."</div></div>
+        <div><div class="label">Daily Journal Reminder</div><div class="desc">"Write about your day." — skipped automatically if you've already written today.</div></div>
         <label class="switch"><input type="checkbox" ${s.dailyReminder?'checked':''} onchange="saveSettingField('dailyReminder',this.checked)"><span class="track"></span></label>
       </div>
       <div class="settings-row">
-        <div><div class="label">Weekly summary ready</div></div>
+        <div><div class="label">Reminder time</div><div class="desc">In your local timezone.</div></div>
+        <input type="time" value="${s.dailyReminderTime||'20:00'}" style="max-width:120px;" onchange="saveSettingField('dailyReminderTime',this.value)">
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Weekly Reflection</div><div class="desc">A nudge to review your week.</div></div>
         <label class="switch"><input type="checkbox" ${s.weeklySummary?'checked':''} onchange="saveSettingField('weeklySummary',this.checked)"><span class="track"></span></label>
       </div>
+      <div class="settings-row">
+        <div><div class="label">Weekly day &amp; time</div></div>
+        <div style="display:flex;gap:8px;">
+          <select onchange="saveSettingField('weeklyReminderDay', parseInt(this.value,10))" style="padding:8px;border-radius:8px;border:1px solid var(--rule);">
+            ${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d,i)=>`<option value="${i}" ${(s.weeklyReminderDay??0)===i?'selected':''}>${d}</option>`).join('')}
+          </select>
+          <input type="time" value="${s.weeklyReminderTime||'21:00'}" style="max-width:120px;" onchange="saveSettingField('weeklyReminderTime',this.value)">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="label">AI Insight Ready</div><div class="desc">Notify when a weekly/monthly/yearly AI reflection finishes generating.</div></div>
+        <label class="switch"><input type="checkbox" ${s.aiInsightNotify!==false?'checked':''} onchange="saveSettingField('aiInsightNotify',this.checked)"><span class="track"></span></label>
+      </div>
+      <div class="ai-note" style="margin-top:4px;">Reminders only fire while a JournalOS tab is open in your browser — this is a browser page, not an installed app, so it can't wake up in the background.</div>
     </div>
 
     <div class="settings-group card">
@@ -4230,6 +4989,89 @@ function renderIndexBuildStatus(){
     <button class="btn btn-sm" onclick="buildSearchIndex()" ${missing===0?'disabled':''}>Build Search Index</button>
   </div>`;
 }
+// Module 09 §13/§37: surface permission state plainly, never ask repeatedly.
+function renderNotificationPermissionRow(){
+  const p = state.notifPermission;
+  if(p==='unsupported'){
+    return `<div class="settings-row"><div class="desc">এই ব্রাউজার notification সমর্থন করে না।</div></div>`;
+  }
+  if(p==='granted'){
+    return `<div class="settings-row"><div class="desc">✅ Notifications enabled for this browser.</div></div>`;
+  }
+  if(p==='denied'){
+    return `<div class="settings-row"><div class="desc">🔕 Notifications blocked — enable them from your browser's site settings (usually the lock/info icon next to the address bar) to receive reminders.</div></div>`;
+  }
+  return `<div class="settings-row">
+    <div><div class="label">Enable notifications</div><div class="desc">Needed for reminders to actually appear.</div></div>
+    <button class="btn btn-sm" onclick="requestNotificationPermission()">Enable</button>
+  </div>`;
+}
+
+/* ================================================================
+   MODULE 09 — PRIVACY DASHBOARD (§23–§26)
+   ================================================================ */
+function estimateStorageMB(){
+  // Approximate, from what's locally known — journal text + media byte
+  // sizes recorded at upload time (no way to query true Storage usage
+  // from the client without Storage wired in).
+  let bytes = 0;
+  (state.entries||[]).forEach(e=>{ bytes += new Blob([e.content||'']).size; });
+  (state.media||[]).forEach(m=>{ bytes += m.size||0; });
+  return (bytes/1024/1024).toFixed(2);
+}
+function renderPrivacy(){
+  const activeEntries = (state.entries||[]).filter(e=>!e.archived).length;
+  const archivedEntries = (state.entries||[]).filter(e=>e.archived).length;
+  const mediaCount = (state.media||[]).length;
+  const imgCount = (state.media||[]).filter(m=>m.kind==='image').length;
+  const audioCount = (state.media||[]).filter(m=>m.kind==='audio').length;
+  return `
+    <div class="page-head">
+      <div><h1>Data &amp; Privacy</h1><div class="sub">তোমার ডেটা তোমার — access, understand, export বা delete করা সবসময় সহজ থাকবে।</div></div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>Account</h3>
+      <div class="settings-row"><div><div class="label">Signed in as</div><div class="desc">${escapeHtml(state.user.name)} — ${escapeHtml(state.user.email)}</div></div></div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>Your Data</h3>
+      <div class="settings-row"><div><div class="label">Journals</div><div class="desc">${activeEntries} active, ${archivedEntries} archived</div></div></div>
+      <div class="settings-row"><div><div class="label">Media files</div><div class="desc">${mediaCount} total — ${imgCount} images, ${audioCount} voice recordings</div></div></div>
+      <div class="settings-row"><div><div class="label">Approximate storage</div><div class="desc">~${estimateStorageMB()} MB (text + media, estimated locally)</div></div></div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>Export My Data</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">Your export includes your journals, life organization data, AI insights, and media references.</p>
+      <div class="settings-row"><div><div class="label">Download JSON</div><div class="desc">Complete machine-readable backup.</div></div>
+        <button class="btn btn-sm" onclick="exportDataJSON()">Export JSON</button></div>
+      <div class="settings-row"><div><div class="label">Download Markdown</div><div class="desc">Human-readable copy of everything.</div></div>
+        <button class="btn btn-sm" onclick="exportDataMarkdown()">Export Markdown</button></div>
+    </div>
+
+    <div class="settings-group card">
+      <h3>AI &amp; Data</h3>
+      <div class="hook-box">
+        তোমার journal data শুধু JournalOS-এর ফিচারগুলোর জন্য ব্যবহৃত হয়। AI analysis (summary, extraction, insights) তোমার লেখা journal থেকে সরাসরি তৈরি হয় — এবং কোনো AI-generated তথ্যই আসল journal-কে প্রতিস্থাপন করে না; আসল journal সবসময় source of truth থেকে যায়। ছবি স্বয়ংক্রিয়ভাবে কোনো AI মডেলে পাঠানো হয় না — শুধু তুমি নিজে অনুরোধ করলে। Gemini API সংক্রান্ত বিস্তারিত তথ্যের জন্য Settings → AI Configuration দেখো।
+      </div>
+    </div>
+
+    <div class="settings-group card">
+      <h3 style="color:var(--rust)">Danger Zone</h3>
+      <div class="settings-row">
+        <div><div class="label" style="color:var(--rust)">Delete All Data</div><div class="desc">Removes journals, AI analysis, memories, structured life data, search indexes, analytics, and media. Your account itself stays.</div></div>
+        <button class="btn btn-sm btn-danger" onclick="wipeAll()">Delete All Data</button>
+      </div>
+      <div class="settings-row">
+        <div><div class="label" style="color:var(--rust)">Delete Account</div><div class="desc">Removes all data AND your sign-in account/identity. Different from Delete All Data — this ends the account itself.</div></div>
+        <button class="btn btn-sm btn-danger" onclick="deleteAccount()">Delete Account</button>
+      </div>
+    </div>
+  `;
+}
+
 function setTheme(dark){
   const s = {...(state.settings||DEFAULT_SETTINGS), theme: dark?'dark':'light'};
   document.documentElement.setAttribute('data-theme', s.theme); // instant feedback; listener will confirm
@@ -4248,10 +5090,66 @@ function saveDashboardSection(key, val){
   const s = {...(state.settings||DEFAULT_SETTINGS), dashboardSections: {...current, [key]: val}};
   saveUserSettings(s);
 }
+/* ---------------- MODULE 09: type-to-confirm modal (§24) ---------------- */
+function typeConfirmAction(title, body, label, onConfirm){
+  document.getElementById('typeConfirmTitle').textContent = title;
+  document.getElementById('typeConfirmBody').textContent = body;
+  document.getElementById('typeConfirmLabel').textContent = `Type ${label} to confirm`;
+  const input = document.getElementById('typeConfirmInput');
+  input.value = ''; input.placeholder = label;
+  input.oninput = function(){ document.getElementById('typeConfirmBtn').disabled = (this.value !== label); };
+  const btn = document.getElementById('typeConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Delete Everything';
+  const modal = document.getElementById('typeConfirmModal');
+  modal.classList.add('show');
+  btn.onclick = ()=>{ modal.classList.remove('show'); onConfirm(); };
+}
+function closeTypeConfirm(){ document.getElementById('typeConfirmModal').classList.remove('show'); }
+
 function wipeAll(){
-  confirmAction('সব ডেটা মুছে ফেলবেন?', 'এই অ্যাকাউন্টের সব জার্নাল এন্ট্রি ও সেটিংস Firebase থেকে স্থায়ীভাবে মুছে যাবে। এটি ফেরানো যাবে না।', async ()=>{
+  typeConfirmAction(
+    'Delete all JournalOS data?',
+    'This permanently removes every journal, AI analysis, memory, structured life data, search index, analytics record, and media attachment on this account. This cannot be undone.',
+    'DELETE',
+    async ()=>{
     try{
-      const colNames = ['entries', ...LIFE_COLLECTIONS, 'searchIndex', 'analytics'];
+      // Module 09 §29: media metadata is cleaned up alongside every other
+      // per-user collection, so nothing is left orphaned.
+      const colNames = ['entries', ...LIFE_COLLECTIONS, 'searchIndex', 'analytics', 'media'];
+      for(const name of colNames){
+        const snap = await userDocRef().collection(name).get();
+        if(snap.empty) continue;
+        const batch = db.batch();
+        snap.docs.forEach(d=>batch.delete(d.ref));
+        await batch.commit();
+        // TODO(storage): once real Firebase Storage is wired in, also delete
+        // every file under users/{uid}/media/ here (Storage has no batch
+        // delete API — list + delete each ref, or use a Cloud Function).
+      }
+      await userDocRef().delete();
+      Object.values(state.mediaBlobs||{}).forEach(url=>{ try{ URL.revokeObjectURL(url); }catch(e){} });
+      toast('ডেটা মুছে ফেলা হয়েছে।');
+      auth.signOut();
+    }catch(err){
+      console.error(err);
+      toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message);
+    }
+  });
+}
+
+/* ---------------- MODULE 09 §25: Account Deletion ----------------
+   Conceptually distinct from "Delete All Data": this also removes the
+   Firebase Auth identity itself. Firebase requires a *recent* sign-in for
+   this (security-sensitive operation), so on failure we ask the user to
+   re-authenticate via Google Sign-In and try again — we never fake success. */
+function deleteAccount(){
+  typeConfirmAction(
+    'Delete your account?',
+    'This deletes all your JournalOS data AND your sign-in account itself. You will be signed out and this account will no longer exist. This cannot be undone.',
+    'DELETE',
+    async ()=>{
+    try{
+      const colNames = ['entries', ...LIFE_COLLECTIONS, 'searchIndex', 'analytics', 'media'];
       for(const name of colNames){
         const snap = await userDocRef().collection(name).get();
         if(snap.empty) continue;
@@ -4260,13 +5158,19 @@ function wipeAll(){
         await batch.commit();
       }
       await userDocRef().delete();
-      toast('ডেটা মুছে ফেলা হয়েছে।');
-      auth.signOut();
+      const user = auth.currentUser;
+      await user.delete();
+      toast('অ্যাকাউন্ট মুছে ফেলা হয়েছে।');
     }catch(err){
       console.error(err);
-      toast('মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message);
+      if(err.code === 'auth/requires-recent-login'){
+        toast('নিরাপত্তার জন্য আবার Google দিয়ে সাইন-ইন করে তারপর আবার চেষ্টা করো।');
+        auth.signInWithPopup(googleProvider).then(()=>deleteAccount()).catch(e2=>console.error(e2));
+      } else {
+        toast('অ্যাকাউন্ট মুছে ফেলা ব্যর্থ হয়েছে: ' + err.message);
+      }
     }
-  }, 'সব মুছে ফেলুন');
+  });
 }
 
 /* ---------------- UTIL: toast + confirm modal ---------------- */
@@ -4289,6 +5193,9 @@ function closeConfirm(){ document.getElementById('confirmModal').classList.remov
 
 renderQuickMoodOptions();
 boot();
+// Module 09: best-effort mic release if the tab closes mid-recording
+// (browsers generally do this automatically, but this is a cheap safety net).
+window.addEventListener('beforeunload', ()=>{ if(state.recording) stopVoiceRecording(true); });
 </script>
 </body>
 </html>
