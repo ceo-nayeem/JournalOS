@@ -543,6 +543,10 @@ input,textarea,select{font-family:var(--font-sans);}
 .search-hero input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent);}
 .search-empty{text-align:center;padding:60px 20px;color:var(--ink-faint);}
 .search-empty .mark{font-size:32px;color:var(--accent-soft);}
+/* ---------- Module 08: Search / Semantic Search / Ask Your Life ---------- */
+mark{background:var(--accent-soft);color:var(--ink);padding:0 2px;border-radius:3px;}
+.search-type-tag{background:var(--sage-soft);color:var(--sage);font-weight:600;}
+:root[data-theme="dark"] .search-type-tag{background:rgba(255,255,255,0.08);color:var(--ink-soft);}
 
 /* ---------- Settings ---------- */
 .settings-group{margin-bottom:26px;}
@@ -925,7 +929,21 @@ function entriesColRef(){ return userDocRef().collection('entries'); }
 const LIFE_COLLECTIONS = ['achievements','plans','quotes','ideas','lessons','challenges','moments','events','people','places'];
 function lifeColRef(name){ return userDocRef().collection(name); }
 
-let unsubEntries = null, unsubUserDoc = null, unsubLife = {};
+let unsubEntries = null, unsubUserDoc = null, unsubLife = {}, unsubSearchIndex = null;
+
+// Module 08: users/{uid}/searchIndex/{entryId} — one lightweight search-representation
+// doc per journal (searchableText + embedding), kept separate from the journal itself.
+function searchIndexColRef(){ return userDocRef().collection('searchIndex'); }
+function attachSearchIndexListener(){
+  if(unsubSearchIndex) unsubSearchIndex();
+  unsubSearchIndex = searchIndexColRef().onSnapshot(snap=>{
+    const idx = {};
+    snap.docs.forEach(d=>{ idx[d.id] = d.data(); });
+    state.searchIndex = idx;
+    if(state.view==='search') afterSearchViewRender();
+  }, err=>console.error('searchIndex listener error', err));
+}
+function detachSearchIndexListener(){ if(unsubSearchIndex){ unsubSearchIndex(); unsubSearchIndex=null; } }
 
 function attachLifeListeners(){
   detachLifeListeners();
@@ -1036,6 +1054,38 @@ async function callGemini(prompt){
     return null;
   }
 }
+/* ---------------- MODULE 08: EMBEDDING PROVIDER ABSTRACTION ----------------
+   generateEmbedding(text) is the only thing the rest of Module 08 knows
+   about "how" embeddings are produced. Today it calls Gemini's embedding
+   endpoint from the browser (reusing the same Settings API key as
+   callGemini) — but every caller only ever sees "an array of numbers or
+   null", so this can move to a secure backend/another provider later
+   without touching search.js's ranking/retrieval logic at all. */
+const EMBEDDING_MODEL = 'text-embedding-004';
+const EMBEDDING_VERSION = 1; // bump if the model/representation changes, so old index docs can be identified for re-indexing
+async function generateEmbedding(text){
+  const apiKey = state.settings && state.settings.apiKey;
+  if(!apiKey || !text || !text.trim()) return null;
+  try{
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({ content: { parts:[{ text: text.slice(0,8000) }] } })
+    });
+    if(!res.ok) throw new Error('embed ' + res.status);
+    const data = await res.json();
+    const values = data.embedding && data.embedding.values;
+    return Array.isArray(values) ? values : null;
+  }catch(err){ console.error('generateEmbedding failed', err); return null; }
+}
+function cosineSimilarity(a, b){
+  if(!a || !b || a.length!==b.length) return 0;
+  let dot=0, na=0, nb=0;
+  for(let i=0;i<a.length;i++){ dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
+  if(!na || !nb) return 0;
+  return dot / (Math.sqrt(na)*Math.sqrt(nb));
+}
+
 function localDailySummary(entry){
   if(!entry || !entry.content || entry.content.trim().length < 12){
     return "যথেষ্ট লেখা হলে এখানে একটা সংক্ষিপ্ত AI সারাংশ দেখানো হবে।";
@@ -1729,7 +1779,13 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   insightsPeriod: '30d', insightsTab:'overview',
   insightsMonth: new Date(), insightsYear: new Date().getFullYear(),
   analysisCache: {}, // periodId -> {status, data, generatedAt} — local mirror of users/{uid}/analytics/*
-  patternsCache: null // {status, items, generatedAt}
+  patternsCache: null, // {status, items, generatedAt}
+  // Module 08: Search, Semantic Search & Ask Your Life
+  searchIndex: {}, // entryId -> {embedding, searchableText, updatedAt, embeddingModel, embeddingVersion} — local mirror of users/{uid}/searchIndex/*
+  indexBuild: {status:'idle', done:0, total:0},
+  searchMode: 'text', searchQuery: '', searchResults: null,
+  searchFilters: {dateRange:'any', dateFrom:'', dateTo:'', moods:[], favOnly:false, importantOnly:false, archived:false, types:[]},
+  askConversation: [], askBusy:false
 };
 
 /* ---------------- MODULE 02: DRAFT / AUTOSAVE ---------------- */
@@ -1836,12 +1892,15 @@ function boot(){
     if(unsubEntries){ unsubEntries(); unsubEntries=null; }
     if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
     detachLifeListeners();
+    detachSearchIndexListener();
 
     if(user){
       state.user = {uid:user.uid, name:user.displayName||'You', email:user.email||'', photoURL:user.photoURL||''};
       state.entries = [];
       state.settings = null;
       state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
+      state.searchIndex = {};
+      state.askConversation = [];
       syncProfileUI();
 
       const ref = userDocRef();
@@ -1857,6 +1916,7 @@ function boot(){
       attachUserDocListener();
       attachEntriesListener();
       attachLifeListeners();
+      attachSearchIndexListener();
       seedDraftFromRemoteIfNeeded();
       showApp();
     } else {
@@ -1864,6 +1924,8 @@ function boot(){
       state.entries = [];
       state.settings = null;
       state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
+      state.searchIndex = {};
+      state.askConversation = [];
       showAuth();
     }
   });
@@ -2073,6 +2135,7 @@ function render(){
   updateStreak();
   if(state.view==='write') refreshAIPreview(true);
   if(state.view==='dashboard') refreshDashboardAISummary();
+  if(state.view==='search') afterSearchViewRender();
   syncWriteFixedBarVisibility();
 }
 
@@ -2587,6 +2650,9 @@ async function saveDraft(){
     // Module 06: re-run structured AI extraction in the background so the
     // journal (source of truth) is never blocked on the Life Organization update.
     runLifeExtraction({id:d.id, content:d.content, date:d.date}).catch(err=>console.error(err));
+    // Module 08: keep the search index in sync — save first, index after, and
+    // an embedding failure here must never affect the journal that just saved fine.
+    updateSearchIndexForEntry(d.id).catch(err=>console.error(err));
     go('dashboard');
   }catch(err){
     console.error(err);
@@ -2598,6 +2664,7 @@ function deleteEntry(id){
     try{
       await entriesColRef().doc(id).delete();
       cascadeDeleteLifeData(id); // never leave orphaned Life Organization items behind
+      removeSearchIndexForEntry(id); // Module 08: no orphaned search index either
       toast('এন্ট্রি মুছে ফেলা হয়েছে।');
       go('timeline');
     }catch(err){
@@ -3061,40 +3128,523 @@ async function saveLifeEdit(){
   }catch(err){ console.error(err); toast('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message); }
 }
 
-/* ---------------- SEARCH (Module 21 — basic) ---------------- */
-function renderSearch(){
-  return `
-    <div class="page-head"><h1>Search</h1></div>
-    <div class="search-hero" style="margin-bottom:20px;">
-      <input id="searchInput" type="text" placeholder="Search by word, title, tag, or mood…" oninput="doSearch(this.value)" autofocus>
-    </div>
-    <div id="searchResults">
-      <div class="search-empty"><div class="mark serif">”</div>খোঁজার জন্য কিছু টাইপ করো।<br><span style="font-size:12px;">Semantic / AI search ভবিষ্যতে AI API কনফিগার করার পর যুক্ত হবে।</span></div>
-    </div>
-  `;
+/* ================================================================
+   MODULE 08 — SEARCH, SEMANTIC SEARCH & ASK YOUR LIFE
+   ----------------------------------------------------------------
+   Architecture:
+     Journal Entries + Module 05/06 structured data
+        -> (per journal) searchableText + embedding, stored in
+           users/{uid}/searchIndex/{entryId} — see EMBEDDING PROVIDER
+           ABSTRACTION above and INDEX GENERATION below.
+        -> runHybridSearch() blends keyword relevance (always available,
+           zero API calls) with semantic similarity (cosine distance
+           against stored embeddings, only when a Gemini key + index
+           exist) into one explainable ranked list.
+        -> Ask Your Life retrieves the top-ranked evidence for a
+           question first, then asks Gemini to answer ONLY from that
+           evidence, with mandatory source citations back to the
+           original journal/Life record.
+   The keyword layer never depends on AI, so Search/filters always work
+   even with zero Gemini key and zero search index.
+   ================================================================ */
+
+// ---- Index generation: one searchable representation per journal ----
+function buildEntrySearchableText(entry){
+  const parts = [entry.title||'', entry.content||'', (entry.tags||[]).join(' '), moodInfo(entry.mood).label, entry.date];
+  const life = state.life || {};
+  ['achievements','plans','ideas','lessons','challenges','moments'].forEach(k=>{
+    (life[k]||[]).filter(x=>x.sourceEntryId===entry.id).forEach(x=>{ if(x.text) parts.push(x.text); });
+  });
+  return parts.filter(Boolean).join('\n').slice(0,6000);
 }
-function doSearch(q){
-  const box = document.getElementById('searchResults');
-  q = q.trim().toLowerCase();
-  if(!q){ box.innerHTML = `<div class="search-empty"><div class="mark serif">”</div>খোঁজার জন্য কিছু টাইপ করো।</div>`; return; }
-  const results = state.entries.filter(e=>{
-    if(e.archived) return false;
-    return (e.title||'').toLowerCase().includes(q) ||
-           (e.content||'').toLowerCase().includes(q) ||
-           (e.tags||[]).some(t=>t.toLowerCase().includes(q)) ||
-           moodInfo(e.mood).label.toLowerCase().includes(q) ||
-           e.date.includes(q);
-  }).sort((a,b)=>b.date.localeCompare(a.date));
-  box.innerHTML = results.length ? `<div class="card">${results.map(e=>`
-    <div class="entry-row" onclick="go('write','${e.id}')">
+// Called (fire-and-forget) after a journal is saved. The journal save itself
+// never waits on this — embedding failures must never block writing.
+async function updateSearchIndexForEntry(entryId){
+  if(!state.user) return;
+  const entry = state.entries.find(e=>e.id===entryId);
+  if(!entry) return;
+  const text = buildEntrySearchableText(entry);
+  const embedding = await generateEmbedding(text); // null if no key / API failure — index doc still saved, minus the vector
+  const doc = {
+    sourceEntryId: entryId, sourceDate: entry.date, searchableText: text.slice(0,2000),
+    updatedAt: new Date().toISOString(), embeddingModel: EMBEDDING_MODEL, embeddingVersion: EMBEDDING_VERSION
+  };
+  if(embedding) doc.embedding = embedding;
+  try{ await searchIndexColRef().doc(entryId).set(doc, {merge:true}); }
+  catch(err){ console.error('updateSearchIndexForEntry failed', err); }
+}
+async function removeSearchIndexForEntry(entryId){
+  try{ await searchIndexColRef().doc(entryId).delete(); }catch(err){ /* best-effort */ }
+}
+// Backfills embeddings for existing journals that predate the search index,
+// or whose stored embedding used an older model/version. Processed in small
+// controlled batches (never hundreds of simultaneous requests) with a short
+// pause between batches, and progress is shown in Settings/Search.
+async function buildSearchIndex(){
+  if(!state.user) return;
+  if(!state.settings || !state.settings.apiKey){ toast('আগে Settings-এ Gemini API key যোগ করো।'); return; }
+  const missing = state.entries.filter(e=>!e.archived &&
+    (!state.searchIndex[e.id] || !state.searchIndex[e.id].embedding || state.searchIndex[e.id].embeddingModel!==EMBEDDING_MODEL));
+  if(!missing.length){ toast('সব জার্নাল ইতিমধ্যে ইনডেক্স করা আছে।'); return; }
+  state.indexBuild = {status:'running', done:0, total:missing.length};
+  render();
+  const BATCH = 3;
+  for(let i=0;i<missing.length;i+=BATCH){
+    const chunk = missing.slice(i, i+BATCH);
+    await Promise.all(chunk.map(e=>updateSearchIndexForEntry(e.id)));
+    state.indexBuild.done = Math.min(missing.length, i+BATCH);
+    if(state.view==='search' || state.view==='settings') render();
+    await new Promise(res=>setTimeout(res, 250)); // gentle pacing — never hammer the embedding API
+  }
+  state.indexBuild.status = 'done';
+  if(state.view==='search' || state.view==='settings') render();
+  toast('Search index আপডেট হয়েছে।');
+}
+
+// ---- Keyword relevance scoring (Module 08 §5) — always available, no AI ----
+function keywordScoreEntry(entry, qLower){
+  let score = 0;
+  const title = (entry.title||'').toLowerCase(), content = (entry.content||'').toLowerCase();
+  if(title===qLower) score += 50; else if(title.includes(qLower)) score += 25;
+  if(content.includes(qLower)){
+    const occurrences = content.split(qLower).length - 1;
+    score += Math.min(occurrences, 10) * 4;
+  }
+  if((entry.tags||[]).some(t=>t.toLowerCase().includes(qLower))) score += 12;
+  if(moodInfo(entry.mood).label.toLowerCase().includes(qLower)) score += 6;
+  if(entry.date.includes(qLower)) score += 6;
+  return score;
+}
+function keywordScoreLifeItem(kind, item, qLower){
+  const mainText = ((kind==='events' ? item.title : item.text) || '').toLowerCase();
+  let score = 0;
+  if(mainText===qLower) score += 40; else if(mainText.includes(qLower)) score += 20;
+  if(item.category && item.category.toLowerCase().includes(qLower)) score += 8;
+  if(item.status && item.status.toLowerCase().includes(qLower)) score += 4;
+  return score;
+}
+function keywordScoreEntity(item, qLower){ return (item.name||'').toLowerCase().includes(qLower) ? 20 : 0; }
+
+const SEARCHABLE_LIFE_TYPES = ['achievements','plans','quotes','ideas','lessons','challenges','moments','events'];
+const SEARCH_TYPE_META = {
+  journal:{icon:'📓', label:'Journal'}, achievements:{icon:'🏆', label:'Achievement'}, plans:{icon:'🗺️', label:'Plan'},
+  quotes:{icon:'💬', label:'Quote'}, ideas:{icon:'💡', label:'Idea'}, lessons:{icon:'📚', label:'Lesson'},
+  challenges:{icon:'⛰️', label:'Challenge'}, moments:{icon:'✨', label:'Moment'}, events:{icon:'📅', label:'Event'},
+  people:{icon:'🧑', label:'Person'}, places:{icon:'📍', label:'Place'}
+};
+
+function searchDateRange(f){
+  const now = new Date(); now.setHours(23,59,59,999);
+  if(f.dateRange==='today'){ const s=new Date(); s.setHours(0,0,0,0); return {start:s, end:now}; }
+  if(f.dateRange==='7d'){ const s=new Date(); s.setDate(s.getDate()-6); s.setHours(0,0,0,0); return {start:s, end:now}; }
+  if(f.dateRange==='30d'){ const s=new Date(); s.setDate(s.getDate()-29); s.setHours(0,0,0,0); return {start:s, end:now}; }
+  if(f.dateRange==='3m'){ const s=new Date(); s.setDate(s.getDate()-89); s.setHours(0,0,0,0); return {start:s, end:now}; }
+  if(f.dateRange==='year'){ return {start:new Date(now.getFullYear(),0,1), end:now}; }
+  if(f.dateRange==='custom'){
+    return {start: f.dateFrom ? new Date(f.dateFrom+'T00:00:00') : null, end: f.dateTo ? new Date(f.dateTo+'T23:59:59') : now};
+  }
+  return {start:null, end:null};
+}
+function itemDateForFilter(kind, obj){
+  if(kind==='journal') return obj.date;
+  if(kind==='plans') return obj.plannedDate || obj.sourceDate || '';
+  if(kind==='events') return obj.date || '';
+  if(kind==='people' || kind==='places') return obj.lastMentioned || '';
+  return obj.sourceDate || '';
+}
+function passesSearchFilters(kind, obj, f){
+  if(f.types && f.types.length && !f.types.includes(kind)) return false;
+  if(kind==='journal'){
+    if(!f.archived && obj.archived) return false;
+    if(f.favOnly && !obj.favorite) return false;
+    if(f.importantOnly && !obj.important) return false;
+    if(f.moods && f.moods.length && !f.moods.includes(obj.mood)) return false;
+  } else if(f.favOnly && kind!=='people' && kind!=='places' && !obj.favorite){
+    return false; // favorite only meaningfully applies to journals + the "hasFavorite" Life types
+  }
+  if(f.dateRange && f.dateRange!=='any'){
+    const dateVal = itemDateForFilter(kind, obj);
+    if(!dateVal) return kind==='journal' ? false : true; // don't hide dateless Life records (people/places) from a date filter meant for journals
+    const {start, end} = searchDateRange(f);
+    const dt = new Date(dateVal+'T12:00:00');
+    if(start && dt<start) return false;
+    if(end && dt>end) return false;
+  }
+  return true;
+}
+
+// ---- Unified keyword search across journals + Module 05/06 structured data ----
+function runTextSearch(q, f){
+  const qLower = q.trim().toLowerCase();
+  if(!qLower) return [];
+  const results = [];
+  state.entries.forEach(e=>{
+    if(!passesSearchFilters('journal', e, f)) return;
+    const s = keywordScoreEntry(e, qLower);
+    if(s>0) results.push({kind:'journal', ref:e, date:e.date, score:s, matchedBy:'keyword'});
+  });
+  SEARCHABLE_LIFE_TYPES.forEach(kind=>{
+    (state.life[kind]||[]).forEach(item=>{
+      if(!passesSearchFilters(kind, item, f)) return;
+      const s = keywordScoreLifeItem(kind, item, qLower);
+      if(s>0) results.push({kind, ref:item, date:itemDateForFilter(kind,item), score:s, matchedBy:'keyword'});
+    });
+  });
+  ['people','places'].forEach(kind=>{
+    if(f.types && f.types.length && !f.types.includes(kind)) return;
+    (state.life[kind]||[]).forEach(item=>{
+      const s = keywordScoreEntity(item, qLower);
+      if(s>0) results.push({kind, ref:item, date:itemDateForFilter(kind,item), score:s, matchedBy:'keyword'});
+    });
+  });
+  results.sort((a,b)=> b.score-a.score || (b.date||'').localeCompare(a.date||''));
+  return results;
+}
+
+// ---- Hybrid keyword + semantic ranking (Module 08 §12) ----
+// mode 'text' weighs keyword relevance higher (exact matches like "IELTS" must
+// still win); mode 'semantic' weighs meaning-similarity higher, so queries
+// like "times I was worried about money" surface entries with no literal
+// word overlap. Both always fall back gracefully when no key/index exists.
+function normalizeKeywordScore(raw){ return Math.min(1, raw/60); }
+async function runHybridSearch(q, f, opts){
+  opts = opts || {};
+  const keywordResults = runTextSearch(q, f);
+  const kwMap = {}; keywordResults.forEach(r=>{ kwMap[r.kind+':'+r.ref.id] = r.score; });
+
+  let semanticOk = false; const simMap = {};
+  const hasIndex = Object.keys(state.searchIndex).length>0;
+  if(state.settings && state.settings.apiKey && hasIndex){
+    const qEmb = await generateEmbedding(q);
+    if(qEmb){
+      semanticOk = true;
+      Object.values(state.searchIndex).forEach(doc=>{
+        if(!doc.embedding) return;
+        const entry = state.entries.find(e=>e.id===doc.sourceEntryId);
+        if(!entry || (entry.archived && !f.archived)) return;
+        if(f.types && f.types.length && !f.types.includes('journal')) return;
+        simMap['journal:'+doc.sourceEntryId] = cosineSimilarity(qEmb, doc.embedding);
+      });
+    }
+  }
+
+  const keys = new Set([...Object.keys(kwMap), ...Object.keys(simMap)]);
+  const combined = [];
+  keys.forEach(key=>{
+    const sep = key.indexOf(':'); const kind = key.slice(0,sep), id = key.slice(sep+1);
+    let ref;
+    if(kind==='journal') ref = state.entries.find(e=>e.id===id);
+    else ref = (state.life[kind]||[]).find(x=>x.id===id);
+    if(!ref) return;
+    const kwRaw = kwMap[key]||0, sim = simMap[key]||0;
+    const kwNorm = normalizeKeywordScore(kwRaw);
+    const semanticEmphasis = !!opts.semanticEmphasis;
+    const finalScore = semanticEmphasis ? (sim*0.75 + kwNorm*0.25) : (kwNorm*0.6 + sim*0.4);
+    if(finalScore<=0.02 && kwRaw<=0) return;
+    combined.push({
+      kind, ref, date: itemDateForFilter(kind, ref), score: finalScore, kwRaw, sim,
+      matchedBy: kwRaw>0 && sim>0.35 ? 'both' : kwRaw>0 ? 'keyword' : 'semantic'
+    });
+  });
+  combined.sort((a,b)=> b.score-a.score || (b.date||'').localeCompare(a.date||''));
+  return {semanticOk, hasIndex, results: combined};
+}
+
+// ---- Result rendering ----
+function highlightExcerpt(text, q){
+  text = text || '';
+  if(!q){ return escapeHtml(text.slice(0,180)); }
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  let excerpt;
+  if(idx===-1){ excerpt = text.slice(0,180) + (text.length>180?'…':''); }
+  else{
+    const start = Math.max(0, idx-60);
+    const end = Math.min(text.length, idx+q.length+120);
+    excerpt = (start>0?'…':'') + text.slice(start,end) + (end<text.length?'…':'');
+  }
+  const esc = escapeHtml(excerpt);
+  if(!q.trim()) return esc;
+  try{
+    const re = new RegExp('(' + q.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'ig');
+    return esc.replace(re, '<mark>$1</mark>');
+  }catch(e){ return esc; }
+}
+function openSearchResult(kind, id){
+  if(kind==='journal'){ go('write', id); return; }
+  if(kind==='people' || kind==='places'){ go('life'); state.memoryTab = kind; render(); return; }
+  openLifeEdit(kind, id); // global modal — works from the Search page itself, no navigation needed
+}
+function renderSearchResultRow(r, q){
+  const meta = SEARCH_TYPE_META[r.kind] || {icon:'📄', label:r.kind};
+  const typeTag = `<span class="tag search-type-tag">${meta.icon} ${meta.label}</span>`;
+  const relatedTag = r.matchedBy==='semantic' ? `<span class="tag search-type-tag">✨ Related meaning</span>` : (r.matchedBy==='both' ? `<span class="tag search-type-tag">✓ Match + related</span>` : '');
+  if(r.kind==='journal'){
+    const e = r.ref;
+    return `<div class="entry-row" onclick="openSearchResult('journal','${e.id}')">
       <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
       <div class="entry-body">
-        <h3>${escapeHtml(e.title||'Untitled')}</h3>
-        <p>${escapeHtml(e.content||'')}</p>
-        <div class="entry-meta"><span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span></div>
+        <div class="entry-meta" style="margin-bottom:4px;">${typeTag}${relatedTag}${e.archived?'<span class="pill">Archived</span>':''}</div>
+        <h3>${escapeHtml(e.title||'Untitled')} ${e.favorite?'<span class="entry-star">★</span>':''}</h3>
+        <p>${highlightExcerpt(e.content, q)}</p>
+        <div class="entry-meta">
+          <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
+          ${typeof e.moodIntensity==='number' ? `<span class="intensity-tag">Intensity ${e.moodIntensity}/10</span>` : ''}
+          ${(e.tags||[]).slice(0,4).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+          ${e.important ? `<span class="pill">🔖 Important</span>` : ''}
+        </div>
       </div>
-    </div>`).join('')}</div>` : `<div class="search-empty">কোনো ফলাফল পাওয়া যায়নি।</div>`;
+    </div>`;
+  }
+  if(r.kind==='people' || r.kind==='places'){
+    const p = r.ref;
+    return `<div class="entry-row" onclick="openSearchResult('${r.kind}','${p.id}')">
+      <div class="entry-date"><div class="d" style="font-size:20px;">${meta.icon}</div></div>
+      <div class="entry-body">
+        <div class="entry-meta" style="margin-bottom:4px;">${typeTag}</div>
+        <h3>${highlightExcerpt(p.name, q)}</h3>
+        <div class="entry-meta"><span class="tag">${(p.sourceEntryIds||[]).length} journal${(p.sourceEntryIds||[]).length===1?'':'s'}</span></div>
+      </div>
+    </div>`;
+  }
+  const item = r.ref;
+  const mainText = r.kind==='events' ? item.title : item.text;
+  const dateForDisplay = itemDateForFilter(r.kind, item);
+  return `<div class="entry-row" onclick="openSearchResult('${r.kind}','${item.id}')">
+    <div class="entry-date">${dateForDisplay ? `<div class="d">${new Date(dateForDisplay+'T00:00:00').getDate()}</div><div class="m">${fmtDate(dateForDisplay,{month:'short'})}</div>` : `<div class="m" style="padding-top:8px;">—</div>`}</div>
+    <div class="entry-body">
+      <div class="entry-meta" style="margin-bottom:4px;">${typeTag}${relatedTag}</div>
+      <h3>${highlightExcerpt(mainText, q)} ${item.favorite?'<span class="entry-star">★</span>':''}</h3>
+      <div class="entry-meta">
+        ${item.category ? `<span class="tag">${escapeHtml(item.category)}</span>` : ''}
+        ${item.status ? `<span class="pill">${escapeHtml(item.status)}</span>` : ''}
+      </div>
+    </div>
+  </div>`;
 }
+function renderSearchResultsList(hybrid, q, mode){
+  if(mode==='semantic' && !hybrid.semanticOk){
+    const reason = !(state.settings && state.settings.apiKey) ? 'Settings-এ Gemini API key যোগ করো।'
+      : !hybrid.hasIndex ? 'এখনো কোনো search index তৈরি হয়নি — Settings থেকে "Build Search Index" চালাও।'
+      : 'সাময়িকভাবে অনুপলব্ধ।';
+    const banner = `<div class="search-empty" style="margin-bottom:10px;">Semantic search is temporarily unavailable — showing basic keyword matches instead. <span style="font-size:11.5px;">(${reason})</span></div>`;
+    return banner + (hybrid.results.length ? `<div class="card">${hybrid.results.map(r=>renderSearchResultRow(r,q)).join('')}</div>` : `<div class="search-empty">No matching records found.</div>`);
+  }
+  if(!hybrid.results.length) return `<div class="search-empty">No matching records found.</div>`;
+  return `<div class="card">${hybrid.results.map(r=>renderSearchResultRow(r,q)).join('')}</div>`;
+}
+
+// ---- Filters ----
+function defaultSearchFilters(){ return {dateRange:'any', dateFrom:'', dateTo:'', moods:[], favOnly:false, importantOnly:false, archived:false, types:[]}; }
+function isSearchFiltered(f){ return f.dateRange!=='any' || f.moods.length>0 || f.favOnly || f.importantOnly || f.archived || f.types.length>0; }
+function patchSearchFilterPanel(){ const el = document.getElementById('searchFilterPanel'); if(el) el.outerHTML = renderSearchFilterPanel(); }
+function setSearchDateRange(v){ state.searchFilters.dateRange = v; patchSearchFilterPanel(); runSearchAndRender(); }
+function setSearchDateCustom(field, v){ state.searchFilters[field] = v; runSearchAndRender(); }
+function toggleSearchBoolFilter(field){ state.searchFilters[field] = !state.searchFilters[field]; patchSearchFilterPanel(); runSearchAndRender(); }
+function toggleSearchMood(m){ const s=state.searchFilters; const i=s.moods.indexOf(m); if(i===-1) s.moods.push(m); else s.moods.splice(i,1); patchSearchFilterPanel(); runSearchAndRender(); }
+function toggleSearchType(t){ const s=state.searchFilters; const i=s.types.indexOf(t); if(i===-1) s.types.push(t); else s.types.splice(i,1); patchSearchFilterPanel(); runSearchAndRender(); }
+function clearSearchFilters(){ state.searchFilters = defaultSearchFilters(); patchSearchFilterPanel(); runSearchAndRender(); }
+function renderSearchFilterPanel(){
+  const f = state.searchFilters;
+  return `
+    <div class="card" id="searchFilterPanel" style="margin-bottom:14px;">
+      <div class="filter-row">
+        <select onchange="setSearchDateRange(this.value)">
+          <option value="any" ${f.dateRange==='any'?'selected':''}>Any time</option>
+          <option value="today" ${f.dateRange==='today'?'selected':''}>Today</option>
+          <option value="7d" ${f.dateRange==='7d'?'selected':''}>Last 7 days</option>
+          <option value="30d" ${f.dateRange==='30d'?'selected':''}>Last 30 days</option>
+          <option value="3m" ${f.dateRange==='3m'?'selected':''}>Last 3 months</option>
+          <option value="year" ${f.dateRange==='year'?'selected':''}>This year</option>
+          <option value="custom" ${f.dateRange==='custom'?'selected':''}>Custom range</option>
+        </select>
+        ${f.dateRange==='custom' ? `<input type="date" value="${f.dateFrom}" onchange="setSearchDateCustom('dateFrom',this.value)"><input type="date" value="${f.dateTo}" onchange="setSearchDateCustom('dateTo',this.value)">` : ''}
+        <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;"><input type="checkbox" ${f.favOnly?'checked':''} onchange="toggleSearchBoolFilter('favOnly')"> Favorite</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;"><input type="checkbox" ${f.importantOnly?'checked':''} onchange="toggleSearchBoolFilter('importantOnly')"> Important</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;"><input type="checkbox" ${f.archived?'checked':''} onchange="toggleSearchBoolFilter('archived')"> Include archived</label>
+        ${isSearchFiltered(f) ? `<button class="btn btn-sm btn-ghost" onclick="clearSearchFilters()">Clear filters</button>` : ''}
+      </div>
+      <div class="filter-row" style="margin-bottom:2px;">
+        ${MOODS.map(m=>`<button class="btn btn-sm ${f.moods.includes(m.id)?'btn-accent':'btn-ghost'}" onclick="toggleSearchMood('${m.id}')">${m.emoji} ${m.label}</button>`).join('')}
+      </div>
+      <div class="filter-row" style="margin-bottom:0;">
+        ${Object.entries(SEARCH_TYPE_META).map(([k,meta])=>`<button class="btn btn-sm ${f.types.includes(k)?'btn-accent':'btn-ghost'}" onclick="toggleSearchType('${k}')">${meta.icon} ${meta.label}${k==='journal'?'s':'s'}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ---- Search input handling (patches only the results area, so typing never loses focus) ----
+let searchDebounce = null, __searchToken = 0;
+function onSearchQueryInput(v){
+  state.searchQuery = v;
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(runSearchAndRender, 300);
+}
+function emptySearchState(){
+  return `<div class="search-empty"><div class="mark serif">”</div>খোঁজার জন্য কিছু টাইপ করো।</div>`;
+}
+async function runSearchAndRender(){
+  const area = document.getElementById('searchResultsArea');
+  if(!area || state.searchMode==='ask') return;
+  const q = (state.searchQuery||'').trim();
+  if(!q){ area.innerHTML = emptySearchState(); state.searchResults = null; return; }
+  area.innerHTML = `<div class="search-empty">${state.searchMode==='semantic' ? 'সম্পর্কিত স্মৃতি খোঁজা হচ্ছে…' : 'খোঁজা হচ্ছে…'}</div>`;
+  const myToken = ++__searchToken;
+  const hybrid = await runHybridSearch(q, state.searchFilters, {semanticEmphasis: state.searchMode==='semantic'});
+  if(myToken !== __searchToken) return; // a newer search superseded this one
+  state.searchResults = hybrid.results;
+  area.innerHTML = renderSearchResultsList(hybrid, q, state.searchMode);
+}
+function afterSearchViewRender(){
+  if(state.view!=='search') return;
+  if(state.searchMode!=='ask' && (state.searchQuery||'').trim()) runSearchAndRender();
+}
+
+// ---- Search modes ----
+const SEARCH_MODES = [
+  {key:'text', label:'🔎 Search'},
+  {key:'semantic', label:'✨ Semantic Search'},
+  {key:'ask', label:'💬 Ask Your Life'}
+];
+function setSearchMode(m){ state.searchMode = m; render(); }
+function renderSearch(){
+  const mode = state.searchMode || 'text';
+  return `
+    <div class="page-head">
+      <div><h1>Search</h1><div class="sub">তোমার জার্নাল ও Life data — keyword, meaning অনুযায়ী, অথবা সরাসরি প্রশ্ন করে খুঁজো।</div></div>
+    </div>
+    <div class="filter-row" style="margin-bottom:14px;">
+      ${SEARCH_MODES.map(m=>`<button class="btn btn-sm ${mode===m.key?'btn-accent':'btn-ghost'}" onclick="setSearchMode('${m.key}')">${m.label}</button>`).join('')}
+    </div>
+    ${mode==='ask' ? renderAskYourLife() : `
+      <div class="search-hero" style="margin-bottom:16px;">
+        <input id="searchQueryInput" type="text" placeholder="${mode==='semantic' ? 'অর্থ অনুযায়ী খুঁজো — যেমন \\"times I was worried about money\\"…' : 'Search by word, title, tag, mood, or your Life data…'}" value="${escapeHtml(state.searchQuery||'')}" oninput="onSearchQueryInput(this.value)" autofocus>
+      </div>
+      ${renderSearchFilterPanel()}
+      <div id="searchResultsArea">${(state.searchQuery||'').trim() ? `<div class="search-empty">${mode==='semantic'?'সম্পর্কিত স্মৃতি খোঁজা হচ্ছে…':'খোঁজা হচ্ছে…'}</div>` : emptySearchState()}</div>
+    `}
+  `;
+}
+
+/* ---- Ask Your Life (Module 08 §14-26): retrieval-before-generation, source-cited, in-memory conversation ---- */
+function renderAskYourLife(){
+  return `<div id="askShell">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="section-title">Ask Your Life</div>
+      <p style="font-size:12.5px;color:var(--ink-faint);margin:0 0 10px;">তোমার নিজের জার্নাল ও Life data থেকেই উত্তর দেওয়া হবে — বাইরের কোনো তথ্য যোগ করা হয় না, এবং যথেষ্ট প্রমাণ না থাকলে তা স্পষ্ট করে বলা হবে।</p>
+      <div class="filter-row" style="flex-wrap:nowrap;margin-bottom:0;">
+        <input id="askInput" type="text" style="flex:1;" placeholder="তুমি তোমার জীবন সম্পর্কে কী জানতে চাও?" onkeydown="if(event.key==='Enter'){event.preventDefault();askYourLife();}" ${state.askBusy?'disabled':''}>
+        <button class="btn btn-primary btn-sm" onclick="askYourLife()" ${state.askBusy?'disabled':''}>${state.askBusy?'…':'Ask'}</button>
+      </div>
+      ${state.askConversation.length ? `<div class="filter-row" style="margin-top:4px;margin-bottom:0;"><button class="btn btn-sm btn-ghost" onclick="clearAskConversation()">Clear conversation</button></div>` : ''}
+    </div>
+    <div id="askThread">${renderAskThread()}</div>
+  </div>`;
+}
+function renderAskThread(){
+  if(!state.askConversation.length){
+    return `<div class="search-empty">এখনো কোনো প্রশ্ন করা হয়নি। যেমন জিজ্ঞেস করে দেখো: "What goals have I repeatedly mentioned?"</div>`;
+  }
+  return state.askConversation.map(renderAskTurn).join('');
+}
+function renderAskTurn(turn){
+  let body;
+  if(turn.status==='thinking') body = `<div class="empty">ভাবা হচ্ছে…</div>`;
+  else if(turn.status==='no-key') body = `<div class="empty">Settings-এ Gemini API key যোগ করলে Ask Your Life কাজ করবে। <button class="btn btn-sm" onclick="go('settings')" style="margin-left:6px;">⚙️ Settings</button></div>`;
+  else if(turn.status==='no-evidence') body = `<div class="empty">${escapeHtml(turn.answer || "I couldn't find enough information in your JournalOS data to answer that.")}</div>`;
+  else if(turn.status==='ai-unavailable') body = `<div class="empty">I couldn't generate an AI answer right now. Here are the relevant records I found.</div>`;
+  else if(turn.status==='failed') body = `<div class="empty">উত্তর তৈরি করা যায়নি — আবার চেষ্টা করো।</div>`;
+  else body = `<div class="ai-reflect">${formatReflectionText(turn.answer)}</div>`;
+  const sources = (turn.sources||[]).length ? `<div class="pattern-sources" style="margin-top:10px;">
+    ${turn.sources.map(s=>`<span class="tag" style="cursor:pointer;" onclick="openSearchResult('${s.kind}','${s.id}')">${(SEARCH_TYPE_META[s.kind]||{icon:'📄'}).icon} ${escapeHtml(s.label)}</span>`).join('')}
+  </div>` : '';
+  return `<div class="card ins-section" style="margin-bottom:14px;">
+    <div class="ins-section-head"><h2 style="font-size:14.5px;">${escapeHtml(turn.question)}</h2></div>
+    ${body}${sources}
+  </div>`;
+}
+// Retrieval-before-generation: pull the top hybrid (keyword+semantic) matches
+// across journals AND structured Life data for this question, before any
+// AI call happens — the AI only ever sees this short, relevant slice.
+async function retrieveForQuestion(q){
+  const hybrid = await runHybridSearch(q, defaultSearchFilters(), {semanticEmphasis:true});
+  const top = hybrid.results.slice(0,12);
+  const entries = top.filter(r=>r.kind==='journal').map(r=>r.ref);
+  const lifeItems = top.filter(r=>r.kind!=='journal' && r.kind!=='people' && r.kind!=='places').map(r=>({kind:r.kind, item:r.ref}));
+  const sources = top.map(r=>{
+    if(r.kind==='journal') return {kind:'journal', id:r.ref.id, label:`${fmtDate(r.ref.date)} — "${r.ref.title||'Untitled'}"`};
+    if(r.kind==='people' || r.kind==='places') return {kind:r.kind, id:r.ref.id, label:`${SEARCH_TYPE_META[r.kind].label}: ${r.ref.name}`};
+    const mainText = r.kind==='events' ? r.ref.title : r.ref.text;
+    return {kind:r.kind, id:r.ref.id, label:`${SEARCH_TYPE_META[r.kind].label}: ${(mainText||'').slice(0,60)}`};
+  });
+  return {entries, lifeItems, sources};
+}
+function buildAskPrompt(question, retrieval, priorTurns){
+  const entryLines = retrieval.entries.map(e=>`- [journal ${e.date}] ${e.title||''}: ${(e.content||'').slice(0,500)}`).join('\n') || '(none)';
+  const lifeLines = retrieval.lifeItems.map(x=>{
+    const mainText = x.kind==='events' ? x.item.title : x.item.text;
+    return `- [${x.kind} ${itemDateForFilter(x.kind, x.item)}] ${mainText}`;
+  }).join('\n') || '(none)';
+  const history = (priorTurns||[]).filter(t=>t.status==='ready').map(t=>`Q: ${t.question}\nA: ${t.answer}`).join('\n\n');
+  return `তুমি JournalOS-এর "Ask Your Life" সহকারী। নিচে ব্যবহারকারীর নিজের জার্নাল ও Life data থেকে retrieve করা প্রাসঙ্গিক তথ্য দেওয়া আছে — এটাই তোমার একমাত্র সোর্স।
+
+কড়া নিয়ম:
+1. শুধু নিচের তথ্য থেকে উত্তর দাও — কোনো বাইরের জ্ঞান, ধারণা বা অনুমান যোগ কোরো না।
+2. কোনো তথ্য আবিষ্কার কোরো না — কোনো তারিখ, মানুষ, অর্জন বা plan বানিয়ো না।
+3. স্পষ্টভাবে লেখা তথ্য (recorded fact) আর একাধিক এন্ট্রি জুড়ে দেখা pattern-কে আলাদা করে বলো — যেমন "You wrote..." বনাম "This appears across several entries...".
+4. প্রমাণ যথেষ্ট না হলে স্পষ্টভাবে বলো যে তথ্য যথেষ্ট নয়, বরং অনুমাননির্ভর আত্মবিশ্বাসী উত্তর দিও না। "I don't have enough information" বলা একটা ভুল অনুমানের চেয়ে ভালো।
+5. কোনো মেডিক্যাল/মানসিক রোগ নির্ণয়, ব্যক্তিত্ব সিদ্ধান্ত, সম্পর্ক বা উদ্দেশ্য অনুমান কখনো কোরো না।
+6. কার্যকারণ (causation) দাবি কোরো না — শুধু co-occurrence বর্ণনা করো।
+7. উত্তরের নিচে নিজে থেকে "Sources" তালিকা লিখো না — সেটা আলাদাভাবে UI-তে দেখানো হবে।
+8. আউটপুট বাংলা অথবা ইংরেজি — যেটাতে বেশিরভাগ রিট্রিভ করা তথ্য লেখা সেই ভাষায় দাও। সংক্ষিপ্ত, স্পষ্ট অনুচ্ছেদে (২-৪টা ছোট প্যারাগ্রাফ) লেখো।
+
+${history ? `পূর্ববর্তী কথোপকথন (শুধু প্রসঙ্গ বোঝার জন্য — নতুন প্রশ্নের উত্তরও শুধু নিচের ডেটা থেকেই দিতে হবে):\n${history}\n\n` : ''}Retrieved journal entries:
+${entryLines}
+
+Retrieved structured life data:
+${lifeLines}
+
+প্রশ্ন: ${question}`;
+}
+async function askYourLife(){
+  if(state.askBusy) return;
+  const input = document.getElementById('askInput');
+  const q = (input ? input.value : '').trim();
+  if(!q) return;
+  if(input) input.value = '';
+  if(!state.settings || !state.settings.apiKey){
+    state.askConversation.push({question:q, status:'no-key'});
+    patchAskShell(); return;
+  }
+  state.askBusy = true;
+  const priorTurns = state.askConversation.slice();
+  const turn = {question:q, status:'thinking'};
+  state.askConversation.push(turn);
+  patchAskShell();
+  try{
+    const retrieval = await retrieveForQuestion(q);
+    if(!retrieval.entries.length && !retrieval.lifeItems.length){
+      turn.status = 'no-evidence';
+      turn.answer = "I couldn't find enough information in your JournalOS data to answer that.";
+    } else {
+      const raw = await callGemini(buildAskPrompt(q, retrieval, priorTurns));
+      if(!raw){
+        turn.status = 'ai-unavailable';
+        turn.sources = retrieval.sources;
+      } else {
+        turn.status = 'ready';
+        turn.answer = raw;
+        turn.sources = retrieval.sources;
+      }
+    }
+  }catch(err){ console.error('askYourLife failed', err); turn.status = 'failed'; }
+  state.askBusy = false;
+  patchAskShell();
+}
+function patchAskShell(){
+  const el = document.getElementById('askShell');
+  if(el && state.view==='search' && state.searchMode==='ask') el.outerHTML = renderAskYourLife();
+}
+function clearAskConversation(){ state.askConversation = []; render(); }
 
 /* ---------------- INSIGHTS (Mood Analytics §27 + Writing Analytics §28, lightweight) ---------------- */
 /* ================================================================
@@ -3659,7 +4209,26 @@ function renderSettings(){
         <b>মনে রাখা জরুরি:</b> এটি একটি ব্রাউজার-সাইড অ্যাপ, তাই এই key ব্রাউজারের ডেভেলপার টুলস / নেটওয়ার্ক ট্যাব থেকে দেখা সম্ভব। ব্যক্তিগত ব্যবহারের জন্য ঠিক আছে, কিন্তু সবার সাথে শেয়ার করা লিংকে এই key কখনো রেখো না।
       </div>
     </div>
+
+    <div class="settings-group card">
+      <h3>Search Index</h3>
+      <div class="settings-row">
+        <div><div class="label">Semantic Search index</div><div class="desc">Search / Ask Your Life-এর "meaning অনুযায়ী" খোঁজা ঠিকভাবে কাজ করার জন্য প্রতিটা জার্নালের একটা embedding দরকার। নতুন জার্নাল সেভ করলে এটা নিজে থেকেই আপডেট হয় — পুরনো জার্নালের জন্য নিচের বাটনে চাপো।</div></div>
+      </div>
+      ${renderIndexBuildStatus()}
+    </div>
   `;
+}
+function renderIndexBuildStatus(){
+  const ib = state.indexBuild || {status:'idle'};
+  const missing = state.entries.filter(e=>!e.archived && (!state.searchIndex[e.id] || !state.searchIndex[e.id].embedding || state.searchIndex[e.id].embeddingModel!==EMBEDDING_MODEL)).length;
+  if(ib.status==='running'){
+    return `<div class="settings-row"><div class="desc">Indexing ${ib.done} of ${ib.total} journals…</div></div>`;
+  }
+  return `<div class="settings-row">
+    <div class="desc">${missing===0 ? 'সব জার্নাল ইনডেক্স করা আছে।' : `${missing}টা জার্নাল এখনো ইনডেক্স করা হয়নি।`}</div>
+    <button class="btn btn-sm" onclick="buildSearchIndex()" ${missing===0?'disabled':''}>Build Search Index</button>
+  </div>`;
 }
 function setTheme(dark){
   const s = {...(state.settings||DEFAULT_SETTINGS), theme: dark?'dark':'light'};
@@ -3682,7 +4251,7 @@ function saveDashboardSection(key, val){
 function wipeAll(){
   confirmAction('সব ডেটা মুছে ফেলবেন?', 'এই অ্যাকাউন্টের সব জার্নাল এন্ট্রি ও সেটিংস Firebase থেকে স্থায়ীভাবে মুছে যাবে। এটি ফেরানো যাবে না।', async ()=>{
     try{
-      const colNames = ['entries', ...LIFE_COLLECTIONS];
+      const colNames = ['entries', ...LIFE_COLLECTIONS, 'searchIndex', 'analytics'];
       for(const name of colNames){
         const snap = await userDocRef().collection(name).get();
         if(snap.empty) continue;
