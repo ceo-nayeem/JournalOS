@@ -603,9 +603,19 @@ input,textarea,select{font-family:var(--font-sans);}
 .title-input:focus{outline:none;}
 .title-input::placeholder{color:var(--ink-faint);}
 .content-input{width:100%;min-height:340px;border:none;background:none;color:var(--ink);
-  font-family:var(--font-serif);font-size:17px;line-height:1.75;resize:vertical;padding:6px 0;}
+  font-family:var(--font-serif);font-size:17px;line-height:1.75;padding:6px 0;
+  white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;outline:none;cursor:text;}
 .content-input:focus{outline:none;}
-.content-input::placeholder{color:var(--ink-faint);font-style:italic;}
+.content-input:empty::before{content:attr(data-placeholder);color:var(--ink-faint);font-style:italic;pointer-events:none;}
+.content-input > div,.content-input > h2,.content-input > h3,.content-input > h4{margin:0;min-height:1.75em;}
+.content-input h2{font-size:1.5em;line-height:1.4;font-weight:700;}
+.content-input h3{font-size:1.25em;line-height:1.5;font-weight:700;}
+.content-input h4{font-size:1.1em;line-height:1.6;font-weight:700;}
+.content-input .li{position:relative;padding-left:1.4em;}
+.content-input .li::before{content:'•';position:absolute;left:.4em;}
+.content-input a{color:var(--accent);text-decoration:underline;cursor:pointer;}
+.content-input s,.content-input strike{text-decoration:line-through;}
+.content-input span[data-size]{line-height:1.4;}
 .mood-picker{display:flex;gap:8px;flex-wrap:wrap;}
 .mood-opt{padding:6px 13px;border-radius:99px;border:1px solid var(--rule);background:var(--paper-card);
   font-size:13px;color:var(--ink-soft);}
@@ -727,6 +737,10 @@ mark{background:var(--accent-soft);color:var(--ink);padding:0 2px;border-radius:
 .fmt-btn{min-width:30px;height:30px;padding:0 8px;border-radius:7px;border:1px solid var(--rule);
   background:var(--paper-card);color:var(--ink-soft);font-size:13px;display:flex;align-items:center;justify-content:center;flex:none;}
 .fmt-btn:hover{border-color:var(--accent);color:var(--ink);}
+.fmt-btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);}
+.fmt-size{height:30px;border-radius:7px;border:1px solid var(--rule);background:var(--paper-card);
+  color:var(--ink-soft);font-size:12.5px;padding:0 6px;flex:none;cursor:pointer;}
+.fmt-size:hover{border-color:var(--accent);color:var(--ink);}
 
 /* ---------- Write mode: fixed floating editor toolbar ---------- */
 /* Holds every editing / customization control — incl. Save — so it stays
@@ -758,8 +772,6 @@ body.write-mode .main{padding-top:148px;}
   .write-fixed-bar{left:10px;right:10px;top:56px;border-radius:16px;padding:8px 14px;}
   body.write-mode .main{padding-top:136px;}
 }
-.content-preview{min-height:340px;padding:6px 0;font-family:var(--font-serif);font-size:17px;line-height:1.75;color:var(--ink);}
-.content-preview .empty{text-align:left;}
 
 /* ---------- Module 02: Archive ---------- */
 .archived-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11.5px;
@@ -1988,7 +2000,7 @@ function toggleFocusMode(force){
   document.body.classList.toggle('focus-mode', on && state.view === 'write');
   const b = document.getElementById('focusToggleBtn');
   if(b){ b.textContent = on ? '✕ Exit focus' : '⛶ Focus'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
-  if(on){ const ta = getContentTextarea(); if(ta) ta.focus(); }
+  if(on){ const ta = getContentEditor(); if(ta) ta.focus(); }
 }
 
 // ---------- Onboarding ----------
@@ -4239,7 +4251,7 @@ function renderWrite(){
     const a = state.appliedDraftData;
     draft.title = a.title || '';
     draft.content = a.content || '';
-    draft.date = a.date || draft.date;
+    if(entry) draft.date = a.date || draft.date; // existing entries keep their own date; new entries are always dated when written
     draft.mood = a.mood || draft.mood;
     draft.moodIntensity = a.moodIntensity || draft.moodIntensity;
     draft.tags = a.tags || draft.tags;
@@ -4255,20 +4267,23 @@ function renderWrite(){
   if(wfb){
     wfb.innerHTML = `
       <div class="wfb-group wfb-optional">
-        <input type="date" aria-label="Journal date" value="${draft.date}" onchange="window.__draft.date=this.value; scheduleAutosave();">
-      </div>
-      <div class="wfb-group wfb-optional">
         <button class="btn btn-sm" id="favBtn" aria-pressed="${!!draft.favorite}" onclick="toggleDraftFlag('favorite')">${draft.favorite?'★ Favorited':'☆ Favorite'}</button>
         <button class="btn btn-sm" id="impBtn" aria-pressed="${!!draft.important}" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
       </div>
       <div class="wfb-sep wfb-optional"></div>
       <div class="wfb-group">
-        <button type="button" class="fmt-btn" aria-label="Bold" title="Bold" onclick="wrapSelection('**','**')"><b>B</b></button>
-        <button type="button" class="fmt-btn" aria-label="Italic" title="Italic" onclick="wrapSelection('*','*')"><i>I</i></button>
-        <button type="button" class="fmt-btn" aria-label="Heading" title="Heading" onclick="prefixLine('## ')">H</button>
-        <button type="button" class="fmt-btn" aria-label="Bulleted list" title="Bulleted list" onclick="prefixLine('- ')">• List</button>
-        <button type="button" class="fmt-btn" aria-label="Insert link" title="Link" onclick="insertLink()">🔗</button>
-        <button type="button" class="btn btn-sm btn-ghost" id="previewToggleBtn" onclick="togglePreview()">👁 Preview</button>
+        <button type="button" class="fmt-btn" id="fmtBoldBtn" aria-label="Bold" title="Bold (Ctrl+B)" onmousedown="event.preventDefault()" onclick="fmtBold()"><b>B</b></button>
+        <button type="button" class="fmt-btn" id="fmtItalicBtn" aria-label="Italic" title="Italic (Ctrl+I)" onmousedown="event.preventDefault()" onclick="fmtItalic()"><i>I</i></button>
+        <button type="button" class="fmt-btn" id="fmtUnderBtn" aria-label="Underline" title="Underline (Ctrl+U)" onmousedown="event.preventDefault()" onclick="fmtUnderline()"><u>U</u></button>
+        <button type="button" class="fmt-btn" id="fmtStrikeBtn" aria-label="Strikethrough" title="Strikethrough (Ctrl+Shift+X)" onmousedown="event.preventDefault()" onclick="fmtStrike()"><s>S</s></button>
+        <select class="fmt-size" id="fmtSizeSel" aria-label="Text size" title="Text size (select text first)" onmousedown="saveEditorSelection()" onchange="fmtSize(this.value); this.selectedIndex=0;">
+          <option value="" selected>Aa</option>
+          ${FONT_SIZES.map(n=>`<option value="${n}">${n}px</option>`).join('')}
+        </select>
+        <button type="button" class="fmt-btn" aria-label="Heading" title="Heading" onmousedown="event.preventDefault()" onclick="fmtHeading()">H</button>
+        <button type="button" class="fmt-btn" aria-label="Bulleted list" title="Bulleted list" onmousedown="event.preventDefault()" onclick="fmtBullet()">• List</button>
+        <button type="button" class="fmt-btn" aria-label="Insert link" title="Link" onmousedown="saveEditorSelection()" onclick="fmtLink()">🔗</button>
+        <button type="button" class="fmt-btn" aria-label="Clear formatting" title="Clear formatting" onmousedown="event.preventDefault()" onclick="fmtClear()">⌫</button>
       </div>
       <div class="wfb-spacer"></div>
       <div class="wfb-group" style="gap:12px;">
@@ -4306,7 +4321,7 @@ function renderWrite(){
     <div class="card">
       <input class="title-input" id="titleInput" aria-label="Title" placeholder="Give today a title…" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();">
 
-      <textarea class="content-input" id="contentInput" aria-label="Journal entry" placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="window.__draft.content=this.value; updateWordCount(); refreshAIPreview(); scheduleAutosave();">${escapeHtml(draft.content)}</textarea>
+      <div class="content-input" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
 
       <div class="focus-hide">
       <div class="section-title" style="margin-top:18px;">Mood</div>
@@ -4341,77 +4356,246 @@ function renderWrite(){
   `;
 }
 
-/* ---------------- MODULE 02: lightweight formatting ---------------- */
-function getContentTextarea(){ return document.getElementById('contentInput'); }
-function wrapSelection(before, after){
-  const ta = getContentTextarea(); if(!ta) return;
-  const start = ta.selectionStart, end = ta.selectionEnd;
-  const val = ta.value;
-  const selected = val.slice(start,end) || 'text';
-  ta.value = val.slice(0,start) + before + selected + after + val.slice(end);
-  window.__draft.content = ta.value;
-  ta.focus();
-  ta.selectionStart = start + before.length;
-  ta.selectionEnd = start + before.length + selected.length;
-  updateWordCount(); refreshAIPreview(); scheduleAutosave();
-}
-function prefixLine(prefix){
-  const ta = getContentTextarea(); if(!ta) return;
-  const start = ta.selectionStart;
-  const val = ta.value;
-  const lineStart = val.lastIndexOf('\n', start-1)+1;
-  ta.value = val.slice(0,lineStart) + prefix + val.slice(lineStart);
-  window.__draft.content = ta.value;
-  ta.focus();
-  const newPos = start + prefix.length;
-  ta.selectionStart = ta.selectionEnd = newPos;
-  updateWordCount(); refreshAIPreview(); scheduleAutosave();
-}
-function insertLink(){
-  const ta = getContentTextarea(); if(!ta) return;
-  const url = prompt('লিংক (URL) দাও:');
-  if(!url) return;
-  const start = ta.selectionStart, end = ta.selectionEnd;
-  const val = ta.value;
-  const label = val.slice(start,end) || 'link';
-  ta.value = val.slice(0,start) + `[${label}](${url})` + val.slice(end);
-  window.__draft.content = ta.value;
-  ta.focus();
-  updateWordCount(); refreshAIPreview(); scheduleAutosave();
-}
-function inlineMd(s){
-  return s
+/* ---------------- MODULE 02: LIVE WYSIWYG EDITOR ----------------
+   The editor is a contenteditable surface: bold / italic / strikethrough /
+   underline / headings / lists / links / font-size all appear instantly while
+   typing — exactly what the old "Preview" showed. Under the hood the entry is
+   still stored as a plain markdown-style string (window.__draft.content), so
+   saving, search, AI extraction, export and older entries keep working.
+   Storage syntax:  **bold**  *italic*  ~~strike~~  <u>underline</u>
+                    <span data-size="N">sized</span>  ## heading  - list  [text](url)
+   ---------------------------------------------------------------- */
+const FONT_SIZES = [12,14,16,18,20,24,28,34];
+function getContentEditor(){ return document.getElementById('contentInput'); }
+function getContentTextarea(){ return getContentEditor(); } // legacy alias (focus mode etc.)
+
+/* ---- markdown -> editor HTML ---- */
+function mdInlineToHtml(raw){
+  // Protect our own inline tags before escaping everything else.
+  const stash = [];
+  const keep = h => { stash.push(h); return '\u0000' + (stash.length-1) + '\u0000'; };
+  let t = raw
+    .replace(/<u>([\s\S]*?)<\/u>/g, (m,a)=> keep('<u>') + a + keep('</u>'))
+    .replace(/<span data-size="(\d{1,2})">([\s\S]*?)<\/span>/g, (m,n,a)=> keep('<span data-size="'+n+'" style="font-size:'+n+'px">') + a + keep('</span>'));
+  t = escapeHtml(t);
+  t = t
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">$1</a>');
+    .replace(/~~(.+?)~~/g,'<s>$1</s>')
+    .replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g,'$1<em>$2</em>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return t.replace(/\u0000(\d+)\u0000/g,(m,i)=>stash[+i]);
 }
-function renderMarkdownLite(text){
-  if(!text || !text.trim()) return '<p class="empty">এখনো কিছু লেখা হয়নি।</p>';
-  const lines = escapeHtml(text).split(/\n/);
-  let html=''; let inList=false;
-  lines.forEach(line=>{
+function mdToEditorHtml(md){
+  const lines = String(md||'').split('\n');
+  return lines.map(line=>{
     const h = line.match(/^(#{1,3})\s+(.*)$/);
-    if(h){ if(inList){html+='</ul>';inList=false;} html += `<h4 style="margin:14px 0 6px;">${inlineMd(h[2])}</h4>`; return; }
+    if(h){ const lvl = h[1].length; const tag = lvl===1?'h2':(lvl===2?'h3':'h4'); return `<${tag} data-lvl="${lvl}">${mdInlineToHtml(h[2])||'<br>'}</${tag}>`; }
     const li = line.match(/^[-*]\s+(.*)$/);
-    if(li){ if(!inList){html+='<ul style="margin:6px 0;padding-left:20px;">';inList=true;} html += `<li>${inlineMd(li[1])}</li>`; return; }
-    if(inList){ html+='</ul>'; inList=false; }
-    html += line.trim()==='' ? '<br>' : `<p style="margin:0 0 10px;">${inlineMd(line)}</p>`;
+    if(li) return `<div class="li">${mdInlineToHtml(li[1])||'<br>'}</div>`;
+    return `<div>${mdInlineToHtml(line)||'<br>'}</div>`;
+  }).join('');
+}
+
+/* ---- editor DOM -> markdown ---- */
+function domInlineToMd(node){
+  let out = '';
+  node.childNodes.forEach(ch=>{
+    if(ch.nodeType===3){ out += ch.nodeValue.replace(/\u00a0/g,' ').replace(/\u200b/g,''); return; }
+    if(ch.nodeType!==1) return;
+    const tag = ch.tagName.toLowerCase();
+    if(tag==='br'){ return; }
+    let inner = domInlineToMd(ch);
+    if(tag==='div' || tag==='p'){ out += inner; return; }
+    if(inner==='') return;
+    const st = ch.style || {};
+    let bold  = tag==='b' || tag==='strong' || (st.fontWeight && (st.fontWeight==='bold' || +st.fontWeight>=600));
+    let ital  = tag==='i' || tag==='em' || st.fontStyle==='italic';
+    let strk  = tag==='s' || tag==='strike' || tag==='del' || (st.textDecoration||st.textDecorationLine||'').indexOf('line-through')>-1;
+    let undl  = tag==='u' || (st.textDecoration||st.textDecorationLine||'').indexOf('underline')>-1;
+    const sz  = ch.getAttribute && ch.getAttribute('data-size');
+    if(tag==='a'){
+      const href = ch.getAttribute('href')||'';
+      if(/^https?:\/\//i.test(href)) inner = '['+inner+']('+href+')';
+    }
+    // keep markers hugging the text (markdown breaks if they touch whitespace)
+    const lead = inner.match(/^\s*/)[0], trail = inner.match(/\s*$/)[0];
+    let core = inner.slice(lead.length, inner.length-trail.length);
+    if(core===''){ out += inner; return; }
+    if(sz)   core = '<span data-size="'+sz+'">'+core+'</span>';
+    if(undl) core = '<u>'+core+'</u>';
+    if(strk) core = '~~'+core+'~~';
+    if(ital) core = '*'+core+'*';
+    if(bold) core = '**'+core+'**';
+    out += lead + core + trail;
   });
-  if(inList) html+='</ul>';
-  return html;
+  return out;
 }
-function togglePreview(){
-  const ta = getContentTextarea();
-  const btn = document.getElementById('previewToggleBtn');
-  const existing = document.getElementById('contentPreview');
-  if(existing){ existing.remove(); ta.style.display=''; btn.textContent='👁 Preview'; return; }
-  const div = document.createElement('div');
-  div.id = 'contentPreview'; div.className = 'content-preview';
-  div.innerHTML = renderMarkdownLite(ta.value);
-  ta.style.display = 'none';
-  ta.insertAdjacentElement('afterend', div);
-  btn.textContent = '✎ Edit';
+function editorHtmlToMd(root){
+  const lines = [];
+  const pushBlock = (el)=>{
+    const tag = el.tagName ? el.tagName.toLowerCase() : '';
+    if(tag==='h2'||tag==='h3'||tag==='h4'){
+      const lvl = tag==='h2'?1:(tag==='h3'?2:3);
+      lines.push('#'.repeat(lvl)+' '+domInlineToMd(el)); return;
+    }
+    if(tag==='ul'||tag==='ol'){ el.querySelectorAll(':scope > li').forEach(li=>lines.push('- '+domInlineToMd(li))); return; }
+    if(tag==='div' && el.classList && el.classList.contains('li')){ lines.push('- '+domInlineToMd(el)); return; }
+    if(tag==='div' || tag==='p'){
+      // a div that itself contains block children (browsers sometimes nest) — flatten
+      const hasBlock = Array.prototype.some.call(el.children, c=>/^(div|p|h2|h3|h4|ul|ol)$/i.test(c.tagName));
+      if(hasBlock){ el.childNodes.forEach(c=>{ if(c.nodeType===1) pushBlock(c); else if(c.nodeType===3 && c.nodeValue.trim()) lines.push(c.nodeValue); }); return; }
+      lines.push(domInlineToMd(el)); return;
+    }
+    if(tag==='br'){ lines.push(''); return; }
+    lines.push(domInlineToMd({childNodes:[el]}));
+  };
+  // Loose inline nodes at the root (first line typed before any <div> exists) form one line.
+  let loose = null;
+  const flushLoose = ()=>{ if(loose){ lines.push(domInlineToMd(loose)); loose=null; } };
+  root.childNodes.forEach(n=>{
+    const isBlock = n.nodeType===1 && /^(div|p|h2|h3|h4|ul|ol)$/i.test(n.tagName);
+    if(isBlock){ flushLoose(); pushBlock(n); }
+    else if(n.nodeType===1 && n.tagName.toLowerCase()==='br'){ if(loose) flushLoose(); else lines.push(''); } // <br> ends the current line; on its own it is an empty line
+    else { if(!loose){ loose = {childNodes:[]}; } loose.childNodes.push(n); }
+  });
+  flushLoose();
+  // a lone trailing empty line from the browser's placeholder <br> is not user content
+  while(lines.length && lines[lines.length-1]==='') lines.pop();
+  return lines.join('\n');
 }
+
+/* ---- keep draft + counters in sync with the surface ---- */
+function syncEditorToDraft(){
+  const ed = getContentEditor(); if(!ed || !window.__draft) return;
+  window.__draft.content = editorHtmlToMd(ed);
+  updateWordCount(); refreshAIPreview(); scheduleAutosave();
+  updateFormatState();
+}
+function editorPlainText(){ const ed = getContentEditor(); return ed ? (ed.innerText||'') : ''; }
+function onEditorPaste(e){
+  // Always paste as plain text so foreign fonts/colours never leak into the journal.
+  e.preventDefault();
+  const txt = (e.clipboardData || window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, txt);
+}
+function onEditorKeydown(e){
+  const mod = e.ctrlKey || e.metaKey;
+  if(mod && !e.shiftKey && !e.altKey){
+    const k = e.key.toLowerCase();
+    if(k==='b'){ e.preventDefault(); fmtBold(); return; }
+    if(k==='i'){ e.preventDefault(); fmtItalic(); return; }
+    if(k==='u'){ e.preventDefault(); fmtUnderline(); return; }
+  }
+  if(mod && e.shiftKey && e.key.toLowerCase()==='x'){ e.preventDefault(); fmtStrike(); return; }
+  // Leaving a heading with Enter should drop back to a normal paragraph.
+  if(e.key==='Enter' && !e.shiftKey){
+    const sel = window.getSelection(); if(!sel.rangeCount) return;
+    let n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==getContentEditor()) n = n.parentNode;
+    if(n && n.nodeType===1 && /^H[234]$/.test(n.tagName)){
+      setTimeout(()=>{
+        const sel2 = window.getSelection(); if(!sel2.rangeCount) return;
+        let b = sel2.anchorNode; while(b && b.parentNode && b.parentNode!==getContentEditor()) b = b.parentNode;
+        if(b && b.nodeType===1 && /^H[234]$/.test(b.tagName) && !(b.textContent||'').trim()){
+          document.execCommand('formatBlock', false, 'div');
+        }
+      },0);
+    }
+  }
+}
+function onEditorInput(){ syncEditorToDraft(); }
+
+/* ---- formatting commands (all act live on the selection) ---- */
+function edCmd(cmd, val){
+  const ed = getContentEditor(); if(!ed) return;
+  ed.focus();
+  try{ document.execCommand('styleWithCSS', false, false); }catch(_){}
+  document.execCommand(cmd, false, val==null ? null : val);
+  syncEditorToDraft();
+}
+function fmtBold(){ edCmd('bold'); }
+function fmtItalic(){ edCmd('italic'); }
+function fmtUnderline(){ edCmd('underline'); }
+function fmtStrike(){ edCmd('strikeThrough'); }
+function fmtHeading(){
+  const ed = getContentEditor(); if(!ed) return; ed.focus();
+  const sel = window.getSelection(); if(!sel.rangeCount) return;
+  let n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode;
+  const isH = n && n.nodeType===1 && /^H[234]$/.test(n.tagName);
+  document.execCommand('formatBlock', false, isH ? 'div' : 'h2');
+  syncEditorToDraft();
+}
+function fmtBullet(){
+  const ed = getContentEditor(); if(!ed) return; ed.focus();
+  const sel = window.getSelection(); if(!sel.rangeCount) return;
+  let n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode;
+  if(!n || n.nodeType!==1){ document.execCommand('formatBlock', false, 'div'); n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode; }
+  if(n && n.nodeType===1){
+    if(n.classList.contains('li')) n.classList.remove('li');
+    else{ if(/^H[234]$/.test(n.tagName)){ document.execCommand('formatBlock', false, 'div'); const s2=window.getSelection(); n=s2.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n=n.parentNode; } if(n && n.nodeType===1) n.classList.add('li'); }
+  }
+  syncEditorToDraft();
+}
+function fmtLink(){
+  const ed = getContentEditor(); if(!ed) return;
+  const sel = window.getSelection();
+  const saved = (__edSavedRange) ? __edSavedRange : (sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null);
+  const url = prompt('লিংক (URL) দাও:');
+  if(!url || !/^https?:\/\//i.test(url.trim())){ if(url) toast('লিংক অবশ্যই http:// বা https:// দিয়ে শুরু হতে হবে।'); return; }
+  ed.focus();
+  if(saved){ sel.removeAllRanges(); sel.addRange(saved); }
+  if(sel.isCollapsed) document.execCommand('insertHTML', false, '<a href="'+escapeAttr(url.trim())+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(url.trim())+'</a>');
+  else document.execCommand('createLink', false, url.trim());
+  syncEditorToDraft();
+}
+/* Font size: wrap the selection in <span data-size="N" style="font-size:Npx"> so it shows live. */
+function fmtSize(px){
+  const ed = getContentEditor(); if(!ed) return;
+  px = parseInt(px,10); if(!px) return;
+  restoreEditorSelection();
+  const sel = window.getSelection(); if(!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if(range.collapsed){ toast('আগে যে লেখার সাইজ বদলাতে চাও সেটা সিলেক্ট করো।'); return; }
+  // execCommand fontSize gives us robust cross-block wrapping; convert its <font> tags after.
+  document.execCommand('styleWithCSS', false, false);
+  document.execCommand('fontSize', false, '7');
+  ed.querySelectorAll('font[size="7"]').forEach(f=>{
+    const sp = document.createElement('span');
+    sp.setAttribute('data-size', String(px)); sp.style.fontSize = px+'px';
+    while(f.firstChild) sp.appendChild(f.firstChild);
+    f.parentNode.replaceChild(sp, f);
+    // collapse nested sized spans so only the innermost/new size applies
+    sp.querySelectorAll('span[data-size]').forEach(inner=>{ while(inner.firstChild) inner.parentNode.insertBefore(inner.firstChild, inner); inner.remove(); });
+  });
+  // pages sometimes leave an emptied outer sized span behind
+  ed.querySelectorAll('span[data-size]:empty').forEach(x=>x.remove());
+  syncEditorToDraft();
+}
+function fmtClear(){
+  edCmd('removeFormat');
+  const ed = getContentEditor(); if(!ed) return;
+  ed.querySelectorAll('span[data-size]').forEach(sp=>{ while(sp.firstChild) sp.parentNode.insertBefore(sp.firstChild, sp); sp.remove(); });
+  syncEditorToDraft();
+}
+let __edSavedRange = null;
+function saveEditorSelection(){
+  const ed = getContentEditor(); const sel = window.getSelection();
+  if(ed && sel.rangeCount && ed.contains(sel.anchorNode)) __edSavedRange = sel.getRangeAt(0).cloneRange();
+}
+function restoreEditorSelection(){
+  const ed = getContentEditor(); if(!ed) return;
+  ed.focus();
+  if(__edSavedRange){ const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(__edSavedRange); }
+}
+/* highlight toolbar buttons whose format is active at the caret */
+function updateFormatState(){
+  const ed = getContentEditor(); if(!ed || document.activeElement!==ed) return;
+  const q = c=>{ try{ return document.queryCommandState(c); }catch(_){ return false; } };
+  const set = (id,on)=>{ const b = document.getElementById(id); if(b){ b.classList.toggle('on', !!on); b.setAttribute('aria-pressed', on?'true':'false'); } };
+  set('fmtBoldBtn', q('bold')); set('fmtItalicBtn', q('italic'));
+  set('fmtUnderBtn', q('underline')); set('fmtStrikeBtn', q('strikeThrough'));
+}
+document.addEventListener('selectionchange', ()=>{ if(window.__draft) updateFormatState(); });
+
 function tagChip(t){ return `<span class="tag-chip">${escapeHtml(t)}<button type="button" aria-label="Remove tag ${escapeAttr(t)}" data-tag="${escapeAttr(encodeURIComponent(t))}" onclick="removeTag(decodeURIComponent(this.dataset.tag))">×</button></span>`; }
 function addTag(v){ v=v.trim(); if(!v) return; if(!window.__draft.tags.includes(v)) window.__draft.tags.push(v); rerenderTagWrap(); scheduleAutosave(); }
 function removeTag(t){ window.__draft.tags = window.__draft.tags.filter(x=>x!==t); rerenderTagWrap(); scheduleAutosave(); }
@@ -4560,7 +4744,10 @@ function toggleDraftFlag(flag){
   scheduleAutosave();
 }
 function updateWordCount(){
-  document.getElementById('wordCount').textContent = (window.__draft.content||'').trim().split(/\s+/).filter(Boolean).length + ' words';
+  const el = document.getElementById('wordCount'); if(!el) return;
+  const ed = getContentEditor();
+  const txt = ed ? (ed.innerText||'') : (window.__draft.content||'');
+  el.textContent = txt.trim().split(/\s+/).filter(Boolean).length + ' words';
 }
 let aiDebounce, aiCallToken = 0;
 // mode: undefined = while typing (local text only, never an AI call)
@@ -4624,6 +4811,8 @@ async function saveDraft(){
     // A new entry gets its id up-front, so a retry after a timeout rewrites the SAME document
     // instead of creating a duplicate.
     const id = d.id || (d.__pendingId = d.__pendingId || entriesColRef().doc().id);
+    // Brand-new entry: it belongs to the moment it is actually saved — never a back-dated day.
+    if(wasNew){ d.date = todayISO(); d.createdAt = nowISO(); }
     const {id:_i, __pendingId, ai, ...data} = d;     // `ai` (stored AI results) is derived data — never written back from a draft
     data.updatedAt = nowISO();                        // the user's modification time
     if(!data.createdAt) data.createdAt = data.updatedAt;
