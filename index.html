@@ -400,6 +400,22 @@ input,textarea,select{font-family:var(--font-sans);}
 .mood-stressed{background:var(--rust-soft);color:var(--rust);}
 .mood-angry{background:var(--mood-angry-bg);color:var(--mood-angry-fg);}
 .mood-neutral{background:var(--paper-dim);color:var(--ink-soft);}
+.mood-excited{background:var(--mood-excited-bg);color:var(--mood-excited-fg);}
+.mood-grateful{background:var(--mood-grateful-bg);color:var(--mood-grateful-fg);}
+.mood-tired{background:var(--mood-tired-bg);color:var(--mood-tired-fg);}
+.mood-anxious{background:var(--mood-anxious-bg);color:var(--mood-anxious-fg);}
+/* "no mood logged" is a real state, not a hidden default — it reads as an
+   outline rather than a filled chip so it never competes with a real mood. */
+.mood-none{background:transparent;color:var(--ink-faint);border:1px dashed var(--rule);}
+
+/* ---------- Mood emoji customizer (Settings) ---------- */
+.mood-emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px;}
+.mood-emoji-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--rule);
+  border-radius:10px;background:var(--paper-card);}
+.mood-emoji-item input{width:52px;flex:none;text-align:center;font-size:20px;line-height:1.2;padding:5px 4px;
+  border-radius:8px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);}
+.mood-emoji-item .mname{font-size:13px;font-weight:600;color:var(--ink);}
+.mood-emoji-item .mhint{font-size:11px;color:var(--ink-faint);}
 
 /* ---------- Auth screen ---------- */
 #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -503,6 +519,23 @@ input,textarea,select{font-family:var(--font-sans);}
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
 .filter-row select,.filter-row input[type=text],.filter-row input[type=date]{padding:7px 10px;border-radius:7px;border:1px solid var(--rule);
   background:var(--paper-card);color:var(--ink);font-size:13px;}
+/* ---------- Library: collapsible filter bar ---------- */
+.lib-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.lib-filter-btn{display:inline-flex;align-items:center;gap:7px;}
+.lib-filter-btn .chev{display:inline-block;font-size:15px;line-height:1;transition:transform var(--dur) var(--ease);}
+.lib-filter-btn.is-open .chev{transform:rotate(90deg);}
+.lib-filter-btn .flt-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
+  padding:0 5px;border-radius:99px;background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:600;}
+.lib-count{margin-left:auto;font-size:12px;color:var(--ink-faint);}
+.lib-filter-panel[hidden]{display:none;}
+
+/* ---------- Library: date dividers ---------- */
+.date-divider{display:flex;align-items:center;gap:10px;padding:16px 4px 6px;}
+.date-divider:first-child{padding-top:2px;}
+.date-divider .dd-label{font-family:var(--font-serif);font-size:13.5px;color:var(--ink-soft);white-space:nowrap;}
+.date-divider .dd-rule{flex:1;height:1px;background:var(--rule);}
+.date-divider .dd-count{font-size:11px;color:var(--ink-faint);white-space:nowrap;}
+
 .entry-row{display:flex;gap:14px;padding:14px 4px;border-bottom:1px solid var(--rule);align-items:flex-start;
   cursor:pointer;}
 .entry-row:hover{background:var(--paper-dim);border-radius:8px;}
@@ -828,6 +861,10 @@ body.write-mode .main{padding-top:148px;}
   /* mood colours as tokens (so chips/dots adapt to dark mode) */
   --mood-happy-bg:#F3E3B8;  --mood-happy-fg:#6B4E0E;  --mood-happy-dot:#8A6A1E;
   --mood-angry-bg:#EBCBCB;  --mood-angry-fg:#8A2F26;  --mood-angry-dot:#93342A;
+  --mood-excited-bg:#F6DCC0;  --mood-excited-fg:#8A4A12;  --mood-excited-dot:#B25F1A;
+  --mood-grateful-bg:#EFD9E4; --mood-grateful-fg:#7E3159; --mood-grateful-dot:#9C3F6E;
+  --mood-tired-bg:#DEDCE8;    --mood-tired-fg:#4A4670;    --mood-tired-dot:#5D588C;
+  --mood-anxious-bg:#D3E4E6;  --mood-anxious-fg:#245A5F;  --mood-anxious-dot:#2E7076;
 
   /* --- spacing scale --- */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
@@ -848,6 +885,10 @@ body.write-mode .main{padding-top:148px;}
   --scrim:rgba(0,0,0,.6);
   --mood-happy-bg:#4A3D1C;  --mood-happy-fg:#EBD08C;  --mood-happy-dot:#E0BC5A;
   --mood-angry-bg:#4A2626;  --mood-angry-fg:#EDA79D;  --mood-angry-dot:#E08B7E;
+  --mood-excited-bg:#4E3218;  --mood-excited-fg:#F0BE8A;  --mood-excited-dot:#E5A868;
+  --mood-grateful-bg:#452438; --mood-grateful-fg:#F0B2D2; --mood-grateful-dot:#DF95BE;
+  --mood-tired-bg:#2F2D42;    --mood-tired-fg:#C2BEE4;    --mood-tired-dot:#ABA5D8;
+  --mood-anxious-bg:#1F3C3F;  --mood-anxious-fg:#9FD2D6;  --mood-anxious-dot:#7FC0C6;
 }
 
 /* ---------- Accessibility primitives ---------- */
@@ -2145,6 +2186,23 @@ function renderSettings(){
     <section class="settings-group card" id="set-journal" aria-labelledby="h-journal">
       <h3 id="h-journal">Journal</h3>
       <div class="settings-row"><div><div class="label">Drafts</div><div class="desc">While you write, a draft is kept on this device and synced to your account. Drafts are removed once you save or discard them.</div></div></div>
+      <div class="settings-row" style="border-bottom:none;padding-bottom:0;">
+        <div><div class="label">Your mood emojis</div>
+        <div class="desc">দশটা mood বা feeling-এর নাম ঠিক থাকবে, কিন্তু প্রত্যেকটার ইমোজি তুমি নিজের মতো বসাতে পারো। যা বসাবে, সেটাই তোমার জার্নাল, Calendar, Insights — সব জায়গায় দেখাবে। খালি রাখলে ডিফল্ট ইমোজিটা ফিরে আসবে।</div></div>
+      </div>
+      <div class="mood-emoji-grid" id="moodEmojiGrid">
+        ${MOODS.map(m=>`
+          <div class="mood-emoji-item">
+            <input type="text" id="moodEmoji_${m.id}" maxlength="8" aria-label="${escapeAttr(m.label)} emoji"
+              value="${escapeAttr(m.emoji)}" placeholder="${escapeAttr(defaultMoodEmoji(m.id))}"
+              oninput="onMoodEmojiInput('${m.id}', this.value)">
+            <div><div class="mname">${escapeHtml(m.label)}</div><div class="mhint">default ${defaultMoodEmoji(m.id)}</div></div>
+          </div>`).join('')}
+      </div>
+      <div class="settings-row" style="margin-top:12px;">
+        <div><div class="desc" id="moodEmojiStatus" role="status">টাইপ করার পরেই নিজে নিজে সেভ হয়ে যাবে।</div></div>
+        <button class="btn btn-sm" onclick="resetMoodEmojis()">Reset to defaults</button>
+      </div>
     </section>
 
     <section class="settings-group card" id="set-ai" aria-labelledby="h-ai">
@@ -2553,6 +2611,13 @@ const DEFAULT_SETTINGS = {theme:'system', focusWriteDefault:false, onboardingDon
   weeklyReminderDay: 0, // 0=Sunday .. 6=Saturday
   weeklyReminderTime: '21:00',
   aiInsightNotify: true,
+  // Module 03: the user's own emoji for each of the ten mood types, keyed by
+  // mood id ({happy:'😃', ...}). Missing keys fall back to the built-in emoji,
+  // so an old settings doc keeps working untouched.
+  moodEmojis: {},
+  // Module 05: whether the Journal Library's filter panel is left expanded.
+  // Stored here (not localStorage) so it survives a reload on any device.
+  libraryFiltersOpen: false,
   // Module 04: which Dashboard sections the user wants to see, synced through
   // the same Firestore user-settings doc as every other preference (not
   // localStorage-only) so it follows the user across devices.
@@ -2696,6 +2761,8 @@ function attachEntriesListener(){
         title: typeof data.title === 'string' ? data.title : '',
         content: typeof data.content === 'string' ? data.content : '',
         tags: Array.isArray(data.tags) ? data.tags : [],
+        // '' means "no mood logged" — a real state, not a silent Neutral
+        mood: hasMood(data.mood) ? data.mood : '',
         moodIntensity: (typeof data.moodIntensity === 'number' && data.moodIntensity>=1 && data.moodIntensity<=10) ? data.moodIntensity : 5,
         archived: !!data.archived
       };
@@ -2717,7 +2784,10 @@ function attachUserDocListener(){
     if(state.profile && state.profile.nameEdited && state.profile.name && state.user){ state.user.name = state.profile.name; syncProfileUI(); }
     state.settings = {...DEFAULT_SETTINGS, ...(doc.settings || {})};
     ThemeSvc.apply(state.settings.theme);
-    if(state.view==='settings') requestRender();
+    // the user's own mood emoji set — applied before anything renders with it
+    applyMoodEmojis();
+    // never rebuild Settings out from under a half-typed emoji field
+    if((state.view==='settings' && !window.__editingMoodEmoji) || state.view==='timeline') requestRender();
     maybeShowOnboarding();
   }, err=>{ reportError(err, 'user doc listener'); });
 }
@@ -2736,23 +2806,68 @@ function fmtDate(iso, opts){
 }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-const MOODS = [
-  {id:'happy', label:'Happy', emoji:'🙂', cls:'mood-happy'},
-  {id:'calm', label:'Calm', emoji:'😌', cls:'mood-calm'},
-  {id:'sad', label:'Sad', emoji:'😔', cls:'mood-sad'},
-  {id:'stressed', label:'Stressed', emoji:'😣', cls:'mood-stressed'},
-  {id:'angry', label:'Angry', emoji:'😠', cls:'mood-angry'},
-  {id:'neutral', label:'Neutral', emoji:'😐', cls:'mood-neutral'}
+/* ---------------- MOOD SYSTEM (Module 03) ----------------
+   Ten mood/feeling types cover the range people actually log. The *meaning*
+   of each one is fixed (ids never change), so filters, analytics, calendar
+   dots and AI prompts stay stable — but the emoji shown for each mood is the
+   user's own choice, stored in settings.moodEmojis and synced through the
+   same Firestore user-settings doc as every other preference, so it follows
+   them across devices.
+   MOODS is mutated in place (never re-assigned) because the rest of the app
+   already holds a reference to this exact array. */
+const BASE_MOODS = [
+  {id:'happy',    label:'Happy',    cls:'mood-happy',    emoji:'🙂'},
+  {id:'excited',  label:'Excited',  cls:'mood-excited',  emoji:'🤩'},
+  {id:'grateful', label:'Grateful', cls:'mood-grateful', emoji:'🥰'},
+  {id:'calm',     label:'Calm',     cls:'mood-calm',     emoji:'😌'},
+  {id:'neutral',  label:'Neutral',  cls:'mood-neutral',  emoji:'😐'},
+  {id:'tired',    label:'Tired',    cls:'mood-tired',    emoji:'😴'},
+  {id:'sad',      label:'Sad',      cls:'mood-sad',      emoji:'😔'},
+  {id:'anxious',  label:'Anxious',  cls:'mood-anxious',  emoji:'😟'},
+  {id:'stressed', label:'Stressed', cls:'mood-stressed', emoji:'😣'},
+  {id:'angry',    label:'Angry',    cls:'mood-angry',    emoji:'😠'}
 ];
-function moodInfo(id){ return MOODS.find(m=>m.id===id) || MOODS[5]; }
+const MOODS = BASE_MOODS.map(m=>({...m}));
+// Shown wherever an entry genuinely has no mood — "not logged" is a valid
+// state now, never quietly rewritten to Neutral.
+const MOOD_NONE = {id:'', label:'No mood', emoji:'🫥', cls:'mood-none'};
+
+function defaultMoodEmoji(id){ const b = BASE_MOODS.find(m=>m.id===id); return b ? b.emoji : MOOD_NONE.emoji; }
+// Called whenever the user-settings doc arrives/changes, so every already-
+// rendered reference to MOODS picks up the user's own emoji set.
+function applyMoodEmojis(){
+  const custom = (state.settings && state.settings.moodEmojis) || {};
+  MOODS.forEach(m=>{
+    const v = custom[m.id];
+    m.emoji = (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 8) : defaultMoodEmoji(m.id);
+  });
+}
+function hasMood(id){ return !!id && MOODS.some(m=>m.id===id); }
+function moodInfo(id){ return MOODS.find(m=>m.id===id) || MOOD_NONE; }
+// One place that decides how a mood is shown on an entry — returns an empty
+// string when there's no mood, so an unlogged mood never shows up as a chip.
+function moodChip(entry, opts){
+  const o = opts || {};
+  if(!entry || !hasMood(entry.mood)) return o.showNone ? `<span class="mood-chip mood-none">${MOOD_NONE.label}</span>` : '';
+  const m = moodInfo(entry.mood);
+  let out = `<span class="mood-chip ${m.cls}">${m.emoji} ${m.label}</span>`;
+  if(o.intensity && typeof entry.moodIntensity === 'number'){
+    out += `<span class="intensity-tag">${o.intensityLabel ? 'Intensity ' : ''}${entry.moodIntensity}/10</span>`;
+  }
+  return out;
+}
 // Reuses the exact hues already used for each mood's chip text color, so the
 // Calendar's mood dots stay visually consistent with the rest of the app
 // instead of inventing a second color language.
 function moodDotColor(id){
   switch(id){
     case 'happy': return 'var(--mood-happy-dot)';
+    case 'excited': return 'var(--mood-excited-dot)';
+    case 'grateful': return 'var(--mood-grateful-dot)';
     case 'calm': return 'var(--sage)';
+    case 'tired': return 'var(--mood-tired-dot)';
     case 'sad': return 'var(--sky)';
+    case 'anxious': return 'var(--mood-anxious-dot)';
     case 'stressed': return 'var(--rust)';
     case 'angry': return 'var(--mood-angry-dot)';
     default: return 'var(--ink-faint)';
@@ -2789,8 +2904,9 @@ function localDailySummary(entry){
 function localWeeklySummary(entries){
   if(!entries.length) return "এই সপ্তাহে এখনো কোনো এন্ট্রি লেখা হয়নি।";
   const moodCount = {};
-  entries.forEach(e=>{ moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
+  entries.forEach(e=>{ if(hasMood(e.mood)) moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
   const topMood = Object.entries(moodCount).sort((a,b)=>b[1]-a[1])[0];
+  if(!topMood) return `${entries.length}টি এন্ট্রি লেখা হয়েছে এই সপ্তাহে। কোনো এন্ট্রিতে mood লগ করা হয়নি।`;
   return `${entries.length}টি এন্ট্রি লেখা হয়েছে এই সপ্তাহে। সবচেয়ে বেশি দেখা যাওয়া mood: ${moodInfo(topMood[0]).label}।`;
 }
 function buildDailySummaryPrompt(entry){
@@ -3195,8 +3311,11 @@ function computeCoreStats(entries){
   const moodCount = {}; MOODS.forEach(m=>moodCount[m.id]=0);
   let intensitySum=0, intensityN=0, intensityMax=null, intensityMin=null;
   const moodWords = {}; MOODS.forEach(m=>moodWords[m.id]={sum:0,n:0});
+  let moodLogged = 0;
   entries.forEach(e=>{
-    if(moodCount[e.mood]===undefined) moodCount[e.mood]=0;
+    // entries with no mood are counted as "not logged", never folded into a mood
+    if(!hasMood(e.mood)) return;
+    moodLogged++;
     moodCount[e.mood]++;
     const wc = wordCount(e.content);
     if(moodWords[e.mood]){ moodWords[e.mood].sum += wc; moodWords[e.mood].n++; }
@@ -3230,7 +3349,7 @@ function computeCoreStats(entries){
   return {
     total, totalWords, avgWords, longest, shortest, dayCount, consistency, avgEntriesPerWeek,
     longestStreak: streaks.longest, currentStreak: streaks.current,
-    moodCount, avgIntensity, intensityMax, intensityMin, moodWords,
+    moodCount, moodLogged, avgIntensity, intensityMax, intensityMin, moodWords,
     mostActiveDay, mostActiveWeek, mostActiveMonth, highestWordWeek
   };
 }
@@ -3259,6 +3378,7 @@ function moodTrend(entries, periodKey){
   const granularity = (periodKey==='7d'||periodKey==='30d') ? 'day' : (periodKey==='3m'||periodKey==='6m') ? 'week' : 'month';
   const buckets = {};
   entries.forEach(e=>{
+    if(!hasMood(e.mood)) return; // a bucket's dominant mood is only about moods that were actually logged
     const key = granularity==='day' ? e.date : granularity==='week' ? isoWeekKey(e.date) : e.date.slice(0,7);
     if(!buckets[key]) buckets[key] = {counts:{}, intSum:0, intN:0};
     buckets[key].counts[e.mood] = (buckets[key].counts[e.mood]||0)+1;
@@ -3843,6 +3963,7 @@ function openQuickAdd(){ document.getElementById('quickAddSheet').classList.add(
 function closeQuickAdd(){ document.getElementById('quickAddSheet').classList.remove('show'); }
 function openMoodSheet(){
   closeQuickAdd();
+  renderQuickMoodOptions(); // rebuilt each time so the user's own emoji set is always current
   // reset the intensity slider to a neutral default each time the sheet opens
   const slider = document.getElementById('quickIntensitySlider');
   const val = document.getElementById('quickIntensityVal');
@@ -4028,7 +4149,7 @@ function renderDashboard(){
     last7.push({key, words: dayEntries.reduce((s,e)=>s+wordsOf(e),0), entries: dayEntries.length});
   }
   const moodCount7 = {};
-  last7.forEach(day=>(dv.byDate.get(day.key)||[]).forEach(e=>{ moodCount7[e.mood] = (moodCount7[e.mood]||0)+1; }));
+  last7.forEach(day=>(dv.byDate.get(day.key)||[]).forEach(e=>{ if(hasMood(e.mood)) moodCount7[e.mood] = (moodCount7[e.mood]||0)+1; }));
   const moodTotal7 = Object.values(moodCount7).reduce((a,b)=>a+b,0);
 
   // Life Highlights row: newest Achievement, Idea, and "Experiment"
@@ -4063,8 +4184,7 @@ function renderDashboard(){
       ${todayEntry ? `
         <h2>${escapeHtml(todayEntry.title || 'Untitled')}</h2>
         <div class="entry-meta" style="margin-bottom:10px;gap:8px;">
-          <span class="mood-chip ${moodInfo(todayEntry.mood).cls}">${moodInfo(todayEntry.mood).emoji} ${moodInfo(todayEntry.mood).label}</span>
-          <span class="intensity-tag">Intensity ${todayEntry.moodIntensity||5}/10</span>
+          ${moodChip(todayEntry, {intensity:true, intensityLabel:true})}
           <span class="intensity-tag">${todayWords} words</span>
           ${todayEntry.favorite ? `<span class="entry-star">★</span>` : ''}
           ${todayEntry.important ? `<span class="archived-pill">🔖 Important</span>` : ''}
@@ -4099,9 +4219,9 @@ function renderDashboard(){
         <div class="delta flat">${totalWords.toLocaleString()} words total</div></div>
       </div>
       <div class="tile dash-stat">
-        <div class="tile-icn tint-sage">${todayEntry?moodInfo(todayEntry.mood).emoji:'😐'}</div>
-        <div><div class="num" style="font-size:16px;">${todayEntry?moodInfo(todayEntry.mood).label:'Not logged'}</div><div class="lbl">Today's mood</div>
-        ${todayEntry ? `<div class="delta flat">Intensity ${todayEntry.moodIntensity||5}/10</div>` : `<div class="delta down" style="cursor:pointer;" onclick="openMoodSheet()">tap to log →</div>`}</div>
+        <div class="tile-icn tint-sage">${todayEntry && hasMood(todayEntry.mood) ? moodInfo(todayEntry.mood).emoji : MOOD_NONE.emoji}</div>
+        <div><div class="num" style="font-size:16px;">${todayEntry && hasMood(todayEntry.mood) ? moodInfo(todayEntry.mood).label : 'Not logged'}</div><div class="lbl">Today's mood</div>
+        ${todayEntry && hasMood(todayEntry.mood) ? `<div class="delta flat">Intensity ${todayEntry.moodIntensity||5}/10</div>` : `<div class="delta down" style="cursor:pointer;" onclick="openMoodSheet()">tap to log →</div>`}</div>
       </div>
     ` : ''}
 
@@ -4231,9 +4351,12 @@ function renderWrite(){
     entry = window.__draft;
   }
   const draft = entry ? {...entry, tags: entry.tags||[]} : {
-    id: null, date: todayISO(), title:'', content:'', mood:'neutral', moodIntensity:5,
+    // mood starts empty on purpose — nothing is pre-selected, so a mood only
+    // ever gets recorded because the user actually chose one.
+    id: null, date: todayISO(), title:'', content:'', mood:'', moodIntensity:5,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
+  if(!hasMood(draft.mood)) draft.mood = '';
   // Safety net for entries saved before Module 03 (or drafts missing the field).
   if(typeof draft.moodIntensity !== 'number' || draft.moodIntensity<1 || draft.moodIntensity>10) draft.moodIntensity = 5;
 
@@ -4252,7 +4375,9 @@ function renderWrite(){
     draft.title = a.title || '';
     draft.content = a.content || '';
     if(entry) draft.date = a.date || draft.date; // existing entries keep their own date; new entries are always dated when written
-    draft.mood = a.mood || draft.mood;
+    // '' is a meaningful value here ("user cleared the mood"), so only fall
+    // back when the recovered draft has no mood field at all.
+    if(typeof a.mood === 'string') draft.mood = hasMood(a.mood) ? a.mood : '';
     draft.moodIntensity = a.moodIntensity || draft.moodIntensity;
     draft.tags = a.tags || draft.tags;
     draft.favorite = !!a.favorite;
@@ -4324,11 +4449,12 @@ function renderWrite(){
       <div class="content-input" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
 
       <div class="focus-hide">
-      <div class="section-title" style="margin-top:18px;">Mood</div>
+      <div class="section-title" style="margin-top:18px;">Mood <span style="font-weight:400;color:var(--ink-faint);font-size:12px;">— optional</span></div>
       <div class="mood-picker" id="moodPicker" role="group" aria-label="Mood">
         ${MOODS.map(m=>`<button type="button" class="mood-opt ${draft.mood===m.id?'selected':''}" data-mood="${m.id}" aria-pressed="${draft.mood===m.id}" onclick="setDraftMood('${m.id}')">${m.emoji} ${m.label}</button>`).join('')}
       </div>
-      <div class="intensity-row" id="intensityRow">
+      <div id="moodHint" style="margin-top:7px;font-size:12px;color:var(--ink-faint);">${hasMood(draft.mood) ? 'আবার ট্যাপ করলে mood তুলে নেওয়া যাবে।' : 'কোনো mood সিলেক্ট করা নেই — চাইলে একটা বেছে নাও, না নিলেও চলবে।'}</div>
+      <div class="intensity-row" id="intensityRow" style="${hasMood(draft.mood)?'':'display:none;'}">
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;">
           <span>Intensity</span><span id="intensityVal"><b>${draft.moodIntensity||5}</b>/10</span>
         </div>
@@ -4723,9 +4849,20 @@ function editTranscript(mediaId, value){
   const m = (state.media||[]).find(x=>x.id===mediaId);
   if(m) m.transcript = value;
 }
+// Tapping the already-selected mood clears it again — "no mood" has to be
+// reachable, otherwise the first tap would become permanent.
 function setDraftMood(m){
-  window.__draft.mood = m;
-  document.querySelectorAll('#moodPicker .mood-opt').forEach(b=>{ b.classList.toggle('selected', b.dataset.mood===m); b.setAttribute('aria-pressed', String(b.dataset.mood===m)); });
+  const next = (window.__draft.mood === m) ? '' : m;
+  window.__draft.mood = next;
+  document.querySelectorAll('#moodPicker .mood-opt').forEach(b=>{
+    const on = !!next && b.dataset.mood===next;
+    b.classList.toggle('selected', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  const row = document.getElementById('intensityRow');
+  if(row) row.style.display = next ? '' : 'none';
+  const hint = document.getElementById('moodHint');
+  if(hint) hint.textContent = next ? 'আবার ট্যাপ করলে mood তুলে নেওয়া যাবে।' : 'কোনো mood সিলেক্ট করা নেই — চাইলে একটা বেছে নাও, না নিলেও চলবে।';
   refreshAIPreview();
   scheduleAutosave();
 }
@@ -4895,7 +5032,7 @@ function renderArchive(){
             <h3>${escapeHtml(e.title || 'Untitled')}</h3>
             <p>${escapeHtml(e.content||'')}</p>
             <div class="entry-meta">
-              <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
+              ${moodChip(e)}
               ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
             </div>
           </div>
@@ -4919,7 +5056,8 @@ function buildFilterPredicates(f){
   if(f.archived==='active') preds.push(e=>!e.archived);
   else if(f.archived==='archived') preds.push(e=>!!e.archived);
   // f.archived==='all' -> no predicate, both included
-  if(f.mood) preds.push(e=>e.mood===f.mood);
+  if(f.mood === '__none') preds.push(e=>!hasMood(e.mood)); // entries you never logged a mood for
+  else if(f.mood) preds.push(e=>e.mood===f.mood);
   if(f.tag) preds.push(e=>(e.tags||[]).includes(f.tag));
   if(f.favOnly) preds.push(e=>!!e.favorite);
   if(f.importantOnly) preds.push(e=>!!e.important);
@@ -4941,6 +5079,78 @@ function clearLibraryFilters(){
   state.libLimit = PAGE_SIZE;
   render();
 }
+// How many filters are actually narrowing the list — shown as a small count on
+// the Filter button so a collapsed panel can never hide an active filter.
+function countLibraryFilters(f){
+  let n = 0;
+  if(f.mood) n++;
+  if(f.tag) n++;
+  if(f.favOnly) n++;
+  if(f.importantOnly) n++;
+  if(f.dateFrom || f.dateTo) n++;
+  if(f.archived !== 'active') n++;
+  return n;
+}
+/* ---------------- Module 05: remembered filter-panel state ----------------
+   Persisted in the user-settings doc (settings.libraryFiltersOpen) so it is
+   genuinely per-user and survives reloads. A localStorage mirror is read
+   first purely so the panel renders in the right state on the very first
+   paint, before Firestore has answered — the settings doc always wins once
+   it arrives. */
+const LIB_FILTERS_KEY = 'journalos.libraryFiltersOpen';
+function libraryFiltersOpen(){
+  if(state.settings && typeof state.settings.libraryFiltersOpen === 'boolean') return state.settings.libraryFiltersOpen;
+  try{ return localStorage.getItem(LIB_FILTERS_KEY) === '1'; }catch(e){ return false; }
+}
+function toggleLibraryFilters(){
+  const next = !libraryFiltersOpen();
+  if(state.settings) state.settings.libraryFiltersOpen = next;
+  try{ localStorage.setItem(LIB_FILTERS_KEY, next ? '1' : '0'); }catch(e){}
+  // patch in place instead of re-rendering, so opening the panel never scrolls
+  // the list or drops a half-set date field
+  const panel = document.getElementById('libFilterPanel');
+  const btn = document.getElementById('libFilterBtn');
+  if(panel) panel.hidden = !next;
+  if(btn){ btn.setAttribute('aria-expanded', String(next)); btn.classList.toggle('is-open', next); }
+  if(state.user) saveUserSettings({...(state.settings||DEFAULT_SETTINGS), libraryFiltersOpen: next}, {silent:true});
+}
+
+/* ---------------- Module 05: date dividers ----------------
+   The library is a long flat list, so each new date gets its own heading —
+   "Today", "Yesterday", then the full date — with the number of entries
+   written that day, so you can tell at a glance which journal belongs where. */
+function libraryDateLabel(iso){
+  const today = todayISO();
+  if(iso === today) return 'Today';
+  const y = new Date(today+'T00:00:00'); y.setDate(y.getDate()-1);
+  if(iso === dateToISO(y)) return 'Yesterday';
+  return fmtDate(iso, {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+function renderLibraryGroups(list){
+  let out = '', currentDate = null;
+  list.forEach(e=>{
+    if(e.date !== currentDate){
+      currentDate = e.date;
+      const n = list.filter(x=>x.date===currentDate).length;
+      out += `<div class="date-divider"><span class="dd-label">${escapeHtml(libraryDateLabel(currentDate))}</span>`
+           + `<span class="dd-rule"></span><span class="dd-count">${n} entr${n===1?'y':'ies'}</span></div>`;
+    }
+    out += `
+      <div class="entry-row" onclick="go('write','${e.id}')">
+        <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
+        <div class="entry-body">
+          <h3>${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄 Archived</span>':''}</h3>
+          <p>${escapeHtml((e.content||'').slice(0,260))}</p>
+          <div class="entry-meta">
+            ${moodChip(e, {intensity:true})}
+            ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+            ${e.favorite?`<span class="entry-star">★</span>`:''}
+          </div>
+        </div>
+      </div>`;
+  });
+  return out;
+}
 
 /* ---------------- TIMELINE / LIBRARY (Module 05) ---------------- */
 function renderTimeline(){
@@ -4948,6 +5158,11 @@ function renderTimeline(){
   let list = applyFilters(state.entries, f).sort((a,b)=> b.date.localeCompare(a.date) || (b.createdAt||'').localeCompare(a.createdAt||''));
 
   const allTags = [...new Set(state.entries.filter(e=>!e.archived).flatMap(e=>e.tags||[]))];
+  // The filter panel's open/closed state is a per-user preference, kept in the
+  // same Firestore settings doc as everything else, so leaving it expanded
+  // survives a reload (and follows the user to their other devices).
+  const open = libraryFiltersOpen();
+  const activeCount = countLibraryFilters(f);
 
   return `
     <div class="page-head">
@@ -4959,10 +5174,20 @@ function renderTimeline(){
       </div>
     </div>
 
-    <div class="filter-row">
+    <div class="lib-filter-bar">
+      <button type="button" class="btn btn-sm lib-filter-btn ${open?'is-open':''}" id="libFilterBtn"
+        aria-expanded="${open}" aria-controls="libFilterPanel" onclick="toggleLibraryFilters()">
+        <span class="chev" aria-hidden="true">›</span> Filter${activeCount ? `<span class="flt-count">${activeCount}</span>` : ''}
+      </button>
+      ${isLibraryFiltered(f) ? `<button class="btn btn-ghost btn-sm" onclick="clearLibraryFilters()">Clear filters</button>` : ''}
+      <span class="lib-count">${list.length} entr${list.length===1?'y':'ies'}</span>
+    </div>
+
+    <div class="filter-row lib-filter-panel" id="libFilterPanel" ${open?'':'hidden'}>
       <select id="fltMood" aria-label="Filter by mood" onchange="libFilter('mood',this.value)">
         <option value="">All moods</option>
         ${MOODS.map(m=>`<option value="${m.id}" ${f.mood===m.id?'selected':''}>${m.emoji} ${m.label}</option>`).join('')}
+        <option value="__none" ${f.mood==='__none'?'selected':''}>🫥 No mood</option>
       </select>
       <select id="fltTag" aria-label="Filter by tag" onchange="libFilter('tag',this.value)">
         <option value="">All tags</option>
@@ -4982,25 +5207,11 @@ function renderTimeline(){
         <option value="all" ${f.archived==='all'?'selected':''}>Include archived</option>
         <option value="archived" ${f.archived==='archived'?'selected':''}>Archived only</option>
       </select>
-      ${isLibraryFiltered(f) ? `<button class="btn btn-ghost btn-sm" onclick="clearLibraryFilters()">Clear filters</button>` : ''}
     </div>
 
     <div class="card">
-      ${list.length ? list.slice(0, state.libLimit||PAGE_SIZE).map(e=>`
-        <div class="entry-row" onclick="go('write','${e.id}')">
-          <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
-          <div class="entry-body">
-            <h3>${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄 Archived</span>':''}</h3>
-            <p>${escapeHtml((e.content||'').slice(0,260))}</p>
-            <div class="entry-meta">
-              <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
-              <span class="intensity-tag">${e.moodIntensity||5}/10</span>
-              ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
-              ${e.favorite?`<span class="entry-star">★</span>`:''}
-            </div>
-          </div>
-        </div>
-      `).join('') + ui.loadMore(PAGE_SIZE, list.length - Math.min(list.length, state.libLimit||PAGE_SIZE), 'showMoreLibrary()')
+      ${list.length ? renderLibraryGroups(list.slice(0, state.libLimit||PAGE_SIZE))
+        + ui.loadMore(PAGE_SIZE, list.length - Math.min(list.length, state.libLimit||PAGE_SIZE), 'showMoreLibrary()')
       : (isLibraryFiltered(f)
           ? ui.empty({icon:'🔎', title:'Nothing matched your filters.', body:'Try removing a filter to see more of your journals.', action:{label:'Clear filters', onclick:'clearLibraryFilters()'}})
           : ui.empty({icon:'✍️', title:'Your story starts here.', body:'Write your first journal — JournalOS will remember, organize and reflect on it.', action:{label:'Write Your First Journal', onclick:"go('write')"}}))}
@@ -5106,8 +5317,7 @@ function openDayEntries(iso){
           <h3 style="font-size:14px;">${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄</span>':''}</h3>
           <p style="margin:0 0 6px;">${escapeHtml((e.content||'').slice(0,90))}${(e.content||'').length>90?'…':''}</p>
           <div class="entry-meta">
-            <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
-            <span class="intensity-tag">${e.moodIntensity||5}/10</span>
+            ${moodChip(e, {intensity:true})}
             ${e.favorite?'<span class="entry-star">★</span>':''}
           </div>
         </div>
@@ -5604,8 +5814,7 @@ function renderSearchResultRow(r, q){
         <h3>${escapeHtml(e.title||'Untitled')} ${e.favorite?'<span class="entry-star">★</span>':''}</h3>
         <p>${highlightExcerpt(e.content, q)}</p>
         <div class="entry-meta">
-          <span class="mood-chip ${moodInfo(e.mood).cls}">${moodInfo(e.mood).emoji} ${moodInfo(e.mood).label}</span>
-          ${typeof e.moodIntensity==='number' ? `<span class="intensity-tag">Intensity ${e.moodIntensity}/10</span>` : ''}
+          ${moodChip(e, {intensity:true, intensityLabel:true})}
           ${(e.tags||[]).slice(0,4).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
           ${e.important ? `<span class="pill">🔖 Important</span>` : ''}
         </div>
@@ -5963,7 +6172,7 @@ function renderInsightsOverview(a){
         <div class="section-title">Mood Distribution</div>
         ${MOODS.map(m=>{
           const n = c.moodCount[m.id]||0;
-          const pct = c.total ? Math.round((n/c.total)*100) : 0;
+          const pct = c.moodLogged ? Math.round((n/c.moodLogged)*100) : 0;
           return `<div class="bar-row"><div class="bar-label"><span>${m.emoji} ${m.label}</span><span class="n">${pct}% · ${n}</span></div>
             <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
         }).join('')}
@@ -6039,7 +6248,7 @@ function renderInsightsMood(a){
         <div class="section-title">Mood Distribution</div>
         ${MOODS.map(m=>{
           const n = c.moodCount[m.id]||0;
-          const pct = c.total ? Math.round((n/c.total)*100) : 0;
+          const pct = c.moodLogged ? Math.round((n/c.moodLogged)*100) : 0;
           return `<div class="bar-row"><div class="bar-label"><span>${m.emoji} ${m.label}</span><span class="n">${pct}% · ${n}</span></div>
             <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
         }).join('')}
@@ -6279,7 +6488,7 @@ function renderMonthly(){
       <div class="card">
         <div class="section-title">Mood Distribution</div>
         ${MOODS.map(mo=>{
-          const n=c.moodCount[mo.id]||0, pct=c.total?Math.round((n/c.total)*100):0;
+          const n=c.moodCount[mo.id]||0, pct=c.moodLogged?Math.round((n/c.moodLogged)*100):0;
           return `<div class="bar-row"><div class="bar-label"><span>${mo.emoji} ${mo.label}</span><span class="n">${pct}% · ${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
         }).join('')}
       </div>
@@ -6328,7 +6537,7 @@ function renderYearly(){
       <div class="card">
         <div class="section-title">Yearly Mood Distribution</div>
         ${MOODS.map(mo=>{
-          const n=c.moodCount[mo.id]||0, pct=c.total?Math.round((n/c.total)*100):0;
+          const n=c.moodCount[mo.id]||0, pct=c.moodLogged?Math.round((n/c.moodLogged)*100):0;
           return `<div class="bar-row"><div class="bar-label"><span>${mo.emoji} ${mo.label}</span><span class="n">${pct}% · ${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div></div>`;
         }).join('')}
         <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px;">Avg intensity: ${c.avgIntensity===null?'—':c.avgIntensity}</p>
@@ -6479,7 +6688,8 @@ function buildExportMarkdown(data){
   lines.push(`## Journals (${data.journals.length})`, ``);
   data.journals.forEach(e=>{
     lines.push(`### ${e.title || 'Untitled'} — ${e.date}`);
-    lines.push(`*Mood: ${e.mood} (${e.moodIntensity}/10)${e.archived?' · Archived':''}${e.favorite?' · ★ Favorite':''}${e.important?' · 🔖 Important':''}*`);
+    const moodText = hasMood(e.mood) ? `${moodInfo(e.mood).label} (${e.moodIntensity}/10)` : 'not logged';
+    lines.push(`*Mood: ${moodText}${e.archived?' · Archived':''}${e.favorite?' · ★ Favorite':''}${e.important?' · 🔖 Important':''}*`);
     if(e.tags.length) lines.push(`Tags: ${e.tags.map(t=>'#'+t).join(' ')}`);
     lines.push(``, mdEscape(e.content), ``);
     if(e.media.length){
@@ -6547,6 +6757,50 @@ function estimateStorageMB(){
 function saveSettingField(field, val){
   const s = {...(state.settings||DEFAULT_SETTINGS), [field]: val};
   saveUserSettings(s);
+}
+/* ---------------- Module 03: user-chosen mood emojis ----------------
+   Only the emoji is user data — the ten mood ids/labels stay fixed, so
+   every entry ever saved keeps its meaning even after the user swaps the
+   picture. Writes are debounced (typing an emoji shouldn't be ten writes)
+   and merged into the same settings doc as every other preference. */
+let __moodEmojiTimer = null;
+function onMoodEmojiInput(moodId, value){
+  window.__editingMoodEmoji = true;
+  const m = MOODS.find(x=>x.id===moodId);
+  const clean = (value||'').trim().slice(0, 8);
+  if(m) m.emoji = clean || defaultMoodEmoji(moodId); // instant feedback, before the round-trip
+  const status = document.getElementById('moodEmojiStatus');
+  if(status) status.textContent = 'সেভ হচ্ছে…';
+  clearTimeout(__moodEmojiTimer);
+  __moodEmojiTimer = setTimeout(async ()=>{
+    const current = {...((state.settings && state.settings.moodEmojis) || {})};
+    if(clean) current[moodId] = clean; else delete current[moodId]; // empty = back to the built-in emoji
+    const s = {...(state.settings||DEFAULT_SETTINGS), moodEmojis: current};
+    state.settings = s;
+    try{
+      await withTimeout(userDocRef().set({settings:{moodEmojis: current}}, {merge:true}), 12000);
+      if(status) status.textContent = 'সেভ হয়েছে — তোমার অ্যাকাউন্টের সব ডিভাইসে দেখাবে।';
+    }catch(err){
+      if(status) status.textContent = 'সেভ করা যায়নি — ইন্টারনেট চেক করে আবার চেষ্টা করো।';
+      toastError(err, "We couldn't save your mood emojis.");
+    }finally{
+      window.__editingMoodEmoji = false;
+    }
+  }, 700);
+}
+function resetMoodEmojis(){
+  confirmAction('ডিফল্ট ইমোজিতে ফিরে যাবে?', 'তোমার বসানো সব ইমোজি সরে গিয়ে JournalOS-এর ডিফল্ট ইমোজিগুলো ফিরে আসবে। mood-এর নাম বা তোমার পুরনো এন্ট্রির কোনো কিছুই বদলাবে না।', async ()=>{
+    const s = {...(state.settings||DEFAULT_SETTINGS), moodEmojis: {}};
+    state.settings = s;
+    applyMoodEmojis();
+    try{
+      await withTimeout(userDocRef().set({settings:{moodEmojis:{}}}, {merge:true}), 12000);
+      toast('ডিফল্ট ইমোজি ফিরিয়ে আনা হয়েছে।', {type:'success'});
+    }catch(err){
+      toastError(err, "We couldn't reset your mood emojis.");
+    }
+    requestRender();
+  }, 'রিসেট করুন');
 }
 // Merges a single Dashboard-section toggle into the existing settings doc
 // (rather than overwriting the whole dashboardSections object), and syncs
