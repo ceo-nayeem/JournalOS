@@ -190,19 +190,6 @@ input,textarea,select{font-family:var(--font-sans);}
   color:var(--ink-faint);padding:10px 8px 2px;}
 .sidebar.expanded .nav-label{display:block;}
 
-.sidebar-foot{margin-top:auto;padding-top:8px;display:flex;justify-content:center;}
-.sidebar.expanded .sidebar-foot{justify-content:flex-start;}
-.streak-pill{display:flex;align-items:center;gap:8px;padding:8px;background:rgba(255,255,255,.16);
-  border:1px solid var(--glass-border);border-radius:22px;font-size:13px;color:var(--ink-soft);
-  width:38px;height:38px;justify-content:center;overflow:hidden;
-  transition:width .32s var(--ease),padding .32s var(--ease),border-radius .32s var(--ease);}
-:root[data-theme="dark"] .streak-pill{background:rgba(255,255,255,.06);}
-.sidebar.expanded .streak-pill{width:100%;justify-content:flex-start;padding:9px 12px;border-radius:14px;}
-.streak-pill b{color:var(--accent);font-family:var(--font-serif);font-size:16px;flex:none;}
-.streak-pill .stxt{opacity:0;max-width:0;white-space:nowrap;overflow:hidden;
-  transition:opacity .2s,max-width .32s var(--ease);}
-.sidebar.expanded .streak-pill .stxt{opacity:1;max-width:110px;}
-
 @media (max-width:860px){
   .sidebar{transform:translateX(-130%);top:66px;bottom:66px;left:10px;width:min(78vw,240px);
     padding:14px 12px;transition:transform .32s var(--ease);}
@@ -214,8 +201,6 @@ input,textarea,select{font-family:var(--font-sans);}
   .sidebar .nav-item .lbl{opacity:1;max-width:140px;margin-left:2px;}
   .sidebar .nav-label{display:block;}
   .sidebar .nav-sep{width:100%;margin:10px 4px;}
-  .sidebar .streak-pill{width:100%;justify-content:flex-start;padding:9px 12px;border-radius:14px;}
-  .sidebar .streak-pill .stxt{opacity:1;max-width:110px;}
   .dock-toggle{display:none;}
 }
 
@@ -235,9 +220,38 @@ input,textarea,select{font-family:var(--font-sans);}
   backdrop-filter:blur(var(--glass-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   border:1px solid var(--glass-border);border-radius:999px;padding:9px 18px 9px 15px;
   box-shadow:var(--shadow-float);}
-.topbar-left{display:flex;align-items:center;gap:8px;}
-.topbar-actions{display:flex;align-items:center;gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:8px;flex:none;}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex:none;}
 @media (max-width:600px){ .topbar{left:10px;right:10px;top:10px;height:38px;} }
+
+/* Small always-visible search bar (replaces the old sidebar Search entry):
+   quick text search on Enter, plus a toggle that opens the full
+   Advanced Search page (filters, semantic search, Ask Your Life). */
+.topbar-search{display:flex;align-items:center;gap:6px;flex:1;min-width:0;max-width:360px;
+  margin:0 10px;height:40px;padding:0 6px 0 14px;background:var(--glass-bg);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
+  border:1px solid var(--glass-border);border-radius:999px;box-shadow:var(--shadow-float);}
+.topbar-search>svg{flex:none;width:15px;height:15px;opacity:.55;}
+.topbar-search input{flex:1;min-width:0;border:none;background:none;outline:none;
+  font-size:13.5px;color:var(--ink);padding:0 4px;}
+.topbar-search input::placeholder{color:var(--ink-faint);}
+.topbar-search .adv-toggle{flex:none;width:29px;height:29px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.16);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,transform .15s var(--ease);}
+:root[data-theme="dark"] .topbar-search .adv-toggle{background:rgba(255,255,255,.06);}
+.topbar-search .adv-toggle:hover{background:rgba(255,255,255,.3);color:var(--ink);}
+.topbar-search .adv-toggle:active{transform:scale(.88);}
+.topbar-search .adv-toggle svg{width:14px;height:14px;}
+@media (max-width:680px){ .topbar-search{max-width:none;} }
+@media (max-width:480px){ .topbar .brand .word{display:none;} .topbar-search{padding:0 4px 0 12px;} }
+
+/* Day-streak chip (replaces the old sidebar streak pill) */
+.topbar-streak{display:flex;align-items:center;gap:5px;height:40px;padding:0 13px;flex:none;
+  background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border:1px solid var(--glass-border);
+  border-radius:999px;box-shadow:var(--shadow-float);font-size:13px;color:var(--ink-soft);cursor:pointer;}
+.topbar-streak b{color:var(--accent);font-family:var(--font-serif);font-size:15px;}
+@media (max-width:600px){ .topbar-streak{padding:0 10px;} .topbar-streak .stxt{display:none;} }
 
 .chip-btn{background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
@@ -994,7 +1008,18 @@ body.focus-mode::before{opacity:.25;}
     </button>
     <div class="brand"><span class="mark">J</span><span class="word serif">JournalOS</span></div>
   </div>
+  <div class="topbar-search" role="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input type="text" id="topSearchInput" placeholder="খুঁজো…" aria-label="খুঁজো"
+      onkeydown="if(event.key==='Enter'){event.preventDefault(); submitTopSearch(this.value);}">
+    <button class="adv-toggle" onclick="openAdvancedSearch()" aria-label="অ্যাডভান্স সার্চ" title="Advanced Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="12" r="2"/><circle cx="15" cy="18" r="2"/></svg>
+    </button>
+  </div>
   <div class="topbar-actions">
+    <div class="topbar-streak" id="streakChip" title="Day streak" onclick="go('dashboard')">
+      <span aria-hidden="true">🔥</span><b id="streakNum">0</b><span class="stxt">day streak</span>
+    </div>
     <button class="chip-btn avatar-fallback" id="profileBtn" onclick="toggleProfileMenu()" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">?</button>
     <button class="chip-btn" id="themeChip" onclick="toggleThemeQuick()" aria-label="থিম পরিবর্তন">🌙</button>
     <button class="topbar-fab" onclick="openQuickAdd()" aria-label="নতুন এন্ট্রি">
@@ -1048,18 +1073,6 @@ body.focus-mode::before{opacity:.25;}
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg></span>
       <span class="lbl">Journal Library</span><span class="tip">Journal Library</span>
     </button>
-    <button class="nav-item" data-view="calendar" onclick="go('calendar')">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 15h.01M12 15h.01M16 15h.01"/></svg></span>
-      <span class="lbl">Calendar</span><span class="tip">Calendar</span>
-    </button>
-    <button class="nav-item" data-view="search" onclick="go('search')">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
-      <span class="lbl">Search</span><span class="tip">Search</span>
-    </button>
-    <button class="nav-item" data-view="archive" onclick="go('archive')">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg></span>
-      <span class="lbl">Archive</span><span class="tip">Archive</span>
-    </button>
 
     <div class="nav-label">Insights</div>
     <button class="nav-item" data-view="insights" onclick="go('insights')">
@@ -1078,13 +1091,6 @@ body.focus-mode::before{opacity:.25;}
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
       <span class="lbl">Settings</span><span class="tip">Settings</span>
     </button>
-
-    <div class="sidebar-foot">
-      <div class="streak-pill">
-        <span>🔥</span>
-        <span class="stxt"><b id="streakNum">0</b> day streak</span>
-      </div>
-    </div>
   </aside>
 
   <main class="main" id="main" tabindex="-1"></main>
@@ -3717,6 +3723,18 @@ function toggleSidebar(){
   document.querySelector('.overlay').classList.toggle('show');
 }
 
+/* ---------------- Topbar quick search (replaces old sidebar Search entry) ---------------- */
+function submitTopSearch(v){
+  const q = (v||'').trim();
+  state.searchQuery = q;
+  state.searchMode = 'text';
+  go('search');
+}
+function openAdvancedSearch(){
+  go('search');
+  setTimeout(()=>{ const el=document.getElementById('searchQueryInput'); if(el) el.focus(); }, 60);
+}
+
 /* Sidebar hover-tooltips: positioned via JS (not pure CSS) so the label is
    a position:fixed element placed next to the button's real on-screen
    location. This lets it escape the sidebar's own overflow box entirely —
@@ -3869,6 +3887,10 @@ function render(){
   }
   syncWriteFixedBarVisibility();
   document.body.classList.toggle('focus-mode', state.view==='write' && !!state.focusMode);
+  // Topbar search lives outside #main, so keep it in sync with state without
+  // clobbering the user's in-progress typing there.
+  const topSearchEl = document.getElementById('topSearchInput');
+  if(topSearchEl && document.activeElement!==topSearchEl) topSearchEl.value = state.searchQuery||'';
 }
 /* ---------------- Module: fixed floating write-toolbar show/hide on scroll ----------------
    The bar (populated inside renderWrite()) stays mounted at position:fixed. It is only
@@ -4651,6 +4673,7 @@ function renderArchive(){
   return `
     <div class="page-head">
       <div><h1>Archive</h1><div class="sub">আর্কাইভ করা এন্ট্রিগুলো এখানে নিরাপদে থাকে — ডিলিট হয় না, চাইলে ফিরিয়ে আনতে পারবে।</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="go('timeline')">📋 Journal Library</button>
     </div>
     <div class="card">
       ${list.length ? list.map(e=>`
@@ -4717,7 +4740,11 @@ function renderTimeline(){
   return `
     <div class="page-head">
       <h1>Journal Library</h1>
-      <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="go('calendar')">📅 Calendar</button>
+        <button class="btn btn-ghost btn-sm" onclick="go('archive')">🗄 Archive</button>
+        <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
+      </div>
     </div>
 
     <div class="filter-row">
@@ -4823,9 +4850,12 @@ function renderCalendar(){
   return `
     <div class="page-head">
       <h1>Calendar</h1>
-      <label class="pill" style="cursor:pointer;">
-        <input type="checkbox" ${showArchived?'checked':''} onchange="state.calendarShowArchived=this.checked; render();" style="margin:0;"> Show archived
-      </label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label class="pill" style="cursor:pointer;">
+          <input type="checkbox" ${showArchived?'checked':''} onchange="state.calendarShowArchived=this.checked; render();" style="margin:0;"> Show archived
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="go('timeline')">📋 Journal Library</button>
+      </div>
     </div>
     <div class="card">
       <div class="cal-head">
