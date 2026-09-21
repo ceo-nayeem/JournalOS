@@ -151,7 +151,7 @@ input,textarea,select{font-family:var(--font-sans);}
 .brand .word{font-family:var(--font-serif);font-size:24px;}
 
 .nav-item{display:flex;align-items:center;gap:12px;padding:0;height:55px;width:55px;flex:none;
-  border-radius:27px;color:var(--ink-soft);text-decoration:none;font-size:17px;font-weight:500;
+  border-radius:27px;color:var(--ink-soft);text-decoration:none;font-size:14px;font-weight:500;
   border:none;background:none;text-align:left;justify-content:center;position:relative;
   transition:background .15s,color .15s,transform .15s var(--ease),width .32s var(--ease),
     justify-content .32s var(--ease),padding .32s var(--ease);}
@@ -169,23 +169,23 @@ input,textarea,select{font-family:var(--font-sans);}
 .nav-item.active{color:var(--ink);font-weight:600;}
 .nav-item.active .ic{background:var(--accent);color:var(--on-accent);box-shadow:0 4px 12px -3px var(--accent-shadow);}
 
-/* Tooltip label shown on hover while the dock is collapsed (icon-only).
-   position:fixed + JS-computed coordinates (see initSidebarTooltips) so the
-   label escapes the sidebar's own overflow/scroll box and always renders on
-   top of every other floating chip — a soft glassy chip, matching the rest
-   of the dock's frosted-glass language. */
+/* Tooltip "page" shown on hover/click while the dock is collapsed (icon-only).
+   Animates like a small page hinged to the button, unfolding open: it grows
+   out horizontally from the button's edge (clip-path reveal + scaleX) rather
+   than just fading in, so the "opening" motion is clearly visible. */
 .nav-item .tip{position:fixed;top:0;left:0;transform-origin:left center;
-  transform:translateY(-50%) translateX(-8px) scaleX(.4);
+  transform:translateY(-50%) scaleX(.15);
+  clip-path:inset(0 0 0 0 round 12px);
   background:var(--glass-bg-strong);color:var(--ink);font-size:15px;font-weight:600;padding:9px 16px;
   border-radius:12px;white-space:nowrap;opacity:0;pointer-events:none;
   border:1px solid var(--glass-border);
   backdrop-filter:blur(var(--glass-blur)) saturate(1.6);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.6);
   box-shadow:var(--shadow-float);
-  transition:opacity .22s var(--ease),transform .22s var(--ease);z-index:9999;}
+  transition:opacity .28s var(--ease),transform .32s cubic-bezier(.22,1.4,.36,1);z-index:9999;}
 .sidebar:not(.expanded):not(.open) .nav-item:hover .tip,
 .sidebar:not(.expanded):not(.open) .nav-item:focus-visible .tip,
 .sidebar:not(.expanded):not(.open) .nav-item.tip-open .tip{
-  opacity:1;transform:translateY(-50%) translateX(0) scaleX(1);}
+  opacity:1;transform:translateY(-50%) scaleX(1);}
 .sidebar.expanded .nav-item .tip,.sidebar.open .nav-item .tip{display:none;}
 
 .nav-sep{height:1px;background:var(--glass-border);margin:12px auto;opacity:.8;width:32px;
@@ -210,9 +210,11 @@ input,textarea,select{font-family:var(--font-sans);}
 }
 
 .main{padding:88px 32px 92px;max-width:960px;width:100%;margin:0 auto;}
-.main{margin-left:calc(var(--dock-expanded) + 30px);}
 #main.view-anim{animation:viewIn .32s var(--ease);}
 @keyframes viewIn{ from{opacity:0;transform:translateY(7px);} to{opacity:1;transform:translateY(0);} }
+#main.dock-nudge{animation:dockNudge .38s var(--ease);}
+@keyframes dockNudge{ 0%{transform:scale(1);} 30%{transform:scale(.985);} 55%{transform:scale(1.008);}
+  75%{transform:scale(.997);} 100%{transform:scale(1);} }
 @media (max-width:860px){ .main{padding:78px 18px 118px;max-width:100%;margin-left:auto!important;} }
 @media (max-width:480px){ .main{padding:74px 12px 122px;} }
 
@@ -3749,7 +3751,7 @@ function initSidebarTooltips(){
     const place = ()=>{
       const r = item.getBoundingClientRect();
       tip.style.top = (r.top + r.height/2) + 'px';
-      tip.style.left = (r.right + 12) + 'px';
+      tip.style.left = (r.right + 10) + 'px';
     };
     item.addEventListener('mouseenter', place);
     item.addEventListener('focus', place);
@@ -3775,6 +3777,15 @@ function toggleDockMode(){
   sb.classList.toggle('expanded', expanded);
   document.body.classList.toggle('sb-expanded', expanded);
   localStorage.setItem('sidebarExpanded', expanded ? '1' : '0');
+  // Main content stays centered and never slides horizontally when the dock
+  // toggles — instead it gets a small in-place "nudge" pulse so the change
+  // still feels responsive without the whole layout shifting sideways.
+  const main = document.getElementById('main');
+  if(main){
+    main.classList.remove('dock-nudge');
+    void main.offsetWidth; // restart animation
+    main.classList.add('dock-nudge');
+  }
 }
 
 /* ---------------- Quick theme toggle (topbar chip) ---------------- */
