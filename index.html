@@ -2132,7 +2132,6 @@ function renderSettings(){
 
     <section class="settings-group card" id="set-journal" aria-labelledby="h-journal">
       <h3 id="h-journal">Journal</h3>
-      ${settingToggle('focusWriteDefault','Start in Focus Writing','Open the editor with menus and extras hidden. Press Esc any time to leave focus mode.', !!s.focusWriteDefault)}
       <div class="settings-row"><div><div class="label">Drafts</div><div class="desc">While you write, a draft is kept on this device and synced to your account. Drafts are removed once you save or discard them.</div></div></div>
     </section>
 
@@ -3706,7 +3705,7 @@ function go(view, param){
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
   if(view!=='write') state.focusMode = false;
-  else if(enteringWrite) state.focusMode = !!(state.settings && state.settings.focusWriteDefault);
+  else if(enteringWrite) state.focusMode = false; // always open in normal mode; Focus only via the ⛶ Focus button
   if(['search','settings'].includes(view)) ensureSearchIndexListener();
   if(view==='write'){ state.draftRecoveryResolved = false; state.appliedDraftData = null; } // re-check for a recoverable draft on every fresh entry into the editor
   document.querySelectorAll('.nav-item,.bn-item').forEach(b=>{ const on = b.dataset.view===view; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
