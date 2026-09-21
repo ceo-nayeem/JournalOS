@@ -118,7 +118,7 @@ input,textarea,select{font-family:var(--font-sans);}
    the icons grow text labels, then collapsing removes the panel again.
    Mobile: the dock becomes an off-canvas drawer opened from the topbar
    hamburger, and the bottom tab bar carries primary navigation. */
-:root{ --dock-collapsed:80px; --dock-expanded:280px; }
+:root{ --dock-collapsed:80px; --dock-expanded:250px; }
 #app{display:none;min-height:100vh;}
 #app.shown{display:block;}
 
@@ -130,7 +130,7 @@ input,textarea,select{font-family:var(--font-sans);}
   transition:width .32s var(--ease),background .32s var(--ease),
     border-color .32s var(--ease),box-shadow .32s var(--ease),padding .32s var(--ease);}
 .sidebar::-webkit-scrollbar{display:none;}
-.sidebar.expanded{width:var(--dock-expanded);padding:17px 15px;
+.sidebar.expanded{width:var(--dock-expanded);padding:12px 10px;
   background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   border-color:var(--glass-border);box-shadow:var(--shadow-float);}
@@ -162,7 +162,7 @@ input,textarea,select{font-family:var(--font-sans);}
 .nav-item svg{width:21px;height:21px;flex:none;opacity:.85;}
 .nav-item .lbl{white-space:nowrap;overflow:hidden;opacity:0;max-width:0;
   transition:opacity .2s,max-width .32s var(--ease);}
-.sidebar.expanded .nav-item .lbl{opacity:1;max-width:175px;margin-left:2px;}
+.sidebar.expanded .nav-item .lbl{opacity:1;max-width:150px;margin-left:2px;}
 .nav-item:hover .ic{background:rgba(255,255,255,.32);}
 :root[data-theme="dark"] .nav-item:hover .ic{background:rgba(255,255,255,.11);}
 .nav-item:active{transform:scale(.94);}
@@ -210,7 +210,7 @@ input,textarea,select{font-family:var(--font-sans);}
 }
 
 .main{padding:88px 32px 92px;max-width:960px;width:100%;margin:0 auto;
-  position:relative;left:5px;}
+  position:relative;left:15px;}
 #main.view-anim{animation:viewIn .32s var(--ease);}
 @keyframes viewIn{ from{opacity:0;transform:translateY(7px);} to{opacity:1;transform:translateY(0);} }
 #main.dock-nudge{animation:dockNudge .38s var(--ease);}
