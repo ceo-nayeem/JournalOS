@@ -417,6 +417,104 @@ input,textarea,select{font-family:var(--font-sans);}
 .mood-emoji-item .mname{font-size:13px;font-weight:600;color:var(--ink);}
 .mood-emoji-item .mhint{font-size:11px;color:var(--ink-faint);}
 
+
+/* ================= ADMIN CONSOLE / BACKEND ================= */
+.announce-bar{display:none;}
+.announce-bar.show{display:block;position:sticky;top:0;z-index:var(--z-nav);padding:9px 16px;text-align:center;
+  font-size:13px;font-weight:500;line-height:1.4;}
+.announce-bar.tone-info{background:var(--sky-soft);color:var(--sky);}
+.announce-bar.tone-success{background:var(--sage-soft);color:var(--sage);}
+.announce-bar.tone-warn{background:var(--accent-soft);color:var(--accent);}
+.announce-bar.tone-danger{background:var(--rust-soft);color:var(--rust);}
+
+.app-lock{display:none;}
+.app-lock.show{display:flex;position:fixed;inset:0;z-index:var(--z-toast);background:var(--bg);
+  align-items:center;justify-content:center;padding:24px;}
+.app-lock .lock-card{max-width:420px;text-align:center;}
+.app-lock .lock-ic{font-size:40px;margin-bottom:10px;}
+.app-lock h2{margin:0 0 8px;font-size:21px;}
+.app-lock p{color:var(--text-muted);font-size:14px;line-height:1.65;margin:0 0 18px;}
+.gate-err{margin-top:7px;font-size:12.5px;color:var(--danger);min-height:16px;}
+.modal.modal-wide{max-width:640px;width:100%;max-height:86vh;overflow:auto;}
+
+.admin-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.admin-head h1{margin:4px 0 2px;}
+.admin-badge{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--ink);color:var(--paper);
+  font-size:10px;font-weight:700;letter-spacing:.09em;}
+.admin-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;border-bottom:1px solid var(--rule);}
+.admin-tab{flex:none;padding:8px 13px;border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;
+  background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.admin-tab:hover{background:var(--surface-sunken);color:var(--text);}
+.admin-tab.active{background:var(--surface);border-color:var(--rule);color:var(--text);font-weight:600;}
+
+.admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;}
+.admin-stats.compact{margin-top:12px;}
+.admin-stat{background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:12px 13px;}
+.admin-stat b{display:block;font-family:var(--font-serif);font-size:22px;line-height:1.1;}
+.admin-stat span{display:block;margin-top:3px;font-size:11.5px;color:var(--text-faint);}
+
+.admin-status{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--rule);font-size:13px;}
+.admin-status:last-child{border-bottom:none;}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
+.badge.tone-ok{background:var(--sage-soft);color:var(--sage);}
+.badge.tone-warn{background:var(--accent-soft);color:var(--accent);}
+.badge.tone-bad{background:var(--rust-soft);color:var(--rust);}
+.badge.tone-accent{background:var(--ink);color:var(--paper);}
+
+.admin-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.admin-toolbar input[type=search],.admin-toolbar select{padding:7px 10px;border-radius:8px;border:1px solid var(--rule);
+  background:var(--surface);color:var(--text);font-size:13px;}
+.admin-toolbar input[type=search]{flex:1;min-width:180px;}
+
+.admin-user-row,.admin-mini-row{display:flex;align-items:center;gap:12px;padding:11px 6px;
+  border-bottom:1px solid var(--rule);cursor:pointer;border-radius:8px;}
+.admin-user-row:hover,.admin-mini-row:hover{background:var(--surface-sunken);}
+.au-avatar{width:34px;height:34px;flex:none;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;overflow:hidden;}
+.au-avatar.big{width:52px;height:52px;font-size:20px;}
+.au-avatar img{width:100%;height:100%;object-fit:cover;}
+.au-main{min-width:0;flex:1;}
+.au-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.au-mail{font-size:11.5px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.au-uid{font-size:10.5px;color:var(--text-faint);font-family:ui-monospace,monospace;margin-top:2px;}
+.au-col{flex:none;width:72px;text-align:center;}
+.au-col b{display:block;font-size:13px;}
+.au-col span{display:block;font-size:10.5px;color:var(--text-faint);}
+.au-tags{flex:none;display:flex;gap:4px;flex-wrap:wrap;max-width:210px;justify-content:flex-end;}
+.au-when{flex:none;font-size:11.5px;color:var(--text-faint);}
+.admin-user-head{display:flex;align-items:center;gap:12px;}
+
+.admin-savebar{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 12px;border-radius:10px;
+  background:var(--surface-sunken);border:1px solid var(--rule);font-size:12.5px;color:var(--text-muted);}
+.admin-savebar button{margin-left:0;}
+.admin-savebar span{margin-right:auto;}
+
+.admin-mood-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:10px;}
+.admin-mood-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--rule);
+  border-radius:10px;background:var(--surface);}
+.admin-mood-item .mm-emoji{width:52px;flex:none;text-align:center;font-size:19px;padding:5px 4px;
+  border-radius:8px;border:1px solid var(--rule);background:var(--bg);color:var(--text);}
+.admin-mood-item .mm-label{flex:1;min-width:0;padding:6px 8px;font-size:13px;border-radius:8px;
+  border:1px solid var(--rule);background:var(--bg);color:var(--text);}
+.admin-mood-item .mm-id{flex:none;font-size:10px;color:var(--text-faint);font-family:ui-monospace,monospace;}
+
+.admin-pre{width:100%;background:var(--surface-sunken);border:1px solid var(--rule);border-radius:9px;
+  padding:10px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.6;
+  color:var(--text);white-space:pre;overflow:auto;max-height:300px;}
+.admin-audit-row{display:flex;gap:10px;align-items:baseline;padding:8px 4px;border-bottom:1px solid var(--rule);font-size:12.5px;}
+.admin-audit-row:last-child{border-bottom:none;}
+.aa-act{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--accent);flex:none;}
+.aa-target{font-weight:600;flex:none;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aa-detail{color:var(--text-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aa-when,.aa-by{flex:none;font-size:11px;color:var(--text-faint);}
+
+@media (max-width:760px){
+  .au-col{display:none;}
+  .au-tags{max-width:130px;}
+  .admin-audit-row{flex-wrap:wrap;}
+}
+
 /* ---------- Auth screen ---------- */
 #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .auth-box{width:100%;max-width:380px;text-align:center;}
@@ -1067,7 +1165,7 @@ body.focus-mode::before{opacity:.25;}
     <button class="hamburger mobile-only" onclick="toggleSidebar()" aria-label="মেনু খুলো">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
-    <div class="brand"><span class="mark">J</span><span class="word serif">JournalOS</span></div>
+    <div class="brand"><span class="mark">J</span><span class="word serif" data-brand-word>JournalOS</span></div>
   </div>
   <div class="topbar-search" role="search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -1099,6 +1197,11 @@ body.focus-mode::before{opacity:.25;}
       <div class="pm-email" id="pmEmail"></div>
     </div>
   </div>
+  <button class="pm-item pm-admin" id="pmBackend" hidden onclick="closeProfileMenu();openBackend()">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>
+    Go to Backend
+  </button>
+  <div class="pm-sep" id="pmBackendSep" hidden></div>
   <button class="pm-item" onclick="closeProfileMenu();go('settings')">
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.5 1 .51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     Customization &amp; Settings
@@ -1108,6 +1211,34 @@ body.focus-mode::before{opacity:.25;}
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
     Log out
   </button>
+</div>
+
+<!-- ============ ADMIN-CONTROLLED GLOBAL GATES ============ -->
+<!-- Both are driven by appConfig/global + this user's userDirectory row and
+     are drawn by applyGlobalGates(), outside #main so every view inherits them. -->
+<div class="announce-bar" id="announceBar"></div>
+<div class="app-lock" id="appLock" role="alertdialog" aria-live="assertive"></div>
+
+<!-- ============ BACKEND PASSCODE ============ -->
+<div class="modal-backdrop" id="adminGateModal" onclick="if(event.target===this) closeAdminGate()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adminGateTitle">
+    <h3 id="adminGateTitle">Backend access</h3>
+    <p id="adminGateBody">Enter the backend passcode to continue.</p>
+    <div class="field" style="margin-top:6px;">
+      <input type="password" id="adminGateInput" inputmode="numeric" autocomplete="off" placeholder="Passcode"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();submitAdminGate();}">
+      <div id="adminGateError" class="gate-err" role="alert"></div>
+    </div>
+    <div class="row">
+      <button class="btn" onclick="closeAdminGate()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAdminGate()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BACKEND: USER DETAIL / RESTRICTIONS ============ -->
+<div class="modal-backdrop" id="adminUserModal" onclick="if(event.target===this) closeAdminUser()">
+  <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="User details" id="adminUserBody"></div>
 </div>
 
 <!-- ============ WRITE MODE: FIXED FLOATING TOOLBAR ============ -->
@@ -1378,13 +1509,81 @@ const FEATURES = Object.freeze({
   advancedInsights: true, export: true
 });
 // Free/Pro hook: a future billing layer fills `overrides` (e.g. {semanticSearch:false})
-// from the user's plan. Today everyone gets everything — no subscription logic here.
+// from the user's plan. The Admin Console (below) also writes into `overrides`,
+// both globally (appConfig.features) and per-user (userDirectory restrictions).
 const ENTITLEMENTS = { plan: 'unrestricted', overrides: {} };
 function canUseFeature(name){
   if(FEATURES[name] !== true) return false;
   const o = ENTITLEMENTS.overrides[name];
   return o === undefined ? true : !!o;
 }
+
+/* ================================================================
+   ADMIN / BACKEND CONSOLE — configuration
+   ----------------------------------------------------------------
+   Only these signed-in Google accounts ever see "Go to Backend", and
+   only they can write appConfig / userDirectory restrictions. The
+   passcode is a second gate in front of the console UI.
+
+   IMPORTANT — read this before going live:
+   The passcode below lives in the page source, so treat it as a
+   convenience lock (it stops a shoulder-surfer or a logged-in family
+   member), NOT as the security boundary. The real boundary is
+   firestore.rules, which must restrict appConfig/userDirectory writes
+   to the admin email(s). The shipped firestore.rules file does exactly
+   that — deploy it, or anyone could write these documents directly.
+   ================================================================ */
+const ADMIN_EMAILS = Object.freeze([
+  'ceo.nayeemuhammad@gmial.com',   // as provided
+  'ceo.nayeemuhammad@gmail.com'    // the likely-intended spelling, kept so a typo can't lock you out
+].map(e=>e.toLowerCase()));
+const ADMIN_PASSCODE = '12340';           // change here (and in firestore.rules deploys, nothing else)
+const ADMIN_SESSION_KEY = 'journalos.adminUnlocked';
+
+function isAdminUser(){
+  const em = (state.user && state.user.email || '').trim().toLowerCase();
+  return !!em && ADMIN_EMAILS.includes(em);
+}
+function adminUnlocked(){
+  try{ return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }catch(e){ return false; }
+}
+function setAdminUnlocked(v){
+  try{ v ? sessionStorage.setItem(ADMIN_SESSION_KEY,'1') : sessionStorage.removeItem(ADMIN_SESSION_KEY); }catch(e){}
+}
+
+/* ---------------- Backend collections ----------------
+   userDirectory/{uid} — one row per person who has ever signed in. The app
+     writes its own row (identity + usage stats) on sign-in; the admin writes
+     `restrictions`, `role` and `note` onto the same document. Both sides use
+     merge writes on disjoint fields, so neither clobbers the other.
+   appConfig/global  — global, admin-controlled configuration applied live to
+     every running client.
+   adminAudit/{id}   — append-only log of what the admin changed, and when. */
+function userDirectoryCol(){ return db.collection('userDirectory'); }
+function userDirectoryRef(uid){ return userDirectoryCol().doc(uid || (state.user && state.user.uid)); }
+function appConfigRef(){ return db.collection('appConfig').doc('global'); }
+function adminAuditCol(){ return db.collection('adminAudit'); }
+
+const DEFAULT_RESTRICTIONS = Object.freeze({
+  suspended:false,      // cannot use the app at all
+  readOnly:false,       // can read everything, cannot create/edit/delete
+  aiDisabled:false,     // no Gemini calls, no semantic search / Ask Your Life
+  mediaDisabled:false,  // no image/audio/video attachments
+  exportDisabled:false, // no data export
+  entryLimit:0          // 0 = unlimited; otherwise a hard cap on active entries
+});
+const DEFAULT_APP_CONFIG = Object.freeze({
+  appName:'JournalOS',
+  tagline:'Write First. Everything Else Second.',
+  signupsEnabled:true,
+  maintenance:{enabled:false, message:'JournalOS is briefly down for maintenance. Your journals are safe — please check back shortly.'},
+  announcement:{enabled:false, text:'', tone:'info'},
+  features:{aiAnalysis:true, semanticSearch:true, askYourLife:true, voice:true, voiceTranscription:true, media:true, advancedInsights:true, export:true},
+  defaults:{theme:'system', dailyReminder:true, dailyReminderTime:'20:00', weeklySummary:true, aiExtraction:true},
+  moodLabels:{},   // moodId -> admin-chosen label, overriding the built-in one
+  moodEmojis:{},   // moodId -> admin-chosen default emoji (a user's own choice still wins)
+  entryLimitDefault:0
+});
 
 // ---------- 1. Dates, time, hashing ----------
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -1483,7 +1682,8 @@ const Dialogs = (function(){
   const closers = {
     confirmModal: ()=>closeConfirm(), typeConfirmModal: ()=>closeTypeConfirm(), lifeEditModal: ()=>closeLifeEdit(),
     dayEntriesModal: ()=>closeDayEntries(), quickAddSheet: ()=>closeQuickAdd(), moodSheet: ()=>closeMoodSheet(),
-    lightbox: ()=>closeLightbox(), onboarding: ()=>finishOnboarding(false)
+    lightbox: ()=>closeLightbox(), onboarding: ()=>finishOnboarding(false),
+    adminGateModal: ()=>closeAdminGate(), adminUserModal: ()=>closeAdminUser()
   };
   const SEL = '.modal-backdrop,.sheet-backdrop,.lightbox';
   function focusables(root){
@@ -2159,6 +2359,7 @@ function renderSettings(){
       </div>
       <div class="settings-row"><div><div class="label">Profile picture</div><div class="desc">Shown from your Google account.</div></div></div>
       ${since ? `<div class="settings-row"><div><div class="label">Member since</div><div class="desc">${escapeHtml(since)}</div></div></div>` : ''}
+      ${renderAccessRow()}
       <div class="settings-row">
         <div><div class="label">Sign out</div><div class="desc">তোমার ডেটা Firebase-এ নিরাপদে থেকে যাবে।</div></div>
         <button class="btn btn-sm" onclick="logout()">Sign out</button>
@@ -2272,6 +2473,25 @@ function renderSettings(){
     </section>
   `;
 }
+// Surfaces any admin-applied limits on this account, so a blocked action is
+// never a mystery to the person hitting it.
+function renderAccessRow(){
+  const r = currentRestrictions(), cfg = appConfig();
+  const limits = [];
+  if(r.readOnly) limits.push('Read-only (নতুন লেখা বা এডিট করা যাবে না)');
+  if(r.aiDisabled) limits.push('AI ফিচার বন্ধ');
+  if(r.mediaDisabled) limits.push('মিডিয়া অ্যাটাচমেন্ট বন্ধ');
+  if(r.exportDisabled) limits.push('ডেটা এক্সপোর্ট বন্ধ');
+  const cap = r.entryLimit || cfg.entryLimitDefault || 0;
+  if(cap) limits.push('সর্বোচ্চ ' + cap + 'টি active এন্ট্রি');
+  const off = Object.keys(cfg.features).filter(k=>cfg.features[k]===false);
+  if(off.length) limits.push('অ্যাপজুড়ে বন্ধ: ' + off.join(', '));
+  if(!limits.length) return '';
+  return `<div class="settings-row">
+    <div><div class="label">Account limits</div>
+    <div class="desc">${limits.map(escapeHtml).join(' \u00B7 ')}<br>এগুলো অ্যাডমিন ঠিক করেছেন। প্রশ্ন থাকলে তাঁর সাথে যোগাযোগ করো।</div></div>
+  </div>`;
+}
 function renderIndexBuildStatus(){
   const ib = state.indexBuild || {status:'idle'};
   if(!state.searchIndexLoaded) return `<div class="settings-row"><div class="desc" role="status">Checking your search index…</div></div>`;
@@ -2342,7 +2562,7 @@ async function prepareExport(){
   return {data: buildExportData(), partial};
 }
 async function exportDataJSON(){
-  if(!canUseFeature('export')) return;
+  if(!canUseFeature('export')){ toast('এই অ্যাকাউন্টে এক্সপোর্ট বন্ধ করা আছে।', {type:'error'}); return; }
   toast('Preparing your export…');
   try{
     const {data, partial} = await prepareExport();
@@ -2351,7 +2571,7 @@ async function exportDataJSON(){
   }catch(err){ toastError(err, "We couldn't prepare your export.", exportDataJSON); }
 }
 async function exportDataMarkdown(){
-  if(!canUseFeature('export')) return;
+  if(!canUseFeature('export')){ toast('এই অ্যাকাউন্টে এক্সপোর্ট বন্ধ করা আছে।', {type:'error'}); return; }
   toast('Preparing your export…');
   try{
     const {data, partial} = await prepareExport();
@@ -2476,6 +2696,8 @@ function updateMediaProgress(id){
   if(p && el) el.textContent = p.progress || 0;
 }
 async function handleImagePick(fileList, journalId){
+  if(!canUseFeature('media')){ toast('এই অ্যাকাউন্টে মিডিয়া যুক্ত করা বন্ধ আছে।', {type:'error'}); return; }
+  if(!assertCanWrite('ফাইল যুক্ত')) return;
   const files = Array.from(fileList || []);
   const input = document.getElementById('imagePickInput'); if(input) input.value = '';
   for(const file of files){
@@ -2632,6 +2854,168 @@ function dashSectionOn(key){
 function userDocRef(){ return db.collection('users').doc(state.user.uid); }
 function entriesColRef(){ return userDocRef().collection('entries'); }
 
+/* ================================================================
+   BACKEND LINK — the client half of the Admin Console
+   ----------------------------------------------------------------
+   Every signed-in client: (1) registers/refreshes its own userDirectory
+   row so a brand-new user shows up in the backend immediately,
+   (2) listens to its own row for restrictions the admin sets, and
+   (3) listens to appConfig/global for live, app-wide configuration.
+   Restrictions are applied the moment the admin saves them — no reload.
+   ================================================================ */
+let unsubAccess = null, unsubAppConfig = null;
+
+function currentRestrictions(){
+  return {...DEFAULT_RESTRICTIONS, ...((state.access && state.access.restrictions) || {})};
+}
+function appConfig(){
+  return {...DEFAULT_APP_CONFIG, ...(state.appConfig || {}),
+    maintenance:{...DEFAULT_APP_CONFIG.maintenance, ...((state.appConfig||{}).maintenance||{})},
+    announcement:{...DEFAULT_APP_CONFIG.announcement, ...((state.appConfig||{}).announcement||{})},
+    features:{...DEFAULT_APP_CONFIG.features, ...((state.appConfig||{}).features||{})},
+    defaults:{...DEFAULT_APP_CONFIG.defaults, ...((state.appConfig||{}).defaults||{})}};
+}
+// A single place that turns "what the admin decided" into the feature gate the
+// rest of the app already consults, so no feature check had to be rewritten.
+function applyRemoteEntitlements(){
+  const cfg = appConfig(), r = currentRestrictions();
+  const o = {};
+  Object.keys(DEFAULT_APP_CONFIG.features).forEach(k=>{ if(cfg.features[k] === false) o[k] = false; });
+  if(r.aiDisabled){ o.aiAnalysis=false; o.semanticSearch=false; o.askYourLife=false; o.voiceTranscription=false; }
+  if(r.mediaDisabled){ o.media=false; o.voice=false; }
+  if(r.exportDisabled){ o.export=false; }
+  ENTITLEMENTS.overrides = o;
+  ENTITLEMENTS.plan = r.suspended ? 'suspended' : (r.readOnly ? 'read-only' : 'unrestricted');
+}
+// Admin-set mood labels/emojis are *defaults*: the user's own emoji still wins.
+function applyConfigMoodDefaults(){
+  const cfg = appConfig();
+  MOODS.forEach(m=>{
+    const base = BASE_MOODS.find(b=>b.id===m.id) || m;
+    const lbl = cfg.moodLabels && cfg.moodLabels[m.id];
+    m.label = (typeof lbl === 'string' && lbl.trim()) ? lbl.trim().slice(0,24) : base.label;
+  });
+  applyMoodEmojis();
+}
+// Non-admins are blocked from writing here by firestore.rules, so anything
+// that fails is logged and ignored — it must never break signing in.
+function touchUserDirectory(){
+  if(!state.user) return Promise.resolve();
+  const u = state.user;
+  const row = {
+    uid:u.uid, email:u.email||'', name:u.name||'', photoURL:u.photoURL||'',
+    lastSeenAt: nowISO(), appVersion: APP.version,
+    platform: (navigator.userAgent||'').slice(0,180)
+  };
+  return userDirectoryRef(u.uid).get().then(snap=>{
+    if(!snap.exists){
+      // first ever sign-in: this is the row the backend's Users tab lists
+      return userDirectoryRef(u.uid).set({
+        ...row, createdAt: nowISO(), signInCount:1, role:'user', note:'',
+        restrictions:{...DEFAULT_RESTRICTIONS},
+        stats:{entries:0, words:0, lastEntryAt:null}
+      });
+    }
+    const prev = snap.data() || {};
+    return userDirectoryRef(u.uid).set({...row, signInCount:(prev.signInCount||0)+1}, {merge:true});
+  }).catch(err=>console.warn('userDirectory register skipped', err && err.code));
+}
+// Keeps the admin's Users table honest without ever reading anybody else's
+// journals: each client reports its own totals onto its own row.
+let __statsTimer = null;
+function syncUserStats(){
+  if(!state.user || !state.loaded.entries) return;
+  clearTimeout(__statsTimer);
+  __statsTimer = setTimeout(()=>{
+    const active = state.entries.filter(e=>!e.archived);
+    const words = active.reduce((n,e)=>n + ((e.content||'').trim() ? (e.content||'').trim().split(/\s+/).length : 0), 0);
+    const last = active.map(e=>e.date).sort().pop() || null;
+    userDirectoryRef().set({stats:{entries:active.length, archived:state.entries.length-active.length, words, lastEntryAt:last}, lastSeenAt:nowISO()}, {merge:true})
+      .catch(err=>console.warn('stats sync skipped', err && err.code));
+  }, 2500);
+}
+function attachAccessListener(){
+  if(unsubAccess) unsubAccess();
+  unsubAccess = userDirectoryRef().onSnapshot(snap=>{
+    const prev = JSON.stringify(currentRestrictions());
+    state.access = snap.exists ? (snap.data() || {}) : {};
+    state.accessLoaded = true;
+    applyRemoteEntitlements();
+    if(prev !== JSON.stringify(currentRestrictions())) onAccessChanged();
+    applyGlobalGates();
+  }, err=>{
+    // a rules error here must never lock a legitimate user out of their journal
+    console.warn('access listener unavailable', err && err.code);
+    state.accessLoaded = true; applyRemoteEntitlements(); applyGlobalGates();
+  });
+}
+function detachAccessListener(){ if(unsubAccess){ unsubAccess(); unsubAccess=null; } state.access=null; state.accessLoaded=false; }
+function attachAppConfigListener(){
+  if(unsubAppConfig) unsubAppConfig();
+  unsubAppConfig = appConfigRef().onSnapshot(snap=>{
+    state.appConfig = snap.exists ? (snap.data() || {}) : {};
+    state.appConfigLoaded = true;
+    applyRemoteEntitlements();
+    applyConfigMoodDefaults();
+    applyGlobalGates();
+    requestRender();
+  }, err=>{
+    console.warn('appConfig listener unavailable', err && err.code);
+    state.appConfigLoaded = true; applyGlobalGates();
+  });
+}
+function detachAppConfigListener(){ if(unsubAppConfig){ unsubAppConfig(); unsubAppConfig=null; } state.appConfig=null; state.appConfigLoaded=false; }
+
+function onAccessChanged(){
+  const r = currentRestrictions();
+  if(r.suspended) return; // the lock screen says it better than a toast
+  toast('তোমার অ্যাকাউন্টের অনুমতি আপডেট হয়েছে।', {type:'info'});
+  requestRender();
+}
+// Draws (or removes) the two full-app gates — maintenance and suspension —
+// plus the announcement banner, outside #main so no view has to know about them.
+function applyGlobalGates(){
+  const cfg = appConfig(), r = currentRestrictions();
+  const admin = isAdminUser();
+  const brandName = cfg.appName || APP.name;
+  document.title = brandName + ' — ' + (cfg.tagline || APP.tagline);
+  document.querySelectorAll('[data-brand-word]').forEach(el=>{ el.textContent = brandName; });
+  const av = document.getElementById('authVersion');
+  if(av) av.textContent = brandName + ' v' + APP.version;
+  let lock = null;
+  if(r.suspended) lock = {icon:'\u26D4', title:'Your account has been suspended.',
+    body:'এই অ্যাকাউন্ট দিয়ে আপাতত JournalOS ব্যবহার করা যাবে না। তোমার লেখা কিছুই মুছে যায়নি — সব নিরাপদে আছে। প্রশ্ন থাকলে অ্যাডমিনের সাথে যোগাযোগ করো।'};
+  else if(cfg.maintenance.enabled && !admin) lock = {icon:'\u{1F6E0}\uFE0F', title:'Under maintenance', body: cfg.maintenance.message};
+  const host = document.getElementById('appLock');
+  if(!host) return;
+  if(lock){
+    host.innerHTML = `<div class="lock-card"><div class="lock-ic">${lock.icon}</div><h2>${escapeHtml(lock.title)}</h2>
+      <p>${escapeHtml(lock.body)}</p><button class="btn" onclick="logout()">Sign out</button></div>`;
+    host.classList.add('show');
+  } else { host.classList.remove('show'); host.innerHTML=''; }
+  const ann = document.getElementById('announceBar');
+  if(ann){
+    const on = cfg.announcement.enabled && (cfg.announcement.text||'').trim();
+    ann.className = 'announce-bar' + (on ? ' show tone-' + (cfg.announcement.tone||'info') : '');
+    ann.innerHTML = on ? `<span>${escapeHtml(cfg.announcement.text)}</span>` : '';
+  }
+}
+/* Write-side guard. Every mutating path funnels through this, so a read-only
+   or suspended account can't create, edit or delete anything — and gets told
+   why instead of hitting a silent permission error. */
+function assertCanWrite(what){
+  const r = currentRestrictions();
+  if(r.suspended){ toast('তোমার অ্যাকাউন্ট সাসপেন্ড করা আছে — কিছু সেভ করা যাবে না।', {type:'error'}); return false; }
+  if(r.readOnly){ toast('তোমার অ্যাকাউন্ট এখন read-only — ' + (what||'এই পরিবর্তন') + ' করা যাবে না।', {type:'error'}); return false; }
+  return true;
+}
+function entryLimitReached(){
+  const r = currentRestrictions();
+  const lim = r.entryLimit || appConfig().entryLimitDefault || 0;
+  if(!lim) return false;
+  return state.entries.filter(e=>!e.archived).length >= lim;
+}
+
 // Module 06: Life Organization collections — users/{uid}/{achievements,plans,...}.
 // "moments" is the Firestore collection name for the Important Moments library.
 const LIFE_COLLECTIONS = ['achievements','plans','quotes','ideas','lessons','challenges','moments','events','people','places'];
@@ -2770,6 +3154,7 @@ function attachEntriesListener(){
     state.entriesVersion++;
     const first = !state.loaded.entries;
     state.loaded.entries = true; state.loadError.entries = null; clearTimeout(window.__entriesLoadTimer);
+    syncUserStats(); // keeps the backend's Users table accurate, without exposing anyone's text
     if(['dashboard','timeline','calendar','search','insights','archive','monthly','yearly','privacy'].includes(state.view)) requestRender();
     else updateStreak();
     if(first) maybeShowOnboarding();
@@ -3608,6 +3993,11 @@ ${JSON.stringify(ctx).slice(0,12000)}`;
 
 /* ---------------- STATE ---------------- */
 let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:null,
+  // Admin Console link-up: this user's userDirectory row (restrictions/role)
+  // and the global admin config, both live-synced from Firestore.
+  access:null, accessLoaded:false, appConfig:null, appConfigLoaded:false,
+  adminTab:'overview', adminUsers:[], adminUsersLoaded:false, adminUserFilter:'', adminUserStatus:'all',
+  adminSelectedUid:null, adminAudit:[], adminPeek:null, adminConfigDraft:null,
   filters:{mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'},
   calMonth:new Date(), calendarShowArchived:false,
   draftRecoveryResolved:false, appliedDraftData:null,
@@ -3761,6 +4151,8 @@ function boot(){
     detachLifeListeners();
     detachSearchIndexListener();
     detachMediaListener();
+    detachAccessListener();
+    detachAppConfigListener();
     stopVoiceRecording(true);
 
     if(user){
@@ -3771,13 +4163,27 @@ function boot(){
       const ref = userDocRef();
       ref.get().then(snap=>{
         if(!snap.exists){
-          return ref.set({
-            profile:{name:state.user.name, email:state.user.email, createdAt:nowISO(), schemaVersion:APP.schemaVersion},
-            settings: DEFAULT_SETTINGS
+          // A brand-new account starts from the defaults the admin set in the
+          // backend (falling back to the built-in ones), and is refused
+          // outright if sign-ups have been switched off there.
+          return appConfigRef().get().then(cs=>{
+            const cfg = {...DEFAULT_APP_CONFIG, ...(cs.exists ? (cs.data()||{}) : {})};
+            if(cfg.signupsEnabled === false){
+              toast('নতুন অ্যাকাউন্ট খোলা আপাতত বন্ধ আছে। অ্যাডমিনের সাথে যোগাযোগ করো।', {type:'error', ttl:6000});
+              return auth.signOut();
+            }
+            const d = {...DEFAULT_APP_CONFIG.defaults, ...(cfg.defaults||{})};
+            return ref.set({
+              profile:{name:state.user.name, email:state.user.email, createdAt:nowISO(), schemaVersion:APP.schemaVersion},
+              settings: {...DEFAULT_SETTINGS, ...d}
+            });
           });
         }
       }).catch(err=>console.error('user doc init failed', err));
 
+      touchUserDirectory();      // a brand-new user appears in the backend from their very first sign-in
+      attachAccessListener();    // restrictions the admin sets apply live, no reload
+      attachAppConfigListener(); // global config (features, branding, maintenance)
       attachUserDocListener();
       attachEntriesListener();
       attachLifeListeners();
@@ -3787,7 +4193,9 @@ function boot(){
       showApp();
     } else {
       state.user = null;
+      setAdminUnlocked(false);
       resetSessionState();
+      applyGlobalGates();
       showAuth();
     }
   });
@@ -3834,6 +4242,12 @@ function go(view, param){
   // without an explicit Stop) whenever the destination isn't the editor.
   if(state.recording && view!=='write'){ cancelVoiceRecording(); }
   const enteringWrite = (view==='write' && state.view!=='write');
+  // The backend's cross-user listeners only ever run while the console is open.
+  if(state.view==='admin' && view!=='admin') detachAdminListeners();
+  if(view==='admin' && !(isAdminUser() && adminUnlocked())){
+    if(isAdminUser()){ openAdminGate(); return; }
+    toast('Backend access is restricted.', {type:'error'}); view = 'dashboard';
+  }
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
   if(view!=='write') state.focusMode = false;
@@ -3941,6 +4355,12 @@ function syncProfileUI(){
   if(pmName) pmName.textContent = name;
   const pmEmail = document.getElementById('pmEmail');
   if(pmEmail) pmEmail.textContent = (state.user && state.user.email) || '';
+  // "Go to Backend" exists in the DOM for everyone but is only revealed to an
+  // admin account — and it still asks for the passcode before opening.
+  const admin = isAdminUser();
+  const pmB = document.getElementById('pmBackend'), pmS = document.getElementById('pmBackendSep');
+  if(pmB) pmB.hidden = !admin;
+  if(pmS) pmS.hidden = !admin;
 }
 function toggleProfileMenu(){
   const open = document.getElementById('profileMenu').classList.toggle('show');
@@ -3984,6 +4404,7 @@ function startQuickWrite(){
   go('write', existing ? existing.id : null);
 }
 async function quickLogMood(moodId){
+  if(!assertCanWrite('mood লগ')) return;
   // Read the intensity slider before the sheet closes/resets, so a one-tap
   // mood log can still carry an (optional, quietly-defaulted) intensity.
   const sliderEl = document.getElementById('quickIntensitySlider');
@@ -4016,7 +4437,8 @@ function render(){
   const views = {
     dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar,
     search: renderSearch, archive: renderArchive, insights: renderInsights, monthly: renderMonthly,
-    yearly: renderYearly, life: renderLifeHub, settings: renderSettings, privacy: renderPrivacy
+    yearly: renderYearly, life: renderLifeHub, settings: renderSettings, privacy: renderPrivacy,
+    admin: renderAdmin
   };
   const gate = dataGate(state.view);
   let html;
@@ -4937,6 +5359,11 @@ function setSaveBusy(on){
 async function saveDraft(){
   if(__saving) return;
   const d = window.__draft; if(!d) return;
+  if(!assertCanWrite('জার্নাল সেভ')) return;
+  if(!d.id && entryLimitReached()){
+    toast('তোমার অ্যাকাউন্টে এন্ট্রির সর্বোচ্চ সীমায় পৌঁছে গেছ — নতুন এন্ট্রির জন্য অ্যাডমিনের সাথে যোগাযোগ করো।', {type:'error'});
+    return;
+  }
   if(!d.content || !d.content.trim()){ toast('আগে কিছু লিখো।'); return; }
   if(!NET.online){
     toast("You're offline — nothing was saved. Your text is kept on this device; save again once you're back online.", {type:'error'});
@@ -4980,6 +5407,7 @@ async function saveDraft(){
   }
 }
 function deleteEntry(id){
+  if(!assertCanWrite('এন্ট্রি ডিলিট')) return;
   confirmAction('এন্ট্রিটি মুছে ফেলবেন?', 'এই এন্ট্রি এবং এর সাথে যুক্ত সব তথ্য (mood, tags) স্থায়ীভাবে মুছে যাবে। এটি Archive থেকে আলাদা — একবার মুছে ফেললে ফেরানো যাবে না।', async ()=>{
     try{
       await entriesColRef().doc(id).delete();
@@ -4997,6 +5425,7 @@ function deleteEntry(id){
 
 /* ---------------- MODULE 02: ARCHIVE ---------------- */
 function archiveEntry(id){
+  if(!assertCanWrite('আর্কাইভ')) return;
   confirmAction('এন্ট্রিটি আর্কাইভ করবেন?', 'আর্কাইভ করা এন্ট্রি Journal Library ও Calendar থেকে সরে যাবে, কিন্তু Firebase-এ নিরাপদে থেকে যাবে। Archive পেজ থেকে যেকোনো সময় ফিরিয়ে আনতে পারবে।', async ()=>{
     try{
       await entriesColRef().doc(id).set({archived:true, updatedAt:new Date().toISOString()}, {merge:true});
@@ -6843,6 +7272,669 @@ function confirmAction(title, body, onConfirm, confirmLabel){
   btn.onclick = ()=>{ modal.classList.remove('show'); onConfirm(); };
 }
 function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+
+
+/* ================================================================
+   MODULE A — ADMIN CONSOLE (the backend)
+   ----------------------------------------------------------------
+   A real, working control plane for the whole app:
+     Overview   — live counts across the whole install
+     Users      — every person who ever signed in, with per-user
+                  restrictions applied to their client instantly
+     App Config — branding, feature flags, announcement, maintenance,
+                  defaults for new accounts, entry caps
+     Moods      — the ten mood types' default labels & emojis
+     Data       — inspect a single user's stored data
+     Audit      — an append-only record of every admin change
+
+   Reads/writes only ever touch userDirectory, appConfig and adminAudit
+   from a normal client, so the security boundary is firestore.rules —
+   see the Security tab inside the console for the exact rules to deploy.
+   ================================================================ */
+
+function openBackend(){
+  if(!isAdminUser()){ toast('This account does not have backend access.', {type:'error'}); return; }
+  if(adminUnlocked()){ go('admin'); return; }
+  openAdminGate();
+}
+function openAdminGate(){
+  const m = document.getElementById('adminGateModal');
+  const i = document.getElementById('adminGateInput');
+  const e = document.getElementById('adminGateError');
+  if(e) e.textContent = '';
+  if(i){ i.value = ''; }
+  m.classList.add('show');
+  setTimeout(()=>{ if(i) i.focus(); }, 60);
+}
+function closeAdminGate(){ document.getElementById('adminGateModal').classList.remove('show'); }
+function submitAdminGate(){
+  const i = document.getElementById('adminGateInput');
+  const e = document.getElementById('adminGateError');
+  const val = (i && i.value || '').trim();
+  if(val !== ADMIN_PASSCODE){
+    if(e) e.textContent = 'ভুল পাসকোড। আবার চেষ্টা করো।';
+    if(i){ i.value = ''; i.focus(); }
+    return;
+  }
+  setAdminUnlocked(true);
+  closeAdminGate();
+  go('admin');
+}
+function lockBackend(){
+  setAdminUnlocked(false);
+  toast('Backend locked.');
+  go('dashboard');
+}
+
+/* ---------------- Admin data listeners ---------------- */
+let unsubAdminUsers = null, unsubAdminAudit = null;
+function attachAdminListeners(){
+  if(!isAdminUser()) return;
+  if(!unsubAdminUsers){
+    unsubAdminUsers = userDirectoryCol().onSnapshot(snap=>{
+      state.adminUsers = snap.docs.map(d=>({uid:d.id, ...d.data()}));
+      state.adminUsersLoaded = true;
+      if(state.view==='admin') requestRender();
+      if(state.adminSelectedUid && document.getElementById('adminUserModal').classList.contains('show')) paintAdminUser();
+    }, err=>{
+      state.adminUsersLoaded = true; state.adminUsersError = err;
+      if(state.view==='admin') requestRender();
+    });
+  }
+  if(!unsubAdminAudit){
+    unsubAdminAudit = adminAuditCol().orderBy('at','desc').limit(120).onSnapshot(snap=>{
+      state.adminAudit = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      if(state.view==='admin' && state.adminTab==='audit') requestRender();
+    }, err=>console.warn('audit listener unavailable', err && err.code));
+  }
+}
+function detachAdminListeners(){
+  if(unsubAdminUsers){ unsubAdminUsers(); unsubAdminUsers=null; }
+  if(unsubAdminAudit){ unsubAdminAudit(); unsubAdminAudit=null; }
+}
+// Every admin write is recorded. Best-effort: a failed audit write must never
+// stop the change the admin actually asked for.
+function auditLog(action, target, detail){
+  return adminAuditCol().add({
+    action, target: target||'', detail: detail||'',
+    by: (state.user && state.user.email) || 'unknown',
+    at: nowISO()
+  }).catch(err=>console.warn('audit write skipped', err && err.code));
+}
+
+/* ---------------- Admin view ---------------- */
+const ADMIN_TABS = [
+  {key:'overview', label:'Overview', icon:'\u{1F4CA}'},
+  {key:'users',    label:'Users',    icon:'\u{1F465}'},
+  {key:'config',   label:'App Config', icon:'\u2699\uFE0F'},
+  {key:'moods',    label:'Moods',    icon:'\u{1F3AD}'},
+  {key:'data',     label:'Data',     icon:'\u{1F5C3}\uFE0F'},
+  {key:'audit',    label:'Audit',    icon:'\u{1F4DC}'},
+  {key:'security', label:'Security', icon:'\u{1F512}'}
+];
+function adminTab(k){ state.adminTab = k; render(); }
+
+function renderAdmin(){
+  if(!isAdminUser()){
+    return ui.error({title:'Backend access denied', body:'This signed-in account is not an administrator.', retry:"go('dashboard')"});
+  }
+  if(!adminUnlocked()){
+    return ui.error({title:'Backend locked', body:'Enter the backend passcode to continue.', retry:'openAdminGate()'});
+  }
+  attachAdminListeners();
+  const t = state.adminTab || 'overview';
+  const body =
+      t==='users'    ? renderAdminUsers()
+    : t==='config'   ? renderAdminConfig()
+    : t==='moods'    ? renderAdminMoods()
+    : t==='data'     ? renderAdminData()
+    : t==='audit'    ? renderAdminAudit()
+    : t==='security' ? renderAdminSecurity()
+    : renderAdminOverview();
+  return `
+    <div class="admin-head">
+      <div>
+        <div class="admin-badge">BACKEND</div>
+        <h1>Admin Console</h1>
+        <div class="sub">Signed in as ${escapeHtml((state.user&&state.user.email)||'')} \u00B7 changes apply to every client live.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="go('dashboard')">\u2190 Back to app</button>
+        <button class="btn btn-sm btn-danger" onclick="lockBackend()">\u{1F512} Lock backend</button>
+      </div>
+    </div>
+    <div class="admin-tabs" role="tablist">
+      ${ADMIN_TABS.map(x=>`<button role="tab" aria-selected="${t===x.key}" class="admin-tab ${t===x.key?'active':''}" onclick="adminTab('${x.key}')">${x.icon} ${x.label}</button>`).join('')}
+    </div>
+    <div class="admin-body">${body}</div>
+  `;
+}
+
+/* ---- Overview ---- */
+function adminTotals(){
+  const us = state.adminUsers || [];
+  const now = Date.now();
+  const since = (iso, days)=> iso ? (now - new Date(iso).getTime()) <= days*86400000 : false;
+  return {
+    users: us.length,
+    active24: us.filter(u=>since(u.lastSeenAt,1)).length,
+    active7: us.filter(u=>since(u.lastSeenAt,7)).length,
+    new7: us.filter(u=>since(u.createdAt,7)).length,
+    entries: us.reduce((n,u)=>n + ((u.stats&&u.stats.entries)||0), 0),
+    words: us.reduce((n,u)=>n + ((u.stats&&u.stats.words)||0), 0),
+    suspended: us.filter(u=>u.restrictions && u.restrictions.suspended).length,
+    restricted: us.filter(u=>{
+      const r = (u.restrictions)||{};
+      return r.suspended||r.readOnly||r.aiDisabled||r.mediaDisabled||r.exportDisabled||r.entryLimit;
+    }).length
+  };
+}
+function renderAdminOverview(){
+  if(!state.adminUsersLoaded) return ui.skeletonLines(4);
+  if(state.adminUsersError) return ui.error({title:"Can't read the user directory",
+    body:'Firestore rejected the read. Deploy the rules from the Security tab, then reload.', retry:'render()'});
+  const t = adminTotals(), cfg = appConfig();
+  const recent = (state.adminUsers||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,6);
+  return `
+    <div class="admin-stats">
+      ${[['Total users',t.users],['Active today',t.active24],['Active this week',t.active7],['New this week',t.new7],
+         ['Journal entries',t.entries.toLocaleString()],['Words written',t.words.toLocaleString()],
+         ['Restricted accounts',t.restricted],['Suspended',t.suspended]]
+        .map(x=>`<div class="admin-stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('')}
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="section-title">System status</div>
+        ${adminStatusRow('Maintenance mode', cfg.maintenance.enabled ? 'ON \u2014 non-admins are locked out' : 'Off', cfg.maintenance.enabled?'warn':'ok')}
+        ${adminStatusRow('New sign-ups', cfg.signupsEnabled ? 'Allowed' : 'Blocked', cfg.signupsEnabled?'ok':'warn')}
+        ${adminStatusRow('Announcement banner', cfg.announcement.enabled ? 'Showing' : 'Hidden', cfg.announcement.enabled?'warn':'ok')}
+        ${adminStatusRow('Features disabled globally',
+            (Object.keys(cfg.features).filter(k=>cfg.features[k]===false).join(', ') || 'None'),
+            Object.values(cfg.features).some(v=>v===false)?'warn':'ok')}
+        ${adminStatusRow('Default entry cap', cfg.entryLimitDefault ? cfg.entryLimitDefault + ' entries' : 'Unlimited', cfg.entryLimitDefault?'warn':'ok')}
+      </div>
+      <div class="card">
+        <div class="section-title">Newest accounts</div>
+        ${recent.length ? recent.map(u=>`
+          <div class="admin-mini-row" onclick="openAdminUser('${escapeAttr(u.uid)}')">
+            <div class="au-avatar">${escapeHtml((u.name||u.email||'?').trim().charAt(0).toUpperCase())}</div>
+            <div style="min-width:0;flex:1;">
+              <div class="au-name">${escapeHtml(u.name||'Unnamed')}</div>
+              <div class="au-mail">${escapeHtml(u.email||'')}</div>
+            </div>
+            <span class="au-when">${u.createdAt?timeAgo(u.createdAt):'\u2014'}</span>
+          </div>`).join('') : `<div class="empty">এখনো কোনো ইউজার সাইন-ইন করেনি।</div>`}
+      </div>
+    </div>`;
+}
+function adminStatusRow(label, value, tone){
+  return `<div class="admin-status"><span>${escapeHtml(label)}</span><span class="badge tone-${tone}">${escapeHtml(String(value))}</span></div>`;
+}
+
+/* ---- Users ---- */
+function userRestrictionTags(u){
+  const r = {...DEFAULT_RESTRICTIONS, ...((u&&u.restrictions)||{})};
+  const tags = [];
+  if(r.suspended) tags.push(['Suspended','bad']);
+  if(r.readOnly) tags.push(['Read-only','warn']);
+  if(r.aiDisabled) tags.push(['No AI','warn']);
+  if(r.mediaDisabled) tags.push(['No media','warn']);
+  if(r.exportDisabled) tags.push(['No export','warn']);
+  if(r.entryLimit) tags.push(['Cap ' + r.entryLimit,'warn']);
+  if(!tags.length) tags.push(['Full access','ok']);
+  return tags.map(t=>`<span class="badge tone-${t[1]}">${escapeHtml(t[0])}</span>`).join('');
+}
+function adminFilteredUsers(){
+  const q = (state.adminUserFilter||'').trim().toLowerCase();
+  const st = state.adminUserStatus || 'all';
+  return (state.adminUsers||[]).filter(u=>{
+    const r = {...DEFAULT_RESTRICTIONS, ...(u.restrictions||{})};
+    if(st==='suspended' && !r.suspended) return false;
+    if(st==='restricted' && !(r.readOnly||r.aiDisabled||r.mediaDisabled||r.exportDisabled||r.entryLimit||r.suspended)) return false;
+    if(st==='admins' && !ADMIN_EMAILS.includes((u.email||'').toLowerCase()) && u.role!=='admin') return false;
+    if(!q) return true;
+    return (u.email||'').toLowerCase().includes(q) || (u.name||'').toLowerCase().includes(q) || (u.uid||'').toLowerCase().includes(q);
+  }).sort((a,b)=>(b.lastSeenAt||'').localeCompare(a.lastSeenAt||''));
+}
+function adminSetUserFilter(v){ state.adminUserFilter = v; paintAdminUserList(); }
+function adminSetUserStatus(v){ state.adminUserStatus = v; render(); }
+function paintAdminUserList(){
+  const el = document.getElementById('adminUserList');
+  if(el){ el.innerHTML = adminUserRows(); enhanceA11y(el); }
+}
+function adminUserRows(){
+  const list = adminFilteredUsers();
+  if(!list.length) return `<div class="empty">কোনো ইউজার মেলেনি।</div>`;
+  return list.map(u=>`
+    <div class="admin-user-row" onclick="openAdminUser('${escapeAttr(u.uid)}')">
+      <div class="au-avatar">${u.photoURL ? `<img src="${escapeAttr(u.photoURL)}" alt="" referrerpolicy="no-referrer">` : escapeHtml((u.name||u.email||'?').trim().charAt(0).toUpperCase())}</div>
+      <div class="au-main">
+        <div class="au-name">${escapeHtml(u.name||'Unnamed')} ${ADMIN_EMAILS.includes((u.email||'').toLowerCase())||u.role==='admin' ? '<span class="badge tone-accent">ADMIN</span>' : ''}</div>
+        <div class="au-mail">${escapeHtml(u.email||'')}</div>
+      </div>
+      <div class="au-col"><b>${(u.stats&&u.stats.entries)||0}</b><span>entries</span></div>
+      <div class="au-col"><b>${u.signInCount||0}</b><span>sign-ins</span></div>
+      <div class="au-col"><b>${u.lastSeenAt?timeAgo(u.lastSeenAt):'\u2014'}</b><span>last seen</span></div>
+      <div class="au-tags">${userRestrictionTags(u)}</div>
+    </div>`).join('');
+}
+function renderAdminUsers(){
+  if(!state.adminUsersLoaded) return ui.skeletonLines(5);
+  if(state.adminUsersError) return ui.error({title:"Can't read the user directory",
+    body:'Firestore rejected the read. Deploy the rules from the Security tab, then reload.', retry:'render()'});
+  const total = (state.adminUsers||[]).length;
+  return `
+    <div class="card">
+      <div class="admin-toolbar">
+        <input type="search" id="adminUserSearch" placeholder="নাম, ইমেইল বা UID দিয়ে খোঁজো…" value="${escapeAttr(state.adminUserFilter||'')}" oninput="adminSetUserFilter(this.value)">
+        <select aria-label="Filter users" onchange="adminSetUserStatus(this.value)">
+          ${[['all','All users'],['restricted','Restricted only'],['suspended','Suspended only'],['admins','Admins only']]
+            .map(o=>`<option value="${o[0]}" ${state.adminUserStatus===o[0]?'selected':''}>${o[1]}</option>`).join('')}
+        </select>
+        <span class="lib-count">${total} registered</span>
+      </div>
+      <div id="adminUserList">${adminUserRows()}</div>
+    </div>
+    <div class="ai-note" style="margin-top:12px;">নতুন কেউ Google দিয়ে সাইন-ইন করলেই এই লিস্টে সাথে সাথে চলে আসে। যেকোনো সারিতে ক্লিক করে তার রেস্ট্রিকশন বদলানো যাবে — পরিবর্তন তার ডিভাইসে সাথে সাথেই কাজ করবে।</div>`;
+}
+
+/* ---- User detail / restrictions ---- */
+function adminUserById(uid){ return (state.adminUsers||[]).find(u=>u.uid===uid) || null; }
+function openAdminUser(uid){
+  state.adminSelectedUid = uid;
+  document.getElementById('adminUserModal').classList.add('show');
+  paintAdminUser();
+}
+function closeAdminUser(){
+  document.getElementById('adminUserModal').classList.remove('show');
+  state.adminSelectedUid = null;
+}
+function adminToggleRow(uid, key, label, desc, on, tone){
+  return `<div class="settings-row">
+    <div><div class="label">${escapeHtml(label)}</div><div class="desc">${escapeHtml(desc)}</div></div>
+    <label class="switch"><input type="checkbox" ${on?'checked':''} onchange="setUserRestriction('${escapeAttr(uid)}','${key}',this.checked)"><span class="track"></span></label>
+  </div>`;
+}
+function paintAdminUser(){
+  const u = adminUserById(state.adminSelectedUid);
+  const host = document.getElementById('adminUserBody');
+  if(!host) return;
+  if(!u){ host.innerHTML = `<div class="empty">User not found.</div>`; return; }
+  const r = {...DEFAULT_RESTRICTIONS, ...(u.restrictions||{})};
+  const self = state.user && state.user.uid === u.uid;
+  host.innerHTML = `
+    <div class="admin-user-head">
+      <div class="au-avatar big">${u.photoURL ? `<img src="${escapeAttr(u.photoURL)}" alt="" referrerpolicy="no-referrer">` : escapeHtml((u.name||u.email||'?').trim().charAt(0).toUpperCase())}</div>
+      <div style="min-width:0;">
+        <h3 style="margin:0;">${escapeHtml(u.name||'Unnamed')}</h3>
+        <div class="au-mail">${escapeHtml(u.email||'')}</div>
+        <div class="au-uid">UID ${escapeHtml(u.uid)}</div>
+      </div>
+      <button class="btn btn-sm" style="margin-left:auto;" onclick="closeAdminUser()">Close</button>
+    </div>
+    <div class="admin-stats compact">
+      ${[['Entries',(u.stats&&u.stats.entries)||0],['Archived',(u.stats&&u.stats.archived)||0],
+         ['Words',((u.stats&&u.stats.words)||0).toLocaleString()],['Sign-ins',u.signInCount||0],
+         ['Joined',u.createdAt?fmtDate(u.createdAt.slice(0,10)):'\u2014'],['Last seen',u.lastSeenAt?timeAgo(u.lastSeenAt):'\u2014']]
+        .map(x=>`<div class="admin-stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('')}
+    </div>
+    ${self ? `<div class="hook-box" style="margin-top:12px;">এটা তোমার নিজের অ্যাকাউন্ট। নিজেকে সাসপেন্ড বা read-only করলে তুমিও সাথে সাথে আটকে যাবে — সাবধানে।</div>` : ''}
+    <div class="settings-group" style="margin-top:8px;">
+      <h4 style="margin:12px 0 0;font-size:13px;color:var(--text-muted);">Restrictions</h4>
+      ${adminToggleRow(u.uid,'suspended','Suspend account','অ্যাপ পুরোপুরি বন্ধ — সাইন-ইন করলেও শুধু একটা নোটিশ দেখবে। ডেটা মুছে যায় না।', r.suspended)}
+      ${adminToggleRow(u.uid,'readOnly','Read-only','সব পড়তে পারবে, কিন্তু নতুন লেখা, এডিট, আর্কাইভ বা ডিলিট করতে পারবে না।', r.readOnly)}
+      ${adminToggleRow(u.uid,'aiDisabled','Disable AI','Gemini সারাংশ, Life extraction, semantic search ও Ask Your Life বন্ধ।', r.aiDisabled)}
+      ${adminToggleRow(u.uid,'mediaDisabled','Disable media','ছবি, অডিও ও ভিডিও অ্যাটাচমেন্ট এবং ভয়েস রেকর্ডিং বন্ধ।', r.mediaDisabled)}
+      ${adminToggleRow(u.uid,'exportDisabled','Disable export','ডেটা এক্সপোর্ট বা ব্যাকআপ ডাউনলোড বন্ধ।', r.exportDisabled)}
+      <div class="settings-row">
+        <div><div class="label">Entry limit</div><div class="desc">সর্বোচ্চ কতগুলো active এন্ট্রি রাখতে পারবে। 0 মানে কোনো সীমা নেই।</div></div>
+        <input type="number" min="0" max="100000" style="max-width:120px;" value="${r.entryLimit||0}"
+          onchange="setUserRestriction('${escapeAttr(u.uid)}','entryLimit', Math.max(0, parseInt(this.value,10)||0))">
+      </div>
+      <div class="settings-row">
+        <div><div class="label">Role</div><div class="desc">লেবেল হিসেবে কাজ করে। আসল backend অ্যাকসেস ADMIN_EMAILS ও firestore.rules দিয়ে নিয়ন্ত্রিত।</div></div>
+        <select style="max-width:160px;" onchange="setUserField('${escapeAttr(u.uid)}','role',this.value)">
+          ${['user','moderator','admin'].map(x=>`<option value="${x}" ${ (u.role||'user')===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="adminUserNote">Internal note</label>
+        <textarea id="adminUserNote" rows="2" placeholder="শুধু অ্যাডমিনরা দেখবে…" onchange="setUserField('${escapeAttr(u.uid)}','note',this.value)">${escapeHtml(u.note||'')}</textarea>
+      </div>
+      <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px;">
+        <button class="btn btn-sm" onclick="resetUserRestrictions('${escapeAttr(u.uid)}')">\u21BA Reset all restrictions</button>
+        <button class="btn btn-sm" onclick="adminPeekUser('${escapeAttr(u.uid)}')">\u{1F50D} Inspect stored data</button>
+        <button class="btn btn-sm btn-danger" onclick="adminRemoveUserRow('${escapeAttr(u.uid)}')">Remove from directory</button>
+      </div>
+    </div>`;
+  enhanceA11y(host);
+}
+async function setUserRestriction(uid, key, value){
+  const u = adminUserById(uid) || {};
+  const next = {...DEFAULT_RESTRICTIONS, ...(u.restrictions||{}), [key]: value};
+  try{
+    await withTimeout(userDirectoryRef(uid).set({restrictions: next, restrictedAt: nowISO(), restrictedBy: (state.user&&state.user.email)||''}, {merge:true}), 12000);
+    auditLog('restriction:'+key, u.email||uid, String(value));
+    toast('Restriction updated.', {type:'success'});
+  }catch(err){ toastError(err, "We couldn't update that restriction."); }
+}
+async function setUserField(uid, field, value){
+  const u = adminUserById(uid) || {};
+  try{
+    await withTimeout(userDirectoryRef(uid).set({[field]: value}, {merge:true}), 12000);
+    auditLog('user:'+field, u.email||uid, String(value).slice(0,120));
+    toast('Saved.', {type:'success'});
+  }catch(err){ toastError(err, "We couldn't save that."); }
+}
+function resetUserRestrictions(uid){
+  const u = adminUserById(uid) || {};
+  confirmAction('সব রেস্ট্রিকশন তুলে নেবে?', 'এই ইউজার আবার পুরো অ্যাপ ব্যবহার করতে পারবে।', async ()=>{
+    try{
+      await withTimeout(userDirectoryRef(uid).set({restrictions:{...DEFAULT_RESTRICTIONS}}, {merge:true}), 12000);
+      auditLog('restriction:reset', u.email||uid, '');
+      toast('Restrictions cleared.', {type:'success'});
+    }catch(err){ toastError(err, "We couldn't clear those restrictions."); }
+  }, 'রিসেট করুন');
+}
+function adminRemoveUserRow(uid){
+  const u = adminUserById(uid) || {};
+  confirmAction('ডিরেক্টরি থেকে সরাবে?', 'শুধু ব্যাকএন্ডের এই লিস্ট থেকে সারিটা মুছবে — ইউজারের জার্নাল বা Google অ্যাকাউন্ট কিছুই মুছবে না, আর সে আবার সাইন-ইন করলে সারিটা ফিরে আসবে।', async ()=>{
+    try{
+      await userDirectoryRef(uid).delete();
+      auditLog('user:removed', u.email||uid, '');
+      closeAdminUser();
+      toast('Removed from the directory.');
+    }catch(err){ toastError(err, "We couldn't remove that row."); }
+  }, 'সরিয়ে ফেলুন');
+}
+
+/* ---- App Config ---- */
+function cfgDraft(){
+  if(!state.adminConfigDraft) state.adminConfigDraft = JSON.parse(JSON.stringify(appConfig()));
+  return state.adminConfigDraft;
+}
+function setCfg(path, value){
+  const d = cfgDraft(), parts = path.split('.');
+  let o = d;
+  for(let i=0;i<parts.length-1;i++){ if(typeof o[parts[i]] !== 'object' || o[parts[i]]===null) o[parts[i]] = {}; o = o[parts[i]]; }
+  o[parts[parts.length-1]] = value;
+  const btn = document.getElementById('cfgSaveBtn');
+  if(btn){ btn.disabled = false; btn.textContent = 'Save changes'; }
+  const st = document.getElementById('cfgDirty');
+  if(st) st.textContent = 'Unsaved changes';
+}
+async function saveAppConfig(){
+  const d = cfgDraft();
+  try{
+    await withTimeout(appConfigRef().set({...d, updatedAt: nowISO(), updatedBy: (state.user&&state.user.email)||''}, {merge:true}), 12000);
+    auditLog('config:save', 'appConfig/global', '');
+    state.adminConfigDraft = null;
+    toast('App config saved — every client updates live.', {type:'success'});
+    render();
+  }catch(err){ toastError(err, "We couldn't save the app config.", saveAppConfig); }
+}
+function discardAppConfig(){ state.adminConfigDraft = null; render(); }
+function cfgToggle(path, label, desc, on){
+  return `<div class="settings-row">
+    <div><div class="label">${escapeHtml(label)}</div><div class="desc">${escapeHtml(desc)}</div></div>
+    <label class="switch"><input type="checkbox" ${on?'checked':''} onchange="setCfg('${path}',this.checked)"><span class="track"></span></label>
+  </div>`;
+}
+const FEATURE_LABELS = {
+  aiAnalysis:['AI analysis','দৈনিক/সাপ্তাহিক সারাংশ, Insights ও Life extraction।'],
+  semanticSearch:['Semantic search','অর্থ অনুযায়ী খোঁজা (embedding ব্যবহার করে)।'],
+  askYourLife:['Ask Your Life','নিজের জার্নালকে প্রশ্ন করার চ্যাট।'],
+  voice:['Voice recording','মাইক দিয়ে অডিও রেকর্ড করা।'],
+  voiceTranscription:['Voice transcription','অডিও থেকে লেখা তৈরি।'],
+  media:['Media attachments','ছবি, অডিও, ভিডিও যুক্ত করা।'],
+  advancedInsights:['Advanced insights','Monthly/Yearly গভীর বিশ্লেষণ।'],
+  export:['Data export','ব্যাকআপ ডাউনলোড।']
+};
+function renderAdminConfig(){
+  const d = cfgDraft();
+  const dirty = JSON.stringify(d) !== JSON.stringify(appConfig());
+  return `
+    <div class="admin-savebar">
+      <span id="cfgDirty">${dirty?'Unsaved changes':'All changes saved'}</span>
+      <button class="btn btn-sm" onclick="discardAppConfig()">Discard</button>
+      <button class="btn btn-sm btn-primary" id="cfgSaveBtn" onclick="saveAppConfig()">Save changes</button>
+    </div>
+    <section class="settings-group card">
+      <h3>Branding</h3>
+      <div class="field"><label for="cfgName">App name</label>
+        <input id="cfgName" type="text" maxlength="40" value="${escapeAttr(d.appName||'')}" oninput="setCfg('appName',this.value)"></div>
+      <div class="field"><label for="cfgTag">Tagline</label>
+        <input id="cfgTag" type="text" maxlength="90" value="${escapeAttr(d.tagline||'')}" oninput="setCfg('tagline',this.value)"></div>
+    </section>
+    <section class="settings-group card">
+      <h3>Access</h3>
+      ${cfgToggle('signupsEnabled','Allow new sign-ups','বন্ধ করলে নতুন কেউ প্রথমবার সাইন-ইন করার পর ঢুকতে পারবে না; পুরনো ইউজাররা স্বাভাবিকভাবে চলবে।', d.signupsEnabled!==false)}
+      ${cfgToggle('maintenance.enabled','Maintenance mode','চালু করলে অ্যাডমিন ছাড়া সবাই একটা নোটিশ স্ক্রিন দেখবে।', !!(d.maintenance&&d.maintenance.enabled))}
+      <div class="field"><label for="cfgMaint">Maintenance message</label>
+        <textarea id="cfgMaint" rows="2" oninput="setCfg('maintenance.message',this.value)">${escapeHtml((d.maintenance&&d.maintenance.message)||'')}</textarea></div>
+      <div class="settings-row">
+        <div><div class="label">Default entry cap for everyone</div><div class="desc">0 = কোনো সীমা নেই। কোনো ইউজারের নিজের সীমা দেওয়া থাকলে সেটাই চলবে।</div></div>
+        <input type="number" min="0" style="max-width:120px;" value="${d.entryLimitDefault||0}" onchange="setCfg('entryLimitDefault', Math.max(0,parseInt(this.value,10)||0))">
+      </div>
+    </section>
+    <section class="settings-group card">
+      <h3>Announcement banner</h3>
+      ${cfgToggle('announcement.enabled','Show banner','অ্যাপের একদম উপরে সবার জন্য একটা বার্তা দেখাবে।', !!(d.announcement&&d.announcement.enabled))}
+      <div class="field"><label for="cfgAnn">Message</label>
+        <input id="cfgAnn" type="text" maxlength="160" value="${escapeAttr((d.announcement&&d.announcement.text)||'')}" oninput="setCfg('announcement.text',this.value)"></div>
+      <div class="settings-row">
+        <div><div class="label">Tone</div><div class="desc">ব্যানারের রং ঠিক করে।</div></div>
+        <select style="max-width:160px;" onchange="setCfg('announcement.tone',this.value)">
+          ${['info','success','warn','danger'].map(x=>`<option value="${x}" ${((d.announcement&&d.announcement.tone)||'info')===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+    </section>
+    <section class="settings-group card">
+      <h3>Feature flags <span style="font-weight:400;color:var(--text-muted);font-size:12px;">— globally, for every user</span></h3>
+      ${Object.keys(FEATURE_LABELS).map(k=>cfgToggle('features.'+k, FEATURE_LABELS[k][0], FEATURE_LABELS[k][1], (d.features||{})[k]!==false)).join('')}
+    </section>
+    <section class="settings-group card">
+      <h3>Defaults for new accounts</h3>
+      <div class="settings-row">
+        <div><div class="label">Theme</div></div>
+        <select style="max-width:160px;" onchange="setCfg('defaults.theme',this.value)">
+          ${['system','light','dark'].map(x=>`<option value="${x}" ${((d.defaults&&d.defaults.theme)||'system')===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      ${cfgToggle('defaults.dailyReminder','Daily reminder on by default','', (d.defaults&&d.defaults.dailyReminder)!==false)}
+      <div class="settings-row">
+        <div><div class="label">Default reminder time</div></div>
+        <input type="time" style="max-width:130px;" value="${escapeAttr((d.defaults&&d.defaults.dailyReminderTime)||'20:00')}" onchange="setCfg('defaults.dailyReminderTime',this.value)">
+      </div>
+      ${cfgToggle('defaults.weeklySummary','Weekly reflection on by default','', (d.defaults&&d.defaults.weeklySummary)!==false)}
+      ${cfgToggle('defaults.aiExtraction','AI Life extraction on by default','', (d.defaults&&d.defaults.aiExtraction)!==false)}
+    </section>`;
+}
+
+/* ---- Moods ---- */
+function renderAdminMoods(){
+  const d = cfgDraft();
+  return `
+    <div class="admin-savebar">
+      <span id="cfgDirty">${JSON.stringify(d)!==JSON.stringify(appConfig())?'Unsaved changes':'All changes saved'}</span>
+      <button class="btn btn-sm" onclick="discardAppConfig()">Discard</button>
+      <button class="btn btn-sm btn-primary" id="cfgSaveBtn" onclick="saveAppConfig()">Save changes</button>
+    </div>
+    <section class="settings-group card">
+      <h3>Mood types</h3>
+      <div class="desc" style="margin-bottom:6px;">দশটা mood-এর ডিফল্ট নাম আর ইমোজি এখান থেকে ঠিক করা যায়। কোনো ইউজার নিজের Settings-এ নিজের ইমোজি বসালে তার ক্ষেত্রে সেটাই চলবে — এটা শুধু ডিফল্ট। mood-এর ভেতরের আইডি কখনো বদলায় না, তাই পুরনো এন্ট্রির কোনো ডেটা নষ্ট হয় না।</div>
+      <div class="admin-mood-grid">
+        ${BASE_MOODS.map(m=>`
+          <div class="admin-mood-item">
+            <input type="text" class="mm-emoji" maxlength="8" aria-label="${escapeAttr(m.label)} default emoji"
+              value="${escapeAttr((d.moodEmojis&&d.moodEmojis[m.id])||m.emoji)}" oninput="setCfg('moodEmojis.${m.id}', this.value.trim())">
+            <input type="text" class="mm-label" maxlength="24" aria-label="${escapeAttr(m.label)} label"
+              value="${escapeAttr((d.moodLabels&&d.moodLabels[m.id])||m.label)}" oninput="setCfg('moodLabels.${m.id}', this.value)">
+            <span class="mm-id">${escapeHtml(m.id)}</span>
+          </div>`).join('')}
+      </div>
+    </section>`;
+}
+
+/* ---- Data inspector ----
+   Reads a single user's stored documents straight from Firestore. This only
+   works once firestore.rules grants the admin email read access (Security
+   tab) — otherwise Firestore refuses, and we say so plainly instead of
+   pretending the account is empty. */
+async function adminPeekUser(uid){
+  state.adminTab = 'data';
+  state.adminPeek = {uid, status:'loading', user: adminUserById(uid)};
+  closeAdminUser();
+  render();
+  try{
+    const base = db.collection('users').doc(uid);
+    const [doc, entries, media] = await Promise.all([
+      base.get(),
+      base.collection('entries').orderBy('date','desc').limit(25).get(),
+      base.collection('media').limit(10).get()
+    ]);
+    state.adminPeek = {uid, status:'ready', user: adminUserById(uid),
+      profile: doc.exists ? (doc.data().profile||null) : null,
+      settings: doc.exists ? (doc.data().settings||null) : null,
+      entries: entries.docs.map(d=>({id:d.id, ...d.data()})),
+      mediaCount: media.size};
+  }catch(err){
+    state.adminPeek = {uid, status:'error', user: adminUserById(uid), error: err};
+  }
+  if(state.view==='admin') render();
+}
+function renderAdminData(){
+  const p = state.adminPeek;
+  if(!p) return `<div class="card">${ui.empty({icon:'\u{1F5C3}\uFE0F', title:'Pick a user to inspect.',
+    body:'Users ট্যাব থেকে কারো সারিতে ক্লিক করে "Inspect stored data" চাপো — তার প্রোফাইল, সেটিংস আর সাম্প্রতিক এন্ট্রিগুলো এখানে দেখাবে।',
+    action:{label:'Open Users', onclick:"adminTab('users')"}})}</div>`;
+  const who = (p.user && (p.user.email||p.user.name)) || p.uid;
+  if(p.status==='loading') return `<div class="card"><div class="section-title">${escapeHtml(who)}</div>${ui.skeletonLines(4)}</div>`;
+  if(p.status==='error') return `<div class="card"><div class="section-title">${escapeHtml(who)}</div>${
+    ui.error({title:"Firestore refused that read", body:'অন্য ইউজারের ডেটা পড়তে হলে Security ট্যাবের rules ডিপ্লয় করতে হবে। কোড: ' + ((p.error&&p.error.code)||'unknown'),
+      retry:`adminPeekUser('${escapeAttr(p.uid)}')`})}</div>`;
+  return `
+    <div class="card">
+      <div class="admin-toolbar">
+        <div class="section-title" style="margin:0;">${escapeHtml(who)}</div>
+        <button class="btn btn-sm" style="margin-left:auto;" onclick="adminPeekUser('${escapeAttr(p.uid)}')">Refresh</button>
+        <button class="btn btn-sm btn-ghost" onclick="adminTab('users')">\u2190 Users</button>
+      </div>
+      <h4 style="margin:14px 0 4px;font-size:13px;color:var(--text-muted);">Profile</h4>
+      <pre class="admin-pre">${escapeHtml(JSON.stringify(p.profile||{}, null, 2))}</pre>
+      <h4 style="margin:14px 0 4px;font-size:13px;color:var(--text-muted);">Settings</h4>
+      <pre class="admin-pre">${escapeHtml(JSON.stringify(p.settings||{}, null, 2))}</pre>
+      <h4 style="margin:14px 0 4px;font-size:13px;color:var(--text-muted);">Recent entries (${p.entries.length}) \u00B7 ${p.mediaCount} media files</h4>
+      ${p.entries.length ? p.entries.map(e=>`
+        <div class="entry-row" style="cursor:default;">
+          <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
+          <div class="entry-body">
+            <h3>${escapeHtml(e.title||'Untitled')}</h3>
+            <p>${escapeHtml((e.content||'').slice(0,200))}</p>
+            <div class="entry-meta">${moodChip(e,{intensity:true})}<span class="intensity-tag">${(e.content||'').length} chars</span></div>
+          </div>
+        </div>`).join('') : `<div class="empty">কোনো এন্ট্রি নেই।</div>`}
+      <div class="ai-note" style="margin-top:12px;">এটা অন্য একজনের ব্যক্তিগত লেখা। শুধু সত্যিকারের প্রয়োজনে দেখো — প্রতিটা ইন্সপেকশন Audit-এ লেখা থাকা উচিত, আর এই অ্যাকসেস firestore.rules দিয়েই নিয়ন্ত্রণ করা যায়।</div>
+    </div>`;
+}
+
+/* ---- Audit ---- */
+function renderAdminAudit(){
+  const list = state.adminAudit || [];
+  return `<div class="card">
+    <div class="section-title">Admin activity</div>
+    ${list.length ? list.map(a=>`
+      <div class="admin-audit-row">
+        <span class="aa-act">${escapeHtml(a.action||'')}</span>
+        <span class="aa-target">${escapeHtml(a.target||'')}</span>
+        <span class="aa-detail">${escapeHtml(String(a.detail||''))}</span>
+        <span class="aa-when">${a.at?timeAgo(a.at):''}</span>
+        <span class="aa-by">${escapeHtml(a.by||'')}</span>
+      </div>`).join('') : `<div class="empty">এখনো কোনো অ্যাডমিন অ্যাকশন রেকর্ড হয়নি।</div>`}
+  </div>`;
+}
+
+/* ---- Security ---- */
+const FIRESTORE_RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+             'ceo.nayeemuhammad@gmial.com',
+             'ceo.nayeemuhammad@gmail.com'
+           ];
+    }
+    function me(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    // A person owns everything under their own users/{uid} document.
+    // The admin may read it (for the backend's Data inspector) but not write it.
+    match /users/{uid} {
+      allow read:  if me(uid) || isAdmin();
+      allow write: if me(uid);
+      match /{sub=**} {
+        allow read:  if me(uid) || isAdmin();
+        allow write: if me(uid);
+      }
+    }
+
+    // The backend's user list. A person may create and refresh only their own
+    // row, and only the identity/usage fields — never their own restrictions.
+    match /userDirectory/{uid} {
+      allow read: if me(uid) || isAdmin();
+      allow create: if me(uid)
+        && !request.resource.data.keys().hasAny(['restrictions','role','note']);
+      allow update: if isAdmin() || (
+        me(uid) &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['restrictions','role','note'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Global configuration: everyone reads it, only the admin writes it.
+    match /appConfig/{doc} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Append-only audit trail.
+    match /adminAudit/{id} {
+      allow read:   if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}`;
+function copyRules(){
+  const ta = document.getElementById('rulesBox');
+  if(!ta) return;
+  ta.select();
+  navigator.clipboard.writeText(FIRESTORE_RULES)
+    .then(()=>toast('Rules copied.', {type:'success'}))
+    .catch(()=>toast('Copy failed — select the text and copy manually.'));
+}
+function renderAdminSecurity(){
+  return `
+    <div class="card">
+      <div class="section-title">How this backend is secured</div>
+      <div class="hook-box">
+        <b>এই পাসকোডটা আসল নিরাপত্তা নয়।</b> JournalOS একটা ব্রাউজার-সাইড অ্যাপ, তাই পাসকোড পেজের সোর্সেই থাকে। এটা শুধু চোখের সামনে থাকা কাউকে ঠেকায়।
+        আসল নিরাপত্তা আসে নিচের Firestore rules থেকে — এগুলো ডিপ্লয় করলে শুধু অ্যাডমিন ইমেইলই <code>appConfig</code> ও রেস্ট্রিকশন লিখতে পারবে, আর কেউ পারবে না, এমনকি ব্রাউজার কনসোল থেকেও না।
+        <br><br>ডিপ্লয় করতে: Firebase Console \u2192 Firestore Database \u2192 Rules \u2192 নিচের লেখাটা পেস্ট করে Publish।
+      </div>
+      <div class="settings-row"><div><div class="label">Admin accounts</div><div class="desc">${ADMIN_EMAILS.map(escapeHtml).join(', ')}</div></div></div>
+      <div class="settings-row"><div><div class="label">Backend passcode</div><div class="desc">index.html-এর <code>ADMIN_PASSCODE</code> ধ্রুবকটি বদলালেই পাসকোড বদলে যায়।</div></div></div>
+      <div class="settings-row"><div><div class="label">Session</div><div class="desc">আনলক শুধু এই ট্যাবেই থাকে, ট্যাব বন্ধ করলে বা লগ-আউট করলে আবার পাসকোড লাগবে।</div></div></div>
+      <div class="field" style="margin-top:14px;">
+        <label for="rulesBox">firestore.rules</label>
+        <textarea id="rulesBox" class="admin-pre" rows="18" readonly>${escapeHtml(FIRESTORE_RULES)}</textarea>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="copyRules()">Copy rules</button>
+    </div>`;
+}
 
 renderQuickMoodOptions();
 if(window.__FB_FAILED__) showLoadFailure(); else boot();
