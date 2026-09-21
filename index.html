@@ -118,51 +118,51 @@ input,textarea,select{font-family:var(--font-sans);}
    the icons grow text labels, then collapsing removes the panel again.
    Mobile: the dock becomes an off-canvas drawer opened from the topbar
    hamburger, and the bottom tab bar carries primary navigation. */
-:root{ --dock-collapsed:64px; --dock-expanded:224px; }
+:root{ --dock-collapsed:80px; --dock-expanded:280px; }
 #app{display:none;min-height:100vh;}
 #app.shown{display:block;}
 
-.sidebar{position:fixed;left:12px;top:76px;bottom:88px;z-index:60;
-  width:var(--dock-collapsed);display:flex;flex-direction:column;gap:6px;
-  padding:10px 8px;border-radius:26px;background:transparent;
+.sidebar{position:fixed;left:15px;top:76px;bottom:88px;z-index:60;
+  width:var(--dock-collapsed);display:flex;flex-direction:column;gap:7px;
+  padding:12px 10px;border-radius:32px;background:transparent;
   border:1px solid transparent;box-shadow:none;overflow-y:auto;overflow-x:hidden;
   scrollbar-width:none;
   transition:width .32s var(--ease),background .32s var(--ease),
     border-color .32s var(--ease),box-shadow .32s var(--ease),padding .32s var(--ease);}
 .sidebar::-webkit-scrollbar{display:none;}
-.sidebar.expanded{width:var(--dock-expanded);padding:14px 12px;
+.sidebar.expanded{width:var(--dock-expanded);padding:17px 15px;
   background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
   border-color:var(--glass-border);box-shadow:var(--shadow-float);}
 
-.dock-toggle{flex:none;width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.14);
-  color:var(--ink-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;
+.dock-toggle{flex:none;width:47px;height:47px;border-radius:50%;border:none;background:rgba(255,255,255,.14);
+  color:var(--ink-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 7px;
   transition:background .15s,transform .15s var(--ease),margin .32s var(--ease);}
 :root[data-theme="dark"] .dock-toggle{background:rgba(255,255,255,.05);}
-.sidebar.expanded .dock-toggle{margin:0 0 6px auto;}
+.sidebar.expanded .dock-toggle{margin:0 0 7px auto;}
 .dock-toggle:hover{background:rgba(255,255,255,.28);color:var(--ink);}
 :root[data-theme="dark"] .dock-toggle:hover{background:rgba(255,255,255,.1);}
 .dock-toggle:active{transform:scale(.88);}
-.dock-toggle svg{width:15px;height:15px;transition:transform .32s var(--ease);}
+.dock-toggle svg{width:19px;height:19px;transition:transform .32s var(--ease);}
 .sidebar.expanded .dock-toggle svg{transform:rotate(180deg);}
 
-.brand{display:flex;align-items:baseline;gap:6px;padding:6px 10px 20px;}
-.brand .mark{font-family:var(--font-serif);font-size:22px;font-style:italic;color:var(--accent);}
-.brand .word{font-family:var(--font-serif);font-size:19px;}
+.brand{display:flex;align-items:baseline;gap:7px;padding:7px 12px 25px;}
+.brand .mark{font-family:var(--font-serif);font-size:27px;font-style:italic;color:var(--accent);}
+.brand .word{font-family:var(--font-serif);font-size:24px;}
 
-.nav-item{display:flex;align-items:center;gap:10px;padding:0;height:44px;width:44px;flex:none;
-  border-radius:22px;color:var(--ink-soft);text-decoration:none;font-size:14px;font-weight:500;
+.nav-item{display:flex;align-items:center;gap:12px;padding:0;height:55px;width:55px;flex:none;
+  border-radius:27px;color:var(--ink-soft);text-decoration:none;font-size:17px;font-weight:500;
   border:none;background:none;text-align:left;justify-content:center;position:relative;
   transition:background .15s,color .15s,transform .15s var(--ease),width .32s var(--ease),
     justify-content .32s var(--ease),padding .32s var(--ease);}
-.sidebar.expanded .nav-item{width:100%;justify-content:flex-start;padding:0 8px;}
-.nav-item .ic{flex:none;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
+.sidebar.expanded .nav-item{width:100%;justify-content:flex-start;padding:0 10px;}
+.nav-item .ic{flex:none;width:47px;height:47px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;background:rgba(255,255,255,.16);transition:background .15s,box-shadow .15s;}
 :root[data-theme="dark"] .nav-item .ic{background:rgba(255,255,255,.06);}
-.nav-item svg{width:17px;height:17px;flex:none;opacity:.85;}
+.nav-item svg{width:21px;height:21px;flex:none;opacity:.85;}
 .nav-item .lbl{white-space:nowrap;overflow:hidden;opacity:0;max-width:0;
   transition:opacity .2s,max-width .32s var(--ease);}
-.sidebar.expanded .nav-item .lbl{opacity:1;max-width:140px;margin-left:2px;}
+.sidebar.expanded .nav-item .lbl{opacity:1;max-width:175px;margin-left:2px;}
 .nav-item:hover .ic{background:rgba(255,255,255,.32);}
 :root[data-theme="dark"] .nav-item:hover .ic{background:rgba(255,255,255,.11);}
 .nav-item:active{transform:scale(.94);}
@@ -174,33 +174,38 @@ input,textarea,select{font-family:var(--font-sans);}
    label escapes the sidebar's own overflow/scroll box and always renders on
    top of every other floating chip — a soft glassy chip, matching the rest
    of the dock's frosted-glass language. */
-.nav-item .tip{position:fixed;top:0;left:0;transform:translateY(-50%) translateX(-4px);
-  background:var(--glass-bg-strong);color:var(--ink);font-size:12px;font-weight:600;padding:7px 13px;
-  border-radius:10px;white-space:nowrap;opacity:0;pointer-events:none;
+.nav-item .tip{position:fixed;top:0;left:0;transform-origin:left center;
+  transform:translateY(-50%) translateX(-8px) scaleX(.4);
+  background:var(--glass-bg-strong);color:var(--ink);font-size:15px;font-weight:600;padding:9px 16px;
+  border-radius:12px;white-space:nowrap;opacity:0;pointer-events:none;
   border:1px solid var(--glass-border);
   backdrop-filter:blur(var(--glass-blur)) saturate(1.6);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.6);
-  box-shadow:var(--shadow-float);transition:opacity .15s,transform .15s;z-index:9999;}
-.sidebar:not(.expanded):not(.open) .nav-item:hover .tip{opacity:1;transform:translateY(-50%) translateX(0);}
+  box-shadow:var(--shadow-float);
+  transition:opacity .22s var(--ease),transform .22s var(--ease);z-index:9999;}
+.sidebar:not(.expanded):not(.open) .nav-item:hover .tip,
+.sidebar:not(.expanded):not(.open) .nav-item:focus-visible .tip,
+.sidebar:not(.expanded):not(.open) .nav-item.tip-open .tip{
+  opacity:1;transform:translateY(-50%) translateX(0) scaleX(1);}
 .sidebar.expanded .nav-item .tip,.sidebar.open .nav-item .tip{display:none;}
 
-.nav-sep{height:1px;background:var(--glass-border);margin:10px auto;opacity:.8;width:26px;
+.nav-sep{height:1px;background:var(--glass-border);margin:12px auto;opacity:.8;width:32px;
   transition:width .32s var(--ease),margin .32s var(--ease);}
-.sidebar.expanded .nav-sep{width:100%;margin:10px 4px;}
-.nav-label{display:none;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--ink-faint);padding:10px 8px 2px;}
+.sidebar.expanded .nav-sep{width:100%;margin:12px 5px;}
+.nav-label{display:none;font-size:13px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--ink-faint);padding:12px 10px 2px;}
 .sidebar.expanded .nav-label{display:block;}
 
 @media (max-width:860px){
-  .sidebar{transform:translateX(-130%);top:66px;bottom:66px;left:10px;width:min(78vw,240px);
-    padding:14px 12px;transition:transform .32s var(--ease);}
+  .sidebar{transform:translateX(-130%);top:66px;bottom:66px;left:12px;width:min(78vw,290px);
+    padding:17px 15px;transition:transform .32s var(--ease);}
   .sidebar.open{transform:translateX(0);
     background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
     -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
     border:1px solid var(--glass-border);box-shadow:var(--shadow-float);}
-  .sidebar .nav-item{width:100%;justify-content:flex-start;padding:0 8px;}
-  .sidebar .nav-item .lbl{opacity:1;max-width:140px;margin-left:2px;}
+  .sidebar .nav-item{width:100%;justify-content:flex-start;padding:0 10px;}
+  .sidebar .nav-item .lbl{opacity:1;max-width:175px;margin-left:2px;}
   .sidebar .nav-label{display:block;}
-  .sidebar .nav-sep{width:100%;margin:10px 4px;}
+  .sidebar .nav-sep{width:100%;margin:12px 5px;}
   .dock-toggle{display:none;}
 }
 
@@ -1086,11 +1091,6 @@ body.focus-mode::before{opacity:.25;}
       <span class="lbl">Life</span><span class="tip">Life — Achievements, Plans &amp; Memories</span>
     </button>
 
-    <div class="nav-label">App</div>
-    <button class="nav-item" data-view="settings" onclick="go('settings')">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
-      <span class="lbl">Settings</span><span class="tip">Settings</span>
-    </button>
   </aside>
 
   <main class="main" id="main" tabindex="-1"></main>
@@ -3753,6 +3753,18 @@ function initSidebarTooltips(){
     };
     item.addEventListener('mouseenter', place);
     item.addEventListener('focus', place);
+    // Click: "unfold" the tip open (like a page flipping open) and hold it
+    // briefly so the click feels acknowledged before navigation happens —
+    // only relevant while the dock is collapsed (icon-only) and not the
+    // mobile slide-out drawer, where labels are already always visible.
+    item.addEventListener('click', ()=>{
+      if(sidebar.classList.contains('expanded') || sidebar.classList.contains('open')) return;
+      place();
+      sidebar.querySelectorAll('.nav-item.tip-open').forEach(o=>{ if(o!==item) o.classList.remove('tip-open'); });
+      item.classList.add('tip-open');
+      clearTimeout(item._tipTimer);
+      item._tipTimer = setTimeout(()=>item.classList.remove('tip-open'), 900);
+    });
   });
 }
 
