@@ -364,6 +364,9 @@ input,textarea,select{font-family:var(--font-sans);}
 
 /* ---------- Auth screen ---------- */
 #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+#pinGate{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;}
+#pinGate .auth-box .mark{font-size:30px;}
+#pinGate input{text-align:center;letter-spacing:4px;font-size:18px;}
 .auth-box{width:100%;max-width:380px;text-align:center;}
 .auth-box .mark{font-family:var(--font-serif);font-style:italic;color:var(--accent);font-size:34px;}
 .auth-box h1{margin:2px 0 6px;font-size:26px;}
@@ -763,6 +766,14 @@ body.write-mode .main{padding-top:148px;}
     <h1>JournalOS</h1>
     <p class="tag">Write First. Everything Else Second.</p>
     <div id="authForm"></div>
+  </div>
+</div>
+
+<!-- ============ PIN SECURITY GATE (shown after Google Sign-In) ============ -->
+<div id="pinGate">
+  <div class="auth-box card">
+    <div class="mark">🔒</div>
+    <div id="pinGateForm"></div>
   </div>
 </div>
 
@@ -2146,6 +2157,7 @@ function boot(){
       state.user = {uid:user.uid, name:user.displayName||'You', email:user.email||'', photoURL:user.photoURL||''};
       state.entries = [];
       state.settings = null;
+      state.security = null;
       state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
       state.searchIndex = {};
       state.askConversation = [];
@@ -2154,26 +2166,42 @@ function boot(){
 
       const ref = userDocRef();
       ref.get().then(snap=>{
+        let security = null;
+        let initPromise = Promise.resolve();
         if(!snap.exists){
-          return ref.set({
+          initPromise = ref.set({
             profile:{name:state.user.name, email:state.user.email, createdAt:new Date().toISOString()},
             settings: DEFAULT_SETTINGS
           });
+        } else {
+          security = snap.data().security || null;
         }
-      }).catch(err=>console.error('user doc init failed', err));
-
-      attachUserDocListener();
-      attachEntriesListener();
-      attachLifeListeners();
-      attachSearchIndexListener();
-      attachMediaListener();
-      seedDraftFromRemoteIfNeeded();
-      scheduleReminderCheck();
-      showApp();
+        return initPromise.then(()=>security);
+      }).catch(err=>{
+        console.error('user doc init failed', err);
+        toast('অ্যাকাউন্ট লোড করতে সমস্যা হয়েছে, আবার চেষ্টা করো।');
+        return null;
+      }).then(security=>{
+        state.security = security;
+        attachUserDocListener();
+        attachEntriesListener();
+        attachLifeListeners();
+        attachSearchIndexListener();
+        attachMediaListener();
+        seedDraftFromRemoteIfNeeded();
+        scheduleReminderCheck();
+        // MODULE: PIN SECURITY GATE — every sign-in (fresh Google sign-in
+        // OR a restored session on page load) must pass this gate before
+        // the app itself is shown. First time -> set a PIN. Every time
+        // after -> re-enter that same PIN, with a "forgot PIN" OTP-based
+        // reset flow (see AUTH section below).
+        enterPinGate(security);
+      });
     } else {
       state.user = null;
       state.entries = [];
       state.settings = null;
+      state.security = null;
       state.life = {achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]};
       state.searchIndex = {};
       state.askConversation = [];
@@ -2183,11 +2211,13 @@ function boot(){
   });
 }
 function showAuth(){
+  document.getElementById('pinGate').style.display='none';
   document.getElementById('auth').style.display='flex';
   document.getElementById('app').classList.remove('shown');
 }
 function showApp(){
   document.getElementById('auth').style.display='none';
+  document.getElementById('pinGate').style.display='none';
   document.getElementById('app').classList.add('shown');
   go('dashboard');
 }
@@ -2215,6 +2245,235 @@ function logout(){
   confirmAction('লগ আউট করবেন?', 'তোমার এন্ট্রিগুলো Firebase-এ নিরাপদে সংরক্ষিত থাকবে।', ()=>{
     auth.signOut();
   }, 'লগ আউট');
+}
+
+/* ================================================================
+   MODULE: PIN SECURITY GATE
+   ----------------------------------------------------------------
+   Extra layer on top of Google Sign-In: once Google auth succeeds,
+   the user must also enter a local 4–8 digit PIN before the app
+   unlocks. First sign-in -> set a PIN. Every later sign-in (a fresh
+   click OR a restored session on reload) -> re-enter that PIN.
+   "Forgot PIN" sends a 6-digit OTP to the signed-in Gmail address
+   and lets them set a new PIN after verifying it.
+
+   STORAGE: users/{uid}.security = { pinHash, pinUpdatedAt, otp? }
+   The PIN itself is never stored — only a SHA-256 hash salted with
+   the user's uid (sha256(uid + ':pin:' + pin)). The OTP is likewise
+   stored only as a hash, with a 10-minute expiry and a 5-attempt cap.
+
+   EMAIL DELIVERY (important — see note below):
+   Sending the actual OTP email requires a mail-sending backend;
+   plain client-side JS cannot deliver email on its own. This code
+   writes the OTP into a top-level "mail" collection in the shape
+   expected by Firebase's official "Trigger Email from Firestore"
+   extension (https://extensions.dev/extensions/firebase/firestore-send-email).
+   Install that extension from the Firebase console (free to install;
+   you configure it with your own SMTP or SendGrid credentials) and
+   OTP emails will start going out automatically — no other code
+   changes needed. Until it's installed, sendPinResetOtp() will still
+   "succeed" (the OTP is saved) but no email will actually arrive.
+   ================================================================ */
+
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function validatePinFormat(pin){ return /^[0-9]{4,8}$/.test(pin); }
+function genOtpCode(){ return String(Math.floor(100000 + Math.random()*900000)); }
+
+function enterPinGate(security){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').classList.remove('shown');
+  document.getElementById('pinGate').style.display='flex';
+  if(security && security.pinHash){ renderPinGate('verify'); }
+  else { renderPinGate('setup'); }
+}
+function exitPinGateToApp(){
+  document.getElementById('pinGate').style.display='none';
+  showApp();
+}
+function pinGateSignOut(){
+  document.getElementById('pinGate').style.display='none';
+  auth.signOut();
+}
+
+function renderPinGate(mode){
+  const el = document.getElementById('pinGateForm');
+  const email = (state.user && state.user.email) || '';
+  if(mode === 'setup'){
+    el.innerHTML = `
+      <h1>পিন সেট করো</h1>
+      <p class="tag">প্রতিবার সাইন-ইন করার সময় এই পিনটি দিতে হবে (৪–৮ সংখ্যা)।</p>
+      <div class="field"><label>নতুন পিন</label><input id="pgPin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="new-password" placeholder="৪–৮ ডিজিট"></div>
+      <div class="field"><label>পিন আবার লিখো</label><input id="pgPin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="new-password" placeholder="আবার লিখো" onkeydown="if(event.key==='Enter') submitPinSetup();"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitPinSetup()">পিন সেট করো</button>
+      <div class="auth-switch"><a href="#" onclick="pinGateSignOut();return false;">ভুল অ্যাকাউন্ট? সাইন আউট করো</a></div>
+    `;
+  } else if(mode === 'verify'){
+    el.innerHTML = `
+      <h1>পিন দাও</h1>
+      <p class="tag">স্বাগতম, ${escapeHtml(email)}</p>
+      <div class="field"><input id="pgPinVerify" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="current-password" placeholder="তোমার পিন" onkeydown="if(event.key==='Enter') submitPinVerify();"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitPinVerify()">লগইন করো</button>
+      <div class="auth-switch">
+        <a href="#" onclick="startForgotPin();return false;">পিন ভুলে গেছো?</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="pinGateSignOut();return false;">সাইন আউট</a>
+      </div>
+    `;
+    setTimeout(()=>{ const i=document.getElementById('pgPinVerify'); if(i) i.focus(); }, 50);
+  } else if(mode === 'otp-sending'){
+    el.innerHTML = `<h1>কোড পাঠানো হচ্ছে…</h1><p class="tag">${escapeHtml(email)}-এ একটি ভেরিফিকেশন কোড পাঠানো হচ্ছে।</p>`;
+  } else if(mode === 'otp-verify'){
+    el.innerHTML = `
+      <h1>কোড ভেরিফাই করো</h1>
+      <p class="tag">${escapeHtml(email)}-এ পাঠানো ৬-সংখ্যার কোডটি দাও। কোডটি ১০ মিনিট বৈধ।</p>
+      <div class="field"><input id="pgOtp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="৬-সংখ্যার কোড" style="font-size:20px;" onkeydown="if(event.key==='Enter') submitOtpVerify();"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitOtpVerify()">ভেরিফাই করো</button>
+      <div class="auth-switch">
+        <a href="#" id="pgResendLink" onclick="resendOtp();return false;">আবার কোড পাঠাও</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="renderPinGate('verify');return false;">ফিরে যাও</a>
+      </div>
+    `;
+    setTimeout(()=>{ const i=document.getElementById('pgOtp'); if(i) i.focus(); }, 50);
+    beginOtpResendCooldown();
+  } else if(mode === 'reset'){
+    el.innerHTML = `
+      <h1>নতুন পিন সেট করো</h1>
+      <p class="tag">কোড ভেরিফাই হয়েছে। এখন একটি নতুন পিন সেট করো (৪–৮ ডিজিট)।</p>
+      <div class="field"><label>নতুন পিন</label><input id="pgPin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="new-password" placeholder="৪–৮ ডিজিট"></div>
+      <div class="field"><label>পিন আবার লিখো</label><input id="pgPin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="new-password" placeholder="আবার লিখো" onkeydown="if(event.key==='Enter') submitPinReset();"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitPinReset()">পিন আপডেট করো</button>
+    `;
+  }
+}
+
+async function submitPinSetup(){
+  const p1 = document.getElementById('pgPin1').value.trim();
+  const p2 = document.getElementById('pgPin2').value.trim();
+  if(!validatePinFormat(p1)){ toast('পিন অবশ্যই ৪ থেকে ৮ সংখ্যার (শুধু নম্বর) হতে হবে।'); return; }
+  if(p1 !== p2){ toast('দুইটি পিন মিলছে না।'); return; }
+  try{
+    const hash = await sha256Hex(state.user.uid + ':pin:' + p1);
+    await userDocRef().set({security:{pinHash:hash, pinUpdatedAt:new Date().toISOString()}}, {merge:true});
+    state.security = {pinHash:hash};
+    toast('পিন সেট হয়েছে।');
+    exitPinGateToApp();
+  }catch(err){
+    console.error(err);
+    toast('পিন সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
+  }
+}
+
+async function submitPinVerify(){
+  const input = document.getElementById('pgPinVerify');
+  const p = input.value.trim();
+  if(!p) return;
+  const hash = await sha256Hex(state.user.uid + ':pin:' + p);
+  if(state.security && hash === state.security.pinHash){
+    exitPinGateToApp();
+  } else {
+    toast('পিন সঠিক নয়।');
+    input.value = ''; input.focus();
+  }
+}
+
+async function startForgotPin(){
+  renderPinGate('otp-sending');
+  const ok = await sendPinResetOtp();
+  renderPinGate(ok ? 'otp-verify' : 'verify');
+}
+function resendOtp(){
+  const link = document.getElementById('pgResendLink');
+  if(link && link.dataset.cooling === '1') return;
+  startForgotPin();
+}
+function beginOtpResendCooldown(){
+  clearInterval(window.__otpResendTimer);
+  let secs = 60;
+  const base = 'আবার কোড পাঠাও';
+  const tick = ()=>{
+    const l = document.getElementById('pgResendLink');
+    if(!l){ clearInterval(window.__otpResendTimer); return; }
+    if(secs <= 0){ l.textContent = base; l.dataset.cooling = '0'; clearInterval(window.__otpResendTimer); return; }
+    l.dataset.cooling = '1';
+    l.textContent = `${base} (${secs}s)`;
+    secs--;
+  };
+  tick();
+  window.__otpResendTimer = setInterval(tick, 1000);
+}
+
+// Writes the OTP (hashed) to users/{uid}.security.otp, then queues the
+// actual email via the "mail" collection — see the module note above for
+// why a Firebase Extension (or equivalent backend) is required for the
+// email to actually be delivered.
+async function sendPinResetOtp(){
+  try{
+    const otp = genOtpCode();
+    const hash = await sha256Hex(state.user.uid + ':otp:' + otp);
+    const expiresAt = Date.now() + 10*60*1000;
+    await userDocRef().set({security:{otp:{hash, expiresAt, attempts:0}}}, {merge:true});
+    await db.collection('mail').add({
+      to: [state.user.email],
+      message: {
+        subject: 'JournalOS পিন রিসেট কোড',
+        text: `তোমার JournalOS পিন রিসেট করার কোড: ${otp}\nএই কোডটি ১০ মিনিট বৈধ। এই অনুরোধ তুমি না করলে ইমেইলটি উপেক্ষা করো।`,
+        html: `<p>তোমার JournalOS পিন রিসেট করার কোড:</p><h2 style="letter-spacing:6px;">${otp}</h2><p>এই কোডটি ১০ মিনিট বৈধ। এই অনুরোধ তুমি না করলে ইমেইলটি উপেক্ষা করো।</p>`
+      }
+    });
+    toast('কোড পাঠানো হয়েছে, ইমেইল চেক করো।');
+    return true;
+  }catch(err){
+    console.error(err);
+    toast('কোড পাঠাতে সমস্যা হয়েছে: ' + err.message);
+    return false;
+  }
+}
+
+async function submitOtpVerify(){
+  const input = document.getElementById('pgOtp');
+  const code = input.value.trim();
+  if(!/^[0-9]{6}$/.test(code)){ toast('৬-সংখ্যার কোড দাও।'); return; }
+  try{
+    const snap = await userDocRef().get();
+    const security = (snap.exists && snap.data().security) || {};
+    const otpRec = security.otp;
+    if(!otpRec || !otpRec.hash){ toast('কোনো সক্রিয় কোড নেই, আবার পাঠাও।'); return; }
+    if(Date.now() > otpRec.expiresAt){ toast('কোডের মেয়াদ শেষ হয়ে গেছে, আবার পাঠাও।'); return; }
+    if((otpRec.attempts||0) >= 5){ toast('অনেকবার ভুল হয়েছে, নতুন কোড পাঠাও।'); return; }
+    const hash = await sha256Hex(state.user.uid + ':otp:' + code);
+    if(hash === otpRec.hash){
+      await userDocRef().update({'security.otp': firebase.firestore.FieldValue.delete()});
+      renderPinGate('reset');
+    } else {
+      await userDocRef().update({'security.otp.attempts': (otpRec.attempts||0)+1});
+      toast('কোড সঠিক নয়।');
+      input.value = ''; input.focus();
+    }
+  }catch(err){
+    console.error(err);
+    toast('ভেরিফাই করতে সমস্যা হয়েছে: ' + err.message);
+  }
+}
+
+async function submitPinReset(){
+  const p1 = document.getElementById('pgPin1').value.trim();
+  const p2 = document.getElementById('pgPin2').value.trim();
+  if(!validatePinFormat(p1)){ toast('পিন অবশ্যই ৪ থেকে ৮ সংখ্যার (শুধু নম্বর) হতে হবে।'); return; }
+  if(p1 !== p2){ toast('দুইটি পিন মিলছে না।'); return; }
+  try{
+    const hash = await sha256Hex(state.user.uid + ':pin:' + p1);
+    await userDocRef().set({security:{pinHash:hash, pinUpdatedAt:new Date().toISOString()}}, {merge:true});
+    state.security = {pinHash:hash};
+    toast('নতুন পিন সেট হয়েছে।');
+    exitPinGateToApp();
+  }catch(err){
+    console.error(err);
+    toast('পিন সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
+  }
 }
 
 /* ---------------- NAV ---------------- */
