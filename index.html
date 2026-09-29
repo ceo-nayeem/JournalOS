@@ -812,6 +812,21 @@ input,textarea,select{font-family:var(--font-sans);}
 .ai-box p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
 .ai-note{font-size:11.5px;color:var(--ink-faint);margin-top:8px;}
 
+/* ---------- Notes: a field that lives inside the journal entry ---------- */
+.notes-box{border:1px solid var(--rule);border-radius:9px;margin-top:18px;background:var(--paper-dim);}
+.notes-box > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 14px;font-size:12.5px;font-weight:600;color:var(--ink-soft);user-select:none;}
+.notes-box > summary::-webkit-details-marker{display:none;}
+.notes-box > summary .chev{display:inline-block;color:var(--ink-faint);transition:transform .15s;}
+.notes-box[open] > summary .chev{transform:rotate(90deg);}
+.notes-box .notes-count{margin-left:auto;font-weight:400;color:var(--ink-faint);font-size:12px;}
+.notes-body{padding:0 14px 14px;}
+.notes-hint{font-size:12px;color:var(--ink-faint);margin:0 0 8px;line-height:1.5;}
+.notes-input{display:block;width:100%;box-sizing:border-box;min-height:130px;max-height:60vh;resize:vertical;border:1px solid var(--rule);border-radius:8px;background:var(--paper-card);color:var(--ink);font:inherit;font-size:14px;line-height:1.7;padding:10px 12px;white-space:pre-wrap;}
+.notes-input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.notes-input::placeholder{color:var(--ink-faint);font-style:italic;}
+.notes-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+.tag.notes-tag{background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--rule);}
+
 /* ---------- Search ---------- */
 .search-hero input{width:100%;padding:14px 16px;font-size:16px;border-radius:10px;border:1px solid var(--rule);
   background:var(--paper-card);color:var(--ink);}
@@ -3144,6 +3159,8 @@ function attachEntriesListener(){
         id: d.id, ...data,
         title: typeof data.title === 'string' ? data.title : '',
         content: typeof data.content === 'string' ? data.content : '',
+        // Notes live inside the journal entry (older entries simply have none)
+        notes: typeof data.notes === 'string' ? data.notes : '',
         tags: Array.isArray(data.tags) ? data.tags : [],
         // '' means "no mood logged" — a real state, not a silent Neutral
         mood: hasMood(data.mood) ? data.mood : '',
@@ -3998,7 +4015,7 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   access:null, accessLoaded:false, appConfig:null, appConfigLoaded:false,
   adminTab:'overview', adminUsers:[], adminUsersLoaded:false, adminUserFilter:'', adminUserStatus:'all',
   adminSelectedUid:null, adminAudit:[], adminPeek:null, adminConfigDraft:null,
-  filters:{mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'},
+  filters:{mood:'',tag:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'},
   calMonth:new Date(), calendarShowArchived:false,
   draftRecoveryResolved:false, appliedDraftData:null,
   // Module 06: Life Organization — derived, source-linked data built from journals via AI.
@@ -4049,7 +4066,7 @@ async function clearRemoteDraft(){
 }
 function isDraftMeaningful(d){
   if(!d) return false;
-  return !!((d.title && d.title.trim()) || (d.content && d.content.trim().length>3) || (d.tags && d.tags.length));
+  return !!((d.title && d.title.trim()) || (d.content && d.content.trim().length>3) || (d.notes && d.notes.trim()) || (d.tags && d.tags.length));
 }
 async function seedDraftFromRemoteIfNeeded(){
   if(!state.user || readLocalDraft()) return; // local already covers this device
@@ -4110,8 +4127,8 @@ function discardDraftRecovery(){
 function draftIsDirty(){
   const dr = window.__draft; if(!dr) return false;
   const saved = dr.id ? entryById(dr.id) : null;
-  if(!saved) return !!((dr.title||'').trim() || (dr.content||'').trim());
-  return (dr.title||'') !== (saved.title||'') || (dr.content||'') !== (saved.content||'') || (dr.tags||[]).join('\u0001') !== (saved.tags||[]).join('\u0001')
+  if(!saved) return !!((dr.title||'').trim() || (dr.content||'').trim() || (dr.notes||'').trim());
+  return (dr.title||'') !== (saved.title||'') || (dr.content||'') !== (saved.content||'') || (dr.notes||'') !== (saved.notes||'') || (dr.tags||[]).join('\u0001') !== (saved.tags||[]).join('\u0001')
     || dr.mood !== saved.mood || dr.moodIntensity !== saved.moodIntensity || dr.date !== saved.date
     || !!dr.favorite !== !!saved.favorite || !!dr.important !== !!saved.important;
 }
@@ -4608,10 +4625,11 @@ function renderDashboard(){
         <div class="entry-meta" style="margin-bottom:10px;gap:8px;">
           ${moodChip(todayEntry, {intensity:true, intensityLabel:true})}
           <span class="intensity-tag">${todayWords} words</span>
+          ${notesChip(todayEntry)}
           ${todayEntry.favorite ? `<span class="entry-star">★</span>` : ''}
           ${todayEntry.important ? `<span class="archived-pill">🔖 Important</span>` : ''}
         </div>
-        <p class="preview">${escapeHtml((todayEntry.content||'').slice(0,220))}${(todayEntry.content||'').length>220?'…':''}</p>
+        <p class="preview">${escapeHtml(entryPreview(todayEntry,220))}${((todayEntry.content||'').trim() ? (todayEntry.content||'').length : (todayEntry.notes||'').trim().length)>220?'…':''}</p>
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="go('write','${todayEntry.id}')">Continue writing</button>
         </div>
@@ -4772,10 +4790,10 @@ function renderWrite(){
   if(!entry && window.__draft && window.__draft.id === state.editingId && state.editingId){
     entry = window.__draft;
   }
-  const draft = entry ? {...entry, tags: entry.tags||[]} : {
+  const draft = entry ? {...entry, tags: entry.tags||[], notes: typeof entry.notes==='string' ? entry.notes : ''} : {
     // mood starts empty on purpose — nothing is pre-selected, so a mood only
     // ever gets recorded because the user actually chose one.
-    id: null, date: todayISO(), title:'', content:'', mood:'', moodIntensity:5,
+    id: null, date: todayISO(), title:'', content:'', notes:'', mood:'', moodIntensity:5,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
   if(!hasMood(draft.mood)) draft.mood = '';
@@ -4786,7 +4804,7 @@ function renderWrite(){
   const targetId = state.editingId || null;
   const localDraft = readLocalDraft();
   const recoverable = (!state.draftRecoveryResolved && localDraft && localDraft.entryId===targetId && isDraftMeaningful(localDraft)
-    && (localDraft.title!==draft.title || localDraft.content!==draft.content)) ? localDraft : null;
+    && (localDraft.title!==draft.title || localDraft.content!==draft.content || (localDraft.notes||'')!==(draft.notes||''))) ? localDraft : null;
   window.__pendingRecoveryDraft = recoverable;
 
   // If the user just clicked "Continue draft", state.appliedDraftData holds the recovered
@@ -4796,6 +4814,7 @@ function renderWrite(){
     const a = state.appliedDraftData;
     draft.title = a.title || '';
     draft.content = a.content || '';
+    draft.notes = typeof a.notes === 'string' ? a.notes : (draft.notes || '');
     if(entry) draft.date = a.date || draft.date; // existing entries keep their own date; new entries are always dated when written
     // '' is a meaningful value here ("user cleared the mood"), so only fall
     // back when the recovered draft has no mood field at all.
@@ -4806,6 +4825,7 @@ function renderWrite(){
     draft.important = !!a.important;
   }
   window.__draft = draft;
+  if(draft.notes) setTimeout(()=>{ const n = document.getElementById('notesInput'); if(n) autosizeNotes(n); }, 0);
 
   // ---- populate the fixed floating toolbar (date, flags, formatting,
   // preview toggle, word count, cancel & save) — this is the single source
@@ -4871,6 +4891,18 @@ function renderWrite(){
       <div class="content-input" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
 
       <div class="focus-hide">
+      <details class="notes-box" id="notesBox" ${(draft.notes||'').trim() ? 'open' : ''}>
+        <summary><span class="chev" aria-hidden="true">›</span> 📝 Notes <span class="notes-count" id="notesCount">${notesCountLabel(draft.notes)}</span></summary>
+        <div class="notes-body">
+          <p class="notes-hint">অন্য কোথাও থেকে নোট থাকলে এখানে পেস্ট করে রাখো — এই জার্নালের সাথেই সেভ হবে। মূল লেখা থেকে আলাদা থাকে, তবে Search-এ পাওয়া যাবে।</p>
+          <textarea class="notes-input" id="notesInput" aria-label="Notes for this journal" maxlength="${NOTES_MAX}" spellcheck="true" placeholder="নোট এখানে পেস্ট করো বা লিখো…" oninput="onNotesInput(this)">${escapeHtml(draft.notes||'')}</textarea>
+          <div class="notes-actions">
+            <button type="button" class="btn btn-sm" onclick="pasteIntoNotes()">📋 Paste from clipboard</button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="copyNotes()">Copy</button>
+            <button type="button" class="btn btn-sm btn-ghost btn-danger" onclick="clearNotes()">Clear</button>
+          </div>
+        </div>
+      </details>
       <div class="section-title" style="margin-top:18px;">Mood <span style="font-weight:400;color:var(--ink-faint);font-size:12px;">— optional</span></div>
       <div class="mood-picker" id="moodPicker" role="group" aria-label="Mood">
         ${MOODS.map(m=>`<button type="button" class="mood-opt ${draft.mood===m.id?'selected':''}" data-mood="${m.id}" aria-pressed="${draft.mood===m.id}" onclick="setDraftMood('${m.id}')">${m.emoji} ${m.label}</button>`).join('')}
@@ -5051,6 +5083,68 @@ function onEditorKeydown(e){
   }
 }
 function onEditorInput(){ syncEditorToDraft(); }
+
+/* ---------------- NOTES (a field inside the journal entry) ----------------
+   Notes are not a separate feature: they are one extra text field on the
+   journal document itself (entry.notes), so they are saved, archived,
+   exported, searched and deleted together with the journal. They are kept
+   apart from the main text on purpose — the AI daily summary and Life
+   extraction only ever read what you *wrote*, not pasted reference notes. */
+const NOTES_MAX = 50000;
+function entryHasNotes(e){ return !!(e && typeof e.notes === 'string' && e.notes.trim()); }
+function notesCountLabel(s){
+  const t = (s||'').trim();
+  return t ? (t.split(/\s+/).length + ' words') : 'empty';
+}
+// Text shown in list cards: the journal text, or (for notes-only entries) the notes.
+function entryPreview(e, n){
+  const c = (e.content||'').trim();
+  if(c) return c.slice(0, n);
+  return entryHasNotes(e) ? ('📝 ' + e.notes.trim().slice(0, n)) : '';
+}
+function notesChip(e){
+  return entryHasNotes(e) ? `<span class="tag notes-tag" title="This journal has notes">📝 Notes</span>` : '';
+}
+function autosizeNotes(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight * 0.6)) + 'px';
+}
+function onNotesInput(el){
+  if(!window.__draft) return;
+  window.__draft.notes = el.value;
+  autosizeNotes(el);
+  const c = document.getElementById('notesCount'); if(c) c.textContent = notesCountLabel(el.value);
+  scheduleAutosave();
+}
+async function pasteIntoNotes(){
+  const el = document.getElementById('notesInput'); if(!el) return;
+  try{
+    const txt = await navigator.clipboard.readText();
+    if(!txt || !txt.trim()){ toast('ক্লিপবোর্ড খালি।'); return; }
+    const start = el.selectionStart ?? el.value.length, end = el.selectionEnd ?? el.value.length;
+    let next = el.value.slice(0, start) + txt + el.value.slice(end);
+    if(next.length > NOTES_MAX){ next = next.slice(0, NOTES_MAX); toast('নোট সর্বোচ্চ ' + NOTES_MAX.toLocaleString() + ' অক্ষর পর্যন্ত রাখা যায় — বাকিটা কেটে দেওয়া হয়েছে।'); }
+    el.value = next;
+    const pos = Math.min(start + txt.length, next.length);
+    el.focus(); try{ el.setSelectionRange(pos, pos); }catch(_){}
+    onNotesInput(el);
+  }catch(err){
+    // Some browsers block clipboard reads — normal paste (Ctrl+V / long-press) still works.
+    el.focus();
+    toast('ব্রাউজার ক্লিপবোর্ড পড়তে দিচ্ছে না — বক্সে ট্যাপ করে সরাসরি Paste (Ctrl+V) করো।');
+  }
+}
+async function copyNotes(){
+  const el = document.getElementById('notesInput'); if(!el || !el.value.trim()){ toast('কপি করার মতো কোনো নোট নেই।'); return; }
+  try{ await navigator.clipboard.writeText(el.value); toast('নোট কপি হয়েছে।', {type:'success'}); }
+  catch(err){ el.focus(); el.select(); toast('অটো-কপি হয়নি — নোট সিলেক্ট করা আছে, Ctrl+C চাপো।'); }
+}
+function clearNotes(){
+  const el = document.getElementById('notesInput'); if(!el || !el.value.trim()) return;
+  confirmAction('নোট মুছে ফেলবেন?', 'এই জার্নালের নোটগুলো খালি হয়ে যাবে। মূল লেখা অক্ষত থাকবে। "Save Journal" চাপলে তবেই পরিবর্তনটা সেভ হবে।', ()=>{
+    el.value = ''; onNotesInput(el); el.focus();
+  }, 'মুছুন');
+}
 
 /* ---- formatting commands (all act live on the selection) ---- */
 function edCmd(cmd, val){
@@ -5364,7 +5458,7 @@ async function saveDraft(){
     toast('তোমার অ্যাকাউন্টে এন্ট্রির সর্বোচ্চ সীমায় পৌঁছে গেছ — নতুন এন্ট্রির জন্য অ্যাডমিনের সাথে যোগাযোগ করো।', {type:'error'});
     return;
   }
-  if(!d.content || !d.content.trim()){ toast('আগে কিছু লিখো।'); return; }
+  if((!d.content || !d.content.trim()) && !entryHasNotes(d)){ toast('আগে কিছু লিখো।'); return; }
   if(!NET.online){
     toast("You're offline — nothing was saved. Your text is kept on this device; save again once you're back online.", {type:'error'});
     return;
@@ -5393,7 +5487,7 @@ async function saveDraft(){
     // Background pipeline — the journal itself never waits on any of this:
     //   AI extraction (skipped if the text is unchanged) -> then the search index (skipped if unchanged),
     //   in that order so the index includes the freshly-extracted Life items (one embedding call, not two).
-    const snapshot = {id, title:d.title, content:d.content, date:d.date, tags:d.tags, mood:d.mood};
+    const snapshot = {id, title:d.title, content:d.content, notes:d.notes||'', date:d.date, tags:d.tags, mood:d.mood};
     runLifeExtraction(snapshot)
       .then(parsed=>updateSearchIndexForEntry(id, {entry:snapshot, extraction:parsed}))
       .catch(err=>reportError(err, 'post-save pipeline'));
@@ -5459,9 +5553,10 @@ function renderArchive(){
           <div class="entry-date" onclick="go('write','${e.id}')" style="cursor:pointer;"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
           <div class="entry-body" onclick="go('write','${e.id}')" style="cursor:pointer;">
             <h3>${escapeHtml(e.title || 'Untitled')}</h3>
-            <p>${escapeHtml(e.content||'')}</p>
+            <p>${escapeHtml(entryPreview(e,5000))}</p>
             <div class="entry-meta">
               ${moodChip(e)}
+              ${notesChip(e)}
               ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
             </div>
           </div>
@@ -5490,6 +5585,7 @@ function buildFilterPredicates(f){
   if(f.tag) preds.push(e=>(e.tags||[]).includes(f.tag));
   if(f.favOnly) preds.push(e=>!!e.favorite);
   if(f.importantOnly) preds.push(e=>!!e.important);
+  if(f.notesOnly) preds.push(e=>entryHasNotes(e));
   if(f.dateFrom) preds.push(e=>e.date >= f.dateFrom);
   if(f.dateTo) preds.push(e=>e.date <= f.dateTo);
   // Future category filters plug in here, e.g.:
@@ -5501,10 +5597,10 @@ function applyFilters(entries, f){
   return entries.filter(e=>preds.every(p=>p(e)));
 }
 function isLibraryFiltered(f){
-  return !!(f.mood || f.tag || f.favOnly || f.importantOnly || f.dateFrom || f.dateTo || f.archived!=='active');
+  return !!(f.mood || f.tag || f.favOnly || f.importantOnly || f.notesOnly || f.dateFrom || f.dateTo || f.archived!=='active');
 }
 function clearLibraryFilters(){
-  state.filters = {mood:'',tag:'',favOnly:false, importantOnly:false, dateFrom:'', dateTo:'', archived:'active'};
+  state.filters = {mood:'',tag:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'};
   state.libLimit = PAGE_SIZE;
   render();
 }
@@ -5516,6 +5612,7 @@ function countLibraryFilters(f){
   if(f.tag) n++;
   if(f.favOnly) n++;
   if(f.importantOnly) n++;
+  if(f.notesOnly) n++;
   if(f.dateFrom || f.dateTo) n++;
   if(f.archived !== 'active') n++;
   return n;
@@ -5569,9 +5666,10 @@ function renderLibraryGroups(list){
         <div class="entry-date"><div class="d">${new Date(e.date+'T00:00:00').getDate()}</div><div class="m">${fmtDate(e.date,{month:'short'})}</div></div>
         <div class="entry-body">
           <h3>${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄 Archived</span>':''}</h3>
-          <p>${escapeHtml((e.content||'').slice(0,260))}</p>
+          <p>${escapeHtml(entryPreview(e,260))}</p>
           <div class="entry-meta">
             ${moodChip(e, {intensity:true})}
+            ${notesChip(e)}
             ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
             ${e.favorite?`<span class="entry-star">★</span>`:''}
           </div>
@@ -5627,6 +5725,9 @@ function renderTimeline(){
       </label>
       <label class="pill" style="cursor:pointer;">
         <input type="checkbox" id="fltImp" ${f.importantOnly?'checked':''} onchange="libFilter('importantOnly',this.checked)" style="margin:0;"> Important
+      </label>
+      <label class="pill" style="cursor:pointer;">
+        <input type="checkbox" id="fltNotes" ${f.notesOnly?'checked':''} onchange="libFilter('notesOnly',this.checked)" style="margin:0;"> 📝 Has notes
       </label>
       <input type="date" id="fltFrom" value="${f.dateFrom||''}" title="From date" aria-label="From date" onchange="libFilter('dateFrom',this.value)">
       <span style="color:var(--ink-faint);font-size:12px;">–</span>
@@ -5744,9 +5845,10 @@ function openDayEntries(iso){
       <div class="entry-row" style="padding:10px 6px;" onclick="closeDayEntries(); go('write','${e.id}')">
         <div class="entry-body">
           <h3 style="font-size:14px;">${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''} ${e.archived?'<span class="archived-pill">🗄</span>':''}</h3>
-          <p style="margin:0 0 6px;">${escapeHtml((e.content||'').slice(0,90))}${(e.content||'').length>90?'…':''}</p>
+          <p style="margin:0 0 6px;">${escapeHtml(entryPreview(e,90))}${((e.content||'').trim() ? (e.content||'').length : (e.notes||'').trim().length)>90?'…':''}</p>
           <div class="entry-meta">
             ${moodChip(e, {intensity:true})}
+            ${notesChip(e)}
             ${e.favorite?'<span class="entry-star">★</span>':''}
           </div>
         </div>
@@ -5992,7 +6094,7 @@ async function saveLifeEdit(){
 
 // ---- Index generation: one searchable representation per journal ----
 function buildEntrySearchableText(entry, extraction){
-  const parts = [entry.title||'', entry.content||'', (entry.tags||[]).join(' '), moodInfo(entry.mood).label, entry.date];
+  const parts = [entry.title||'', entry.content||'', (entry.notes||'').slice(0,1500), (entry.tags||[]).join(' '), moodInfo(entry.mood).label, entry.date];
   const kinds = ['achievements','plans','ideas','lessons','challenges','moments'];
   if(extraction){ // fresh, not-yet-synced AI result passed straight from the save flow
     kinds.forEach(k=>(extraction[k]||[]).forEach(x=>{ if(x && x.text) parts.push(x.text); }));
@@ -6065,6 +6167,10 @@ function keywordScoreEntry(entry, qLower){
   if(content.includes(qLower)){
     const occurrences = content.split(qLower).length - 1;
     score += Math.min(occurrences, 10) * 4;
+  }
+  const notesLower = (entry.notes||'').toLowerCase();
+  if(notesLower && notesLower.includes(qLower)){
+    score += Math.min(notesLower.split(qLower).length - 1, 10) * 2; // notes count, a little less than the journal text itself
   }
   if((entry.tags||[]).some(t=>t.toLowerCase().includes(qLower))) score += 12;
   if(moodInfo(entry.mood).label.toLowerCase().includes(qLower)) score += 6;
@@ -6225,6 +6331,14 @@ function highlightExcerpt(text, q){
     return esc.replace(re, '<mark>$1</mark>');
   }catch(e){ return esc; }
 }
+// If the query matched only the notes (not the journal text), show the notes excerpt instead.
+function searchExcerptHtml(e, q){
+  const ql = (q||'').toLowerCase().trim();
+  const inContent = ql && (e.content||'').toLowerCase().includes(ql);
+  if(ql && !inContent && (e.notes||'').toLowerCase().includes(ql)) return '<span class="tag notes-tag">📝 in Notes</span> ' + highlightExcerpt(e.notes, q);
+  if(!(e.content||'').trim() && entryHasNotes(e)) return highlightExcerpt(e.notes, q);
+  return highlightExcerpt(e.content, q);
+}
 function openSearchResult(kind, id){
   if(kind==='journal'){ go('write', id); return; }
   if(kind==='people' || kind==='places'){ go('life'); state.memoryTab = kind; render(); return; }
@@ -6241,9 +6355,10 @@ function renderSearchResultRow(r, q){
       <div class="entry-body">
         <div class="entry-meta" style="margin-bottom:4px;">${typeTag}${relatedTag}${e.archived?'<span class="pill">Archived</span>':''}</div>
         <h3>${escapeHtml(e.title||'Untitled')} ${e.favorite?'<span class="entry-star">★</span>':''}</h3>
-        <p>${highlightExcerpt(e.content, q)}</p>
+        <p>${searchExcerptHtml(e, q)}</p>
         <div class="entry-meta">
           ${moodChip(e, {intensity:true, intensityLabel:true})}
+          ${notesChip(e)}
           ${(e.tags||[]).slice(0,4).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
           ${e.important ? `<span class="pill">🔖 Important</span>` : ''}
         </div>
@@ -6439,7 +6554,7 @@ async function retrieveForQuestion(q){
   return {entries, lifeItems, sources, hasIndex: hybrid.hasIndex, semanticOk: hybrid.semanticOk};
 }
 function buildAskPrompt(question, retrieval, priorTurns){
-  const entryLines = retrieval.entries.map(e=>`- [journal ${e.date}] ${e.title||''}: ${(e.content||'').slice(0,500)}`).join('\n') || '(none)';
+  const entryLines = retrieval.entries.map(e=>`- [journal ${e.date}] ${e.title||''}: ${(e.content||'').slice(0,500)}${entryHasNotes(e) ? ' [notes: ' + e.notes.trim().slice(0,300) + ']' : ''}`).join('\n') || '(none)';
   const lifeLines = retrieval.lifeItems.map(x=>{
     const mainText = x.kind==='events' ? x.item.title : x.item.text;
     return `- [${x.kind} ${itemDateForFilter(x.kind, x.item)}] ${mainText}`;
@@ -7077,7 +7192,7 @@ function notifyInsightReady(label){
    ================================================================ */
 function buildExportData(){
   const entries = (state.entries||[]).map(e=>({
-    id: e.id, title: e.title||'', content: e.content||'', date: e.date,
+    id: e.id, title: e.title||'', content: e.content||'', notes: e.notes||'', date: e.date,
     mood: e.mood, moodIntensity: e.moodIntensity, tags: e.tags||[],
     favorite: !!e.favorite, important: !!e.important, archived: !!e.archived,
     createdAt: e.createdAt, updatedAt: e.updatedAt,
@@ -7121,6 +7236,9 @@ function buildExportMarkdown(data){
     lines.push(`*Mood: ${moodText}${e.archived?' · Archived':''}${e.favorite?' · ★ Favorite':''}${e.important?' · 🔖 Important':''}*`);
     if(e.tags.length) lines.push(`Tags: ${e.tags.map(t=>'#'+t).join(' ')}`);
     lines.push(``, mdEscape(e.content), ``);
+    if((e.notes||'').trim()){
+      lines.push(`**Notes:**`, ``, mdEscape(e.notes).split('\n').map(l=>'> '+l).join('\n'), ``);
+    }
     if(e.media.length){
       lines.push(`**Attachments:**`);
       e.media.forEach(m=>lines.push(`- ${m.kind}${m.caption?': '+m.caption:''}${m.transcript?` — transcript: "${mdEscape(m.transcript)}"`:''} (${m.storagePath})`));
@@ -7179,7 +7297,7 @@ function estimateStorageMB(){
   // sizes recorded at upload time (no way to query true Storage usage
   // from the client without Storage wired in).
   let bytes = 0;
-  (state.entries||[]).forEach(e=>{ bytes += new Blob([e.content||'']).size; });
+  (state.entries||[]).forEach(e=>{ bytes += new Blob([(e.content||'') + (e.notes||'')]).size; });
   (state.media||[]).forEach(m=>{ bytes += m.size||0; });
   return (bytes/1024/1024).toFixed(2);
 }
