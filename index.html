@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
-<meta name="theme-color" content="#F6F1E6">
+<meta name="theme-color" content="#EEF1FA">
+<meta name="app-build" content="2026-10-17.1">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:title" content="JournalOS — Write First. Everything Else Second.">
@@ -12,19 +13,40 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="JournalOS">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23946022'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='42' fill='white'%3EJ%3C/text%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="application-name" content="JournalOS">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234F46E5'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='42' fill='white'%3EJ%3C/text%3E%3C/svg%3E">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <script>/* apply the saved theme before first paint (no flash of the wrong theme) */
 (function(){try{var m=localStorage.getItem('journalos_theme_cache')||'system';
 var dk=m==='dark'||(m==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
 var r=document.documentElement;r.setAttribute('data-theme',dk?'dark':'light');r.setAttribute('data-theme-mode',m);r.style.colorScheme=dk?'dark':'light';
-var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',dk?'#1B1B17':'#F6F1E6');}catch(e){}})();
+var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',dk?'#070A14':'#EEF1FA');}catch(e){}})();
+</script>
+<script>/* v1.1 early boot: splash, accent palette, install-prompt capture (runs before first paint) */
+window.__ACCENTS__={
+ indigo:{light:{a:'#4F46E5',b:'#06B6D4',s:'#D9D8FB',sh:'rgba(79,70,229,.45)'},dark:{a:'#8E8FFF',b:'#5EE0F5',s:'#25285A',sh:'rgba(142,143,255,.38)'}},
+ cyan:{light:{a:'#0A7EA4',b:'#22D3A5',s:'#CFEAF4',sh:'rgba(10,126,164,.45)'},dark:{a:'#4FD3F5',b:'#7CF0C8',s:'#0F3345',sh:'rgba(79,211,245,.35)'}},
+ emerald:{light:{a:'#0B8A63',b:'#84CC16',s:'#CFEFE3',sh:'rgba(11,138,99,.45)'},dark:{a:'#4FD1A0',b:'#B6F26A',s:'#0F3A2C',sh:'rgba(79,209,160,.35)'}},
+ rose:{light:{a:'#D6336C',b:'#F59E0B',s:'#FADCE6',sh:'rgba(214,51,108,.45)'},dark:{a:'#FF7FA9',b:'#FFB86B',s:'#44182A',sh:'rgba(255,127,169,.35)'}},
+ violet:{light:{a:'#7C3AED',b:'#EC4899',s:'#E6DAFB',sh:'rgba(124,58,237,.45)'},dark:{a:'#B79CFF',b:'#FF9AD0',s:'#34265F',sh:'rgba(183,156,255,.35)'}},
+ amber:{light:{a:'#B45309',b:'#EF4444',s:'#F6E1C3',sh:'rgba(180,83,9,.45)'},dark:{a:'#F5B25A',b:'#FF8A6B',s:'#44311A',sh:'rgba(245,178,90,.35)'}}
+};
+(function(){var r=document.documentElement;
+try{r.classList.add('booting');
+var k=localStorage.getItem('journalos_accent')||'indigo',A=window.__ACCENTS__,a=A[k]||A.indigo,dk=r.getAttribute('data-theme')==='dark',c=dk?a.dark:a.light,st=r.style;
+st.setProperty('--accent',c.a);st.setProperty('--accent-2',c.b);st.setProperty('--accent-soft',c.s);st.setProperty('--accent-shadow',c.sh);}catch(e){}
+try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches)r.classList.add('is-standalone');}catch(e){}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;try{window.dispatchEvent(new Event('pwa-bip'));}catch(x){}});
+})();
 </script>
 <title>JournalOS — Write First. Everything Else Second.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    JOURNALOS — DESIGN TOKENS
@@ -1157,11 +1179,358 @@ body.focus-mode::before{opacity:.25;}
   .rec-dot{animation:none;opacity:1;}
 }
 @media print{ .topbar,.sidebar,.bottom-nav,.write-fixed-bar,.toast-region,.net-banner{display:none!important;} .main{margin:0;padding:0;} }
+
+/* ============================================================
+   v1.1 — "FUTURE" LAYER
+   Loaded after every original rule so it can restyle without
+   touching any markup or logic. Same layout concept (floating
+   dock, glass chips, widget tiles), new look: deep-space ink,
+   electric accent, aurora glow, fine grid, crisp display type.
+   ============================================================ */
+:root{
+  --font-display:'Space Grotesk','Inter','Noto Sans Bengali','Hind Siliguri',system-ui,-apple-system,sans-serif;
+  --font-serif:'Space Grotesk','Inter','Noto Sans Bengali','Hind Siliguri',system-ui,-apple-system,sans-serif;
+  --font-write:'Fraunces',Georgia,'Noto Serif Bengali',serif;
+  --paper:#EEF1FA; --paper-dim:#E2E7F5; --paper-card:#FFFFFF;
+  --ink:#0E1325; --ink-soft:#4A5170; --ink-faint:#5C6483; --rule:#D5DBEE;
+  --accent:#4F46E5; --accent-2:#06B6D4; --accent-soft:#D9D8FB;
+  --sage:#0F8F76; --sage-soft:#D2F1EA; --rust:#C93A55; --rust-soft:#F9DCE2;
+  --sky:#0A78AE; --sky-soft:#D3ECF7;
+  --radius:18px; --radius-lg:24px; --radius-sm:12px;
+  --shadow:0 1px 2px rgba(14,19,37,.05),0 12px 32px -16px rgba(40,50,120,.22);
+  --shadow-float:0 16px 40px -14px rgba(40,50,140,.34),0 2px 10px -3px rgba(14,19,37,.14);
+  --glass-bg:rgba(255,255,255,.62); --glass-bg-strong:rgba(255,255,255,.82); --glass-border:rgba(255,255,255,.75);
+  --accent-shadow:rgba(79,70,229,.45);
+  --on-accent:#FFFFFF;
+  --grad:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 72%,var(--accent-2)));
+  --grad-vivid:linear-gradient(135deg,var(--accent),var(--accent-2));
+  --grid:rgba(79,70,229,.055);
+  --glow:color-mix(in srgb,var(--accent) 34%,transparent);
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+}
+:root[data-theme="dark"]{
+  --paper:#070A14; --paper-dim:#0D1222; --paper-card:#0F1528;
+  --ink:#E6EAFB; --ink-soft:#A9B1D0; --ink-faint:#8B93B6; --rule:#1F2745;
+  --accent:#8E8FFF; --accent-2:#5EE0F5; --accent-soft:#25285A;
+  --sage:#4FD1B0; --sage-soft:#0F3A33; --rust:#FF8DA1; --rust-soft:#3F1B26;
+  --sky:#6CC8F0; --sky-soft:#0F3345;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.7);
+  --shadow-float:0 18px 44px -14px rgba(0,0,0,.75),0 2px 10px -3px rgba(0,0,0,.5);
+  --glass-bg:rgba(15,21,40,.58); --glass-bg-strong:rgba(15,21,40,.8); --glass-border:rgba(142,143,255,.16);
+  --accent-shadow:rgba(142,143,255,.38);
+  --on-accent:#070A14;
+  --grid:rgba(142,143,255,.06);
+}
+
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{font-family:var(--font-display);overscroll-behavior-y:none;min-height:100vh;min-height:100dvh;}
+@supports (min-height:100dvh){ #app,#auth{min-height:100dvh;} }
+h1,h2,h3,h4,.serif{font-family:var(--font-display);letter-spacing:-.02em;font-weight:600;}
+button,.btn,a,[role="button"],input,select,textarea,summary{touch-action:manipulation;}
+img,svg,video,canvas{max-width:100%;}
+::selection{background:color-mix(in srgb,var(--accent) 30%,transparent);}
+html{scrollbar-width:thin;scrollbar-color:var(--rule) transparent;}
+::-webkit-scrollbar{width:9px;height:9px;} ::-webkit-scrollbar-thumb{background:var(--rule);border-radius:99px;border:2px solid transparent;background-clip:padding-box;}
+
+/* aurora + fine grid backdrop */
+body::before{
+  background:
+    radial-gradient(640px 520px at 4% -10%, color-mix(in srgb,var(--accent) 38%,transparent) 0%, transparent 62%),
+    radial-gradient(560px 480px at 104% 6%, color-mix(in srgb,var(--accent-2) 30%,transparent) 0%, transparent 60%),
+    radial-gradient(600px 520px at 10% 108%, var(--sage-soft) 0%, transparent 62%),
+    radial-gradient(480px 420px at 98% 102%, color-mix(in srgb,var(--accent) 22%,transparent) 0%, transparent 58%);
+  opacity:.55;filter:blur(8px);animation:auroraDrift 34s ease-in-out infinite alternate;will-change:transform;
+}
+:root[data-theme="dark"] body::before{opacity:.5;}
+@keyframes auroraDrift{from{transform:translate3d(0,0,0) scale(1);}to{transform:translate3d(-1.5%,1.5%,0) scale(1.06);}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 75%);}
+
+/* ---------- surfaces ---------- */
+.card,.tile,.dash-hero,.stat-card,.pattern-card,.modal{border-color:var(--rule);}
+.card,.tile{border-radius:var(--radius);}
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .tile{background:linear-gradient(180deg,color-mix(in srgb,var(--paper-card) 92%,#fff 3%),var(--paper-card));}
+@media (hover:hover){
+  .card:hover,.tile:hover{border-color:color-mix(in srgb,var(--accent) 38%,var(--rule));box-shadow:var(--shadow-float),0 0 0 1px color-mix(in srgb,var(--accent) 14%,transparent);}
+}
+.dash-hero{border-radius:var(--radius-lg);
+  background:linear-gradient(140deg,var(--paper-card) 0%,color-mix(in srgb,var(--accent) 9%,var(--paper-card)) 100%);
+  border-color:color-mix(in srgb,var(--accent) 26%,var(--rule));}
+.dash-hero::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:var(--grad-vivid);opacity:.9;}
+.dash-hero::after{background:radial-gradient(circle,var(--glow) 0%,transparent 70%);opacity:.8;}
+.dash-hero .eyebrow,.section-title{letter-spacing:.12em;font-size:11.5px;font-weight:600;}
+.section-title{display:flex;align-items:center;gap:8px;}
+.section-title::before{content:'';width:6px;height:6px;border-radius:2px;background:var(--grad-vivid);flex:none;}
+.tile-icn{border-radius:12px;}
+.tile-icn.tint-accent{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);}
+.dash-stat .num{font-family:var(--font-display);font-weight:600;font-feature-settings:'tnum';}
+.stat-card b,.stat b,.life-mini b,.admin-stat b,.compare-row .vals .now{font-family:var(--font-display);font-feature-settings:'tnum';}
+.page-head h1{font-size:clamp(24px,3.4vw,31px);font-weight:700;letter-spacing:-.03em;
+  background:linear-gradient(95deg,var(--ink) 30%,var(--accent) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--ink);}
+.page-head .sub{font-size:13.5px;}
+
+/* ---------- controls ---------- */
+.btn{border-radius:12px;font-weight:500;background:var(--paper-card);}
+@media (hover:hover){ .btn:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--rule));} }
+:root[data-theme] .btn-primary,:root[data-theme] .btn-accent{background:var(--grad);color:var(--on-accent);border-color:transparent;box-shadow:0 8px 20px -8px var(--accent-shadow);}
+:root[data-theme] .btn-primary:hover,:root[data-theme] .btn-accent:hover{opacity:1;filter:brightness(1.08);}
+.btn-ghost{background:transparent;}
+.btn-sm{border-radius:10px;}
+.pill,.tag,.mood-chip,.conf-badge{letter-spacing:.005em;}
+.mood-opt{border-radius:99px;transition:transform .15s var(--ease),border-color .15s,background .15s;}
+.mood-opt.selected{background:color-mix(in srgb,var(--accent) 18%,var(--paper-card));border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);}
+.field input,.field textarea,.field select,.filter-row select,.filter-row input[type=text],.filter-row input[type=date],
+.settings-row select,.settings-row input[type=time],.settings-row input[type=text],.inline-form input[type=text],.inline-form input[type=password],
+.admin-toolbar input[type=search],.admin-toolbar select,.search-hero input,.tag-input-wrap,.notes-input{border-radius:12px;}
+.field input:focus,.field textarea:focus,.field select:focus,.search-hero input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent);}
+.search-hero input{font-size:16px;padding:15px 18px;}
+.switch .track{background:color-mix(in srgb,var(--ink) 18%,var(--paper-card));}
+.switch input:checked + .track{background:var(--grad-vivid);}
+.bar-fill{background:var(--grad-vivid);}
+.mini-chart .col .b{background:color-mix(in srgb,var(--accent) 28%,transparent);border-radius:5px 5px 0 0;}
+.mini-chart .col .b.hi{background:var(--grad-vivid);}
+.entry-date .d{font-family:var(--font-display);font-weight:700;background:var(--grad-vivid);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.entry-row{border-radius:14px;}
+.entry-row:hover{background:color-mix(in srgb,var(--accent) 6%,transparent);}
+.date-divider .dd-label{font-family:var(--font-display);font-weight:600;}
+.seg button[aria-checked="true"]{box-shadow:var(--shadow);outline:1px solid color-mix(in srgb,var(--accent) 40%,transparent);}
+.settings-nav a{border-radius:99px;}
+.settings-nav a:hover{border-color:var(--accent);color:var(--accent);}
+.life-card{border-radius:16px;background:var(--paper-card);}
+
+/* ---------- chrome: topbar, dock, bottom nav ---------- */
+.topbar .brand .mark{width:27px;height:27px;border-radius:9px;display:inline-grid;place-items:center;background:var(--grad-vivid);
+  color:#fff;font-style:normal;font-weight:700;font-size:15px;box-shadow:0 4px 12px -3px var(--accent-shadow);}
+:root[data-theme="dark"] .topbar .brand .mark{color:#070A14;}
+.topbar .brand{align-items:center;gap:9px;padding:6px 16px 6px 7px;}
+.topbar .brand .word{font-weight:700;font-size:18px;letter-spacing:-.03em;}
+.topbar-streak b{font-family:var(--font-display);}
+.nav-item.active .ic,:root[data-theme="dark"] .nav-item.active .ic,:root[data-theme="dark"] .nav-item.active:hover .ic{background:var(--grad-vivid);color:#fff;box-shadow:0 6px 16px -4px var(--accent-shadow);}
+:root[data-theme="dark"] .nav-item.active .ic{color:#070A14;}
+.nav-item.active::after{content:'';position:absolute;left:-9px;top:50%;width:3px;height:20px;border-radius:3px;transform:translateY(-50%);background:var(--grad-vivid);}
+.sidebar.expanded .nav-item.active::after{left:-8px;}
+.nav-label{font-weight:600;letter-spacing:.14em;font-size:11px;}
+.bn-item.active{color:var(--accent);}
+.bn-item.active svg{filter:drop-shadow(0 0 6px var(--glow));}
+.bn-fab,.topbar-fab{background:var(--grad-vivid);color:#fff;box-shadow:0 8px 22px -6px var(--accent-shadow);}
+:root[data-theme="dark"] .bn-fab,:root[data-theme="dark"] .topbar-fab{color:#070A14;}
+.chip-btn.avatar-fallback,.pm-avatar,.avatar-lg{background:var(--grad-vivid);color:#fff;}
+:root[data-theme="dark"] .chip-btn.avatar-fallback,:root[data-theme="dark"] .pm-avatar,:root[data-theme="dark"] .avatar-lg{color:#070A14;}
+#profileBtn{position:relative;}
+html.has-update #profileBtn::after{content:'';position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--rust);border:2px solid var(--paper-card);}
+.profile-menu{border-radius:20px;width:272px;}
+.pm-item{min-height:42px;border-radius:12px;}
+.pm-item .pm-badge{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--rust-soft);color:var(--rust);}
+.pm-item kbd,.cmdk-foot kbd{font-family:var(--font-display);font-size:10.5px;margin-left:auto;padding:1px 6px;border-radius:6px;border:1px solid var(--rule);color:var(--ink-faint);}
+
+/* writing surface keeps a gentle serif */
+.title-input{font-family:var(--font-write);font-size:clamp(22px,3.4vw,27px);}
+.content-input{font-family:var(--font-write);}
+.fmt-btn{border-radius:9px;} .fmt-size{border-radius:9px;}
+.write-fixed-bar{border-radius:22px;}
+
+/* ---------- boot splash (hides the sign-in flash while auth resolves) ---------- */
+#splash{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:var(--paper);}
+html.booting #splash{display:flex;}
+html.booting #auth{visibility:hidden;}
+#splash .sp-mark{width:68px;height:68px;border-radius:20px;display:grid;place-items:center;background:var(--grad-vivid);color:#fff;
+  font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:42px;box-shadow:0 18px 44px -10px var(--accent-shadow);animation:splashPulse 1.6s ease-in-out infinite;}
+:root[data-theme="dark"] #splash .sp-mark{color:#070A14;}
+#splash .sp-word{font-weight:700;font-size:20px;letter-spacing:-.03em;color:var(--ink);}
+#splash .sp-bar{width:120px;height:3px;border-radius:3px;background:var(--rule);overflow:hidden;}
+#splash .sp-bar::after{content:'';display:block;width:40%;height:100%;border-radius:3px;background:var(--grad-vivid);animation:splashBar 1.2s ease-in-out infinite;}
+@keyframes splashPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+@keyframes splashBar{from{transform:translateX(-100%);}to{transform:translateX(300%);}}
+
+/* ---------- auth ---------- */
+.auth-box{max-width:400px;padding:34px 28px 26px;border-radius:28px;background:var(--glass-bg-strong);
+  backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);border-color:var(--glass-border);box-shadow:var(--shadow-float);}
+.auth-box .mark{width:60px;height:60px;margin:0 auto 10px;border-radius:19px;display:grid;place-items:center;background:var(--grad-vivid);color:#fff;
+  font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:38px;box-shadow:0 14px 34px -10px var(--accent-shadow);}
+:root[data-theme="dark"] .auth-box .mark{color:#070A14;}
+.auth-box h1{font-size:28px;font-weight:700;letter-spacing:-.035em;}
+.auth-install{margin-top:12px;}
+.auth-install .btn{width:100%;justify-content:center;}
+
+/* ---------- announcement / update / install UI ---------- */
+.install-chip{width:auto;padding:0 14px 0 12px;gap:7px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;}
+.install-chip svg{width:16px;height:16px;color:var(--accent);}
+.install-chip.pulse{animation:installPulse 2.4s ease-out infinite;}
+@keyframes installPulse{0%{box-shadow:var(--shadow-float),0 0 0 0 var(--glow);}70%{box-shadow:var(--shadow-float),0 0 0 10px transparent;}100%{box-shadow:var(--shadow-float),0 0 0 0 transparent;}}
+html.is-standalone [data-pwa-install]{display:none!important;}
+.update-bar{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translate(-50%,160%);z-index:130;
+  display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;max-width:min(520px,calc(100% - 24px));width:max-content;
+  background:var(--glass-bg-strong);backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--glass-border));border-radius:18px;box-shadow:var(--shadow-float),0 0 0 4px color-mix(in srgb,var(--accent) 10%,transparent);
+  transition:transform .4s var(--ease);}
+.update-bar.show{transform:translate(-50%,0);}
+.update-bar .ub-ic{font-size:20px;flex:none;}
+.update-bar .ub-txt{font-size:13.5px;line-height:1.35;min-width:0;} .update-bar .ub-txt b{display:block;font-size:14px;}
+.update-bar .ub-act{display:flex;gap:6px;flex:none;}
+@media (max-width:860px){ .update-bar{bottom:calc(92px + var(--safe-b));} }
+@media (max-width:420px){ .update-bar{flex-wrap:wrap;width:calc(100% - 24px);} .update-bar .ub-act{width:100%;} .update-bar .ub-act .btn{flex:1;justify-content:center;} }
+.pwa-guide ol{margin:0 0 14px;padding-left:20px;font-size:13.5px;color:var(--ink-soft);line-height:1.75;}
+.pwa-guide .pg-note{font-size:12px;color:var(--ink-faint);background:var(--paper-dim);border-radius:10px;padding:9px 12px;margin:0 0 14px;line-height:1.55;}
+.pwa-guide .pg-ic{display:inline-block;padding:0 6px;border-radius:6px;border:1px solid var(--rule);font-size:12px;}
+.accent-swatches{display:flex;gap:10px;flex-wrap:wrap;}
+.accent-swatch{width:36px;height:36px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;position:relative;box-shadow:var(--shadow);transition:transform .15s var(--ease);}
+.accent-swatch:active{transform:scale(.88);}
+.accent-swatch[aria-checked="true"]{border-color:var(--ink);box-shadow:0 0 0 3px var(--paper-card),0 0 0 5px var(--ink);}
+.accent-swatch[aria-checked="true"]::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.4);}
+
+/* ---------- command palette ---------- */
+.cmdk{position:fixed;inset:0;z-index:140;display:none;align-items:flex-start;justify-content:center;padding:max(72px,10vh) 16px 16px;background:rgba(6,9,20,.48);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.cmdk.show{display:flex;}
+.cmdk-box{width:100%;max-width:580px;max-height:min(70vh,560px);display:flex;flex-direction:column;background:var(--glass-bg-strong);
+  backdrop-filter:blur(28px) saturate(1.6);-webkit-backdrop-filter:blur(28px) saturate(1.6);border:1px solid var(--glass-border);border-radius:22px;
+  box-shadow:var(--shadow-float),0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent);overflow:hidden;animation:cmdkIn .22s var(--ease);}
+@keyframes cmdkIn{from{opacity:0;transform:translateY(-10px) scale(.98);}to{opacity:1;transform:none;}}
+.cmdk-input{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--rule);}
+.cmdk-input svg{width:18px;height:18px;color:var(--ink-faint);flex:none;}
+.cmdk-input input{flex:1;min-width:0;border:none;background:none;outline:none;font-size:16px;color:var(--ink);}
+.cmdk-list{overflow-y:auto;padding:8px;flex:1;}
+.cmdk-group{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:10px 10px 4px;}
+.cmdk-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 10px;border:none;background:none;text-align:left;border-radius:12px;color:var(--ink);font-size:14px;min-height:44px;}
+.cmdk-item .ci-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--paper-dim);font-size:15px;flex:none;}
+.cmdk-item .ci-sub{font-size:11.5px;color:var(--ink-faint);margin-left:auto;white-space:nowrap;}
+.cmdk-item[aria-selected="true"]{background:color-mix(in srgb,var(--accent) 14%,transparent);}
+.cmdk-item[aria-selected="true"] .ci-ic{background:var(--grad-vivid);color:#fff;}
+.cmdk-empty{padding:28px 16px;text-align:center;color:var(--ink-faint);font-size:13.5px;}
+.cmdk-foot{display:flex;gap:14px;align-items:center;padding:9px 16px;border-top:1px solid var(--rule);font-size:11.5px;color:var(--ink-faint);}
+.cmdk-foot kbd{margin-left:0;}
+@media (max-width:600px){ .cmdk{padding:calc(14px + var(--safe-t)) 10px 10px;} .cmdk-foot{display:none;} .cmdk-box{max-height:80dvh;} }
+
+/* ============================================================
+   RESPONSIVE — real fixes, not just resizing
+   ============================================================ */
+/* desktop/tablet: the old layout shifted .main right by 85px *and* clipped it,
+   which cut off the right edge between ~861px and ~1200px wide. Use padding instead. */
+@media (min-width:861px){
+  .main{left:0;max-width:1120px;padding-left:calc(var(--dock-collapsed) + 44px);padding-right:36px;}
+  body.focus-mode .main{padding-left:32px;padding-right:32px;}
+}
+@media (min-width:861px) and (max-width:1100px){ .grid-3{grid-template-columns:1fr 1fr;} }
+
+@media (max-width:860px){
+  .topbar{left:calc(10px + var(--safe-l));right:calc(10px + var(--safe-r));top:calc(10px + var(--safe-t));}
+  .main{padding:calc(70px + var(--safe-t)) 16px calc(124px + var(--safe-b));}
+  .sidebar{top:calc(60px + var(--safe-t));bottom:calc(88px + var(--safe-b));left:calc(10px + var(--safe-l));width:min(82vw,310px);}
+  .write-fixed-bar{top:calc(56px + var(--safe-t));left:calc(10px + var(--safe-l));right:calc(10px + var(--safe-r));}
+  body.write-mode .main{padding-top:calc(134px + var(--safe-t));}
+  .topbar-fab{display:none;}
+  .bottom-nav{left:calc(10px + var(--safe-l));right:calc(10px + var(--safe-r));bottom:calc(10px + 0px);}
+  .bn-item{min-height:48px;font-size:10.5px;}
+  .page-head{margin-bottom:16px;}
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .dash-grid{gap:12px;}
+  .dash-hero{padding:20px 18px;}
+  .dash-hero h2{font-size:21px;}
+  .quick-grid{grid-template-columns:repeat(2,1fr);}
+  .period-tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .period-tabs::-webkit-scrollbar{display:none;} .period-tabs .btn{flex:none;}
+  .settings-nav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;}
+  .settings-nav::-webkit-scrollbar{display:none;} .settings-nav a{flex:none;}
+  .settings-row{gap:10px;} .settings-row > .inline-form,.settings-row > select,.settings-row > .seg{max-width:100%;}
+  .inline-form{width:100%;} .inline-form input{flex:1 1 100%!important;}
+  .mood-emoji-grid{grid-template-columns:repeat(2,1fr);}
+  .admin-user-row{flex-wrap:wrap;} .au-tags{max-width:none;justify-content:flex-start;flex-basis:100%;}
+  .admin-toolbar input[type=search]{min-width:0;flex-basis:100%;}
+  .filter-row{gap:6px;} .filter-row select,.filter-row input[type=date]{flex:1 1 130px;min-width:0;}
+}
+
+@media (max-width:600px){
+  .topbar-streak{padding:0 10px;}
+  .install-chip{display:none;}
+  /* modals become bottom sheets on phones */
+  .modal-backdrop{align-items:flex-end;padding:0;}
+  .modal,.modal.modal-wide{max-width:100%;width:100%;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + var(--safe-b));max-height:88dvh;animation:sheetUp .28s var(--ease);}
+  .modal .row{flex-direction:column-reverse;} .modal .row .btn{justify-content:center;width:100%;min-height:44px;}
+  .onb-card{border-radius:24px 24px 0 0;}
+  .auth-box{padding:28px 20px 22px;border-radius:24px;}
+  #auth{padding:16px;}
+  /* write toolbar: put Cancel/Save first so they are never scrolled out of reach */
+  .write-fixed-bar{padding:7px 10px;gap:6px;}
+  .write-fixed-bar > .wfb-group:last-child{order:-1;gap:8px!important;}
+  .write-fixed-bar > .wfb-spacer,.write-fixed-bar > .wfb-sep{display:none;}
+  .write-fixed-bar .draft-status{display:none;}
+  .content-input{font-size:17px;min-height:46vh;}
+  .editor-footer{flex-direction:column;align-items:stretch;}
+  /* calendar */
+  .cal-grid{gap:3px;} .cal-cell{padding:3px;font-size:11px;border-radius:7px;} .cal-pin{font-size:8px;top:2px;left:3px;}
+  .cal-dot{width:6px;height:6px;} .cal-legend{gap:8px 12px;}
+  .cal-head h3{font-size:15px;}
+  /* list rows: action buttons drop under the text */
+  .entry-row{flex-wrap:wrap;gap:10px;padding:12px 2px;}
+  .entry-date{width:44px;}
+  .entry-body{flex:1 1 calc(100% - 64px);}
+  .entry-row > div[style*="flex-direction:column"]{flex-direction:row!important;flex-basis:100%;padding-left:54px;}
+  .life-card{width:200px;}
+  .dash-stat .num{font-size:22px;}
+  .state-box{padding:32px 12px;}
+  .page-head h1{font-size:24px;}
+  .toast-region{width:calc(100% - 20px);}
+  .update-bar{border-radius:16px;}
+  .hook-box,.ai-note{font-size:12px;}
+  .media-gallery{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
+  .recording-bar{gap:8px;} .recording-bar > div{margin-left:0!important;width:100%;}
+  .lightbox{padding:12px;} .lightbox .lb-nav{width:40px;height:40px;}
+  .admin-tabs{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;}
+  .admin-stats{grid-template-columns:repeat(2,1fr);}
+  .admin-mood-grid{grid-template-columns:1fr;}
+  .admin-audit-row{flex-wrap:wrap;} .aa-detail{flex-basis:100%;white-space:normal;}
+}
+@media (max-width:480px){
+  .topbar .brand,#themeChip{display:none;}
+  .main{padding-left:12px;padding-right:12px;}
+  .card{padding:16px;border-radius:16px;}
+  .tile{padding:14px;}
+  .life-mini-grid{grid-template-columns:repeat(2,1fr);}
+  .grid-2,.grid-3{gap:12px;}
+  .dash-stat{grid-column:span 6;}
+  .quick-btn{padding:12px;}
+  .stat-card{padding:12px;} .stat-card b{font-size:20px;}
+  .topbar-search{margin:0 6px;}
+  .seg{width:100%;} .seg button{flex:1;justify-content:center;}
+}
+@media (max-width:360px){
+  .topbar-streak .stxt{display:none;}
+  .dash-stat{grid-column:span 12;}
+  .stat-grid,.quick-grid{grid-template-columns:1fr 1fr;}
+  .bn-item span{font-size:9.5px;}
+}
+/* short landscape phones: keep bars from eating the screen */
+@media (max-height:480px) and (orientation:landscape){
+  .bottom-nav{display:none;}
+  .main{padding-bottom:40px;}
+  .cmdk{padding-top:12px;} .cmdk-box{max-height:92dvh;}
+}
+/* finger-friendly targets on touch devices */
+@media (pointer:coarse){
+  .btn{min-height:42px;} .btn-sm{min-height:38px;padding:7px 13px;}
+  .fmt-btn{min-width:38px;height:38px;} .fmt-size{height:38px;}
+  .mood-opt{min-height:40px;padding:7px 14px;}
+  .pm-item,.sheet-action{min-height:48px;}
+  .chip-btn,.hamburger,.topbar-fab,.topbar-streak,.topbar-search{height:42px;} .chip-btn,.hamburger,.topbar-fab{width:42px;}
+  .tag-chip button{min-width:24px;min-height:24px;}
+  .rm{width:28px!important;height:28px!important;}
+  .switch{width:46px;height:26px;} .switch .track:before{width:20px;height:20px;top:3px;left:3px;} .switch input:checked + .track:before{transform:translateX(20px);}
+  .cal-cell{min-height:44px;}
+}
+@media (prefers-reduced-motion:reduce){ body::before{animation:none;} #splash .sp-mark,#splash .sp-bar::after,.install-chip.pulse{animation:none;} }
+@media (forced-colors:active){ .btn-primary,.btn-accent{border:1px solid ButtonText;} }
+@media print{ body::before,body::after,#splash,.update-bar,.cmdk{display:none!important;} .page-head h1{-webkit-text-fill-color:currentColor;background:none;} }
+
+.install-chip{width:auto!important;}
 </style>
 </head>
 <body>
 <a class="skip-link" href="#main" onclick="var m=document.getElementById('main');if(m){event.preventDefault();m.focus();}">Skip to content</a>
 <div class="net-banner" id="netBanner" role="status" aria-live="polite"></div>
+<div id="splash" aria-hidden="true"><div class="sp-mark">J</div><div class="sp-word">JournalOS</div><div class="sp-bar"></div></div>
 
 <!-- ============ AUTH SCREEN (mock — see Settings > Account for real-auth hook) ============ -->
 <div id="auth">
@@ -1170,6 +1539,7 @@ body.focus-mode::before{opacity:.25;}
     <h1>JournalOS</h1>
     <p class="tag">Write First. Everything Else Second.</p>
     <div id="authForm"></div>
+    <div class="auth-install" data-pwa-install><button type="button" class="btn btn-ghost" onclick="PWA.install()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> অ্যাপ ইনস্টল করো</button></div>
     <div class="auth-version" id="authVersion"></div>
   </div>
 </div>
@@ -1191,6 +1561,7 @@ body.focus-mode::before{opacity:.25;}
     </button>
   </div>
   <div class="topbar-actions">
+    <button class="chip-btn install-chip" id="installChip" data-pwa-install onclick="PWA.install()" aria-label="Install JournalOS app" title="Install app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg><span>Install</span></button>
     <div class="topbar-streak" id="streakChip" title="Day streak" onclick="go('dashboard')">
       <span aria-hidden="true">🔥</span><b id="streakNum">0</b><span class="stxt">day streak</span>
     </div>
@@ -1221,6 +1592,10 @@ body.focus-mode::before{opacity:.25;}
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.5 1 .51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     Customization &amp; Settings
   </button>
+  <button class="pm-item" onclick="closeProfileMenu();openCmdk()">⌘ Command palette <kbd>Ctrl K</kbd></button>
+  <button class="pm-item" onclick="closeProfileMenu();toggleThemeQuick()">🌓 Switch theme</button>
+  <button class="pm-item" data-pwa-install onclick="closeProfileMenu();PWA.install()">⬇️ Install app</button>
+  <button class="pm-item" onclick="closeProfileMenu();PWA.check(true)">🔄 Check for updates <span class="pm-badge" id="pmUpdateBadge" hidden>New</span></button>
   <div class="pm-sep"></div>
   <button class="pm-item" onclick="closeProfileMenu();logout()">
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -1508,7 +1883,7 @@ if(!window.__FB_FAILED__){
 // ---------- 0. Product configuration ----------
 const APP = Object.freeze({
   name: 'JournalOS',
-  version: '1.0.0',
+  version: '1.1.0',
   tagline: 'Write First. Everything Else Second.',
   promise: 'You write. JournalOS remembers, understands, organizes, and reflects.',
   schemaVersion: 1,      // stamped on newly written docs; lets future migrations find old ones
@@ -1772,7 +2147,7 @@ function onReconnect(){
 // ---------- 6. Theme: Light / Dark / System ----------
 const ThemeSvc = {
   KEY: 'journalos_theme_cache',
-  COLORS: {light:'#F6F1E6', dark:'#1B1B17'},
+  COLORS: {light:'#EEF1FA', dark:'#070A14'},
   mq: window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null,
   mode(){
     const m = state.settings && state.settings.theme;
@@ -2354,7 +2729,7 @@ function renderSettings(){
   const since = accountSince();
   const mode = ThemeSvc.mode();
   const hasKey = !!s.apiKey;
-  const sections = [['set-account','Account'],['set-appearance','Appearance'],['set-journal','Journal'],['set-ai','AI'],['set-notifications','Notifications'],['set-privacy','Data & Privacy'],['set-about','About']];
+  const sections = [['set-account','Account'],['set-appearance','Appearance'],['set-journal','Journal'],['set-ai','AI'],['set-notifications','Notifications'],['set-app','App & Updates'],['set-privacy','Data & Privacy'],['set-about','About']];
   return `
     <div class="page-head"><div><h1>Settings</h1><div class="sub">Saved to your account and shared across your devices.</div></div></div>
     <nav class="settings-nav" aria-label="Settings sections">
@@ -2389,6 +2764,7 @@ function renderSettings(){
           ${[['light','☀️ Light'],['dark','🌙 Dark'],['system','🖥 System']].map(m=>`<button type="button" role="radio" data-mode="${m[0]}" aria-checked="${mode===m[0]}" onclick="setThemeMode('${m[0]}')">${m[1]}</button>`).join('')}
         </div>
       </div>
+      ${typeof accentPickerHTML==='function' ? accentPickerHTML() : ''}
       <h4 style="margin:18px 0 0;font-size:13px;color:var(--text-muted);">Dashboard sections</h4>
       ${dashToggle('todayJournal','Today\'s Journal','Today\'s entry, mood chip and Continue writing.')}
       ${dashToggle('streakStats','Stat Tiles','Words today, day streak, total entries, today\'s mood.')}
@@ -2465,6 +2841,12 @@ function renderSettings(){
       </div>
       ${settingToggle('aiInsightNotify','AI Insight Ready','Notify when a weekly/monthly/yearly AI reflection finishes generating.', s.aiInsightNotify !== false)}
       <div class="ai-note">Reminders only fire while a JournalOS tab is open in your browser — they can't wake up in the background.</div>
+    </section>
+
+    <section class="settings-group card" id="set-app" aria-labelledby="h-app">
+      <h3 id="h-app">App &amp; Updates</h3>
+      <div class="group-sub">ব্রাউজার ছাড়াই অ্যাপের মতো ব্যবহার করো, আর নতুন ভার্সন এলে এক ট্যাপে আপডেট নাও।</div>
+      ${typeof renderAppSection==='function' ? renderAppSection() : ''}
     </section>
 
     <section class="settings-group card" id="set-privacy" aria-labelledby="h-privacy">
@@ -2835,9 +3217,8 @@ function retryAsk(i){
 
 // ---------- PWA ----------
 function registerServiceWorker(){
-  if(!('serviceWorker' in navigator)) return;
-  if(!(location.protocol === 'https:' || location.hostname === 'localhost')) return;
-  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{ /* sw.js not deployed — the app works fine without it */ }); });
+  /* v1.1: registration + update handling now live in the PWA module at the end of this file. */
+  return;
 }
 
 const THEME_CACHE_KEY = ThemeSvc.KEY; // local-only, avoids a flash of the wrong theme before Firebase responds
@@ -8059,6 +8440,344 @@ if(window.__FB_FAILED__) showLoadFailure(); else boot();
 // Module 09: best-effort mic release if the tab closes mid-recording
 // (browsers generally do this automatically, but this is a cheap safety net).
 window.addEventListener('beforeunload', ()=>{ if(state.recording) stopVoiceRecording(true); });
+</script>
+
+<script>
+/* ================================================================
+   JOURNALOS v1.1 — PWA · UPDATES · COMMAND PALETTE · ACCENTS
+   Added as a separate script so none of the original logic is touched.
+   ================================================================ */
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => (typeof escapeHtml === 'function' ? escapeHtml(String(s == null ? '' : s)) : String(s));
+const root = document.documentElement;
+
+/* ---------------- boot splash release ---------------- */
+function releaseSplash(){ root.classList.remove('booting'); }
+const _showAuth = window.showAuth, _showApp = window.showApp;
+window.showAuth = function(){ releaseSplash(); return _showAuth.apply(this, arguments); };
+window.showApp = function(){
+  releaseSplash();
+  const r = _showApp.apply(this, arguments);
+  try{ handleLaunchAction(); }catch(e){}
+  return r;
+};
+setTimeout(releaseSplash, 8000);          // never trap the user behind the splash (offline, blocked CDN…)
+if(window.__FB_FAILED__) releaseSplash();
+
+/* ---------------- launch actions (manifest shortcuts: ?action=write …) ---------------- */
+function handleLaunchAction(){
+  const p = new URLSearchParams(location.search), a = p.get('action');
+  if(!a) return;
+  try{ history.replaceState(null, '', location.pathname + location.hash); }catch(e){}
+  if(a === 'write') go('write');
+  else if(a === 'mood') openMoodSheet();
+  else if(a === 'library') go('timeline');
+  else if(a === 'insights') go('insights');
+  else if(a === 'search') openAdvancedSearch();
+}
+
+/* ---------------- accent colours ---------------- */
+const ACCENTS = window.__ACCENTS__ || {};
+function applyAccent(){
+  const key = (state && state.settings && state.settings.accent) || (function(){ try{ return localStorage.getItem('journalos_accent'); }catch(e){ return null; } })() || 'indigo';
+  const a = ACCENTS[key] || ACCENTS.indigo; if(!a) return;
+  const dark = root.getAttribute('data-theme') === 'dark', c = dark ? a.dark : a.light, s = root.style;
+  s.setProperty('--accent', c.a); s.setProperty('--accent-2', c.b); s.setProperty('--accent-soft', c.s);
+  s.setProperty('--accent-shadow', c.sh);
+}
+window.applyAccent = applyAccent;
+if(typeof ThemeSvc !== 'undefined'){
+  const _apply = ThemeSvc.apply.bind(ThemeSvc);
+  ThemeSvc.apply = function(mode){ _apply(mode); applyAccent(); };
+}
+window.setAccent = function(key){
+  if(!ACCENTS[key]) return;
+  try{ localStorage.setItem('journalos_accent', key); }catch(e){}
+  if(state.settings) state.settings.accent = key;
+  applyAccent();
+  document.querySelectorAll('.accent-swatch').forEach(b=>b.setAttribute('aria-checked', String(b.dataset.accent === key)));
+  if(state.user && typeof saveUserSettings === 'function') saveUserSettings({...(state.settings || DEFAULT_SETTINGS), accent:key}, {silent:true});
+};
+window.accentPickerHTML = function(){
+  const cur = (state.settings && state.settings.accent) || (function(){ try{ return localStorage.getItem('journalos_accent'); }catch(e){ return null; } })() || 'indigo';
+  const names = {indigo:'Indigo', cyan:'Cyan', emerald:'Emerald', rose:'Rose', violet:'Violet', amber:'Classic'};
+  return `<div class="settings-row"><div><div class="label" id="accentLabel">Accent colour</div><div class="desc">পুরো অ্যাপের হাইলাইট রং — সব ডিভাইসে সিঙ্ক হয়।</div></div>
+    <div class="accent-swatches" role="radiogroup" aria-labelledby="accentLabel">
+      ${Object.keys(ACCENTS).map(k=>`<button type="button" class="accent-swatch" role="radio" data-accent="${k}" aria-checked="${k===cur}" aria-label="${names[k]||k}" title="${names[k]||k}"
+        style="background:linear-gradient(135deg,${ACCENTS[k].light.a},${ACCENTS[k].light.b})" onclick="setAccent('${k}')"></button>`).join('')}
+    </div></div>`;
+};
+
+/* ================================================================
+   PWA — install + update
+   ================================================================ */
+const PWA = {
+  reg: null, deferred: window.__bip || null, updateReady: false, wantReload: false,
+  checking: false, lastCheck: 0, lastResult: '', secure: window.isSecureContext && /^https?:$/.test(location.protocol),
+  build: (document.querySelector('meta[name="app-build"]') || {}).content || '',
+  standalone(){ return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true; },
+  platform(){
+    const ua = navigator.userAgent || '';
+    if(/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+    if(/android/i.test(ua)) return 'android';
+    return 'desktop';
+  },
+  canPrompt(){ return !!this.deferred; },
+  refreshUI(){
+    root.classList.toggle('is-standalone', this.standalone());
+    root.classList.toggle('has-update', this.updateReady);
+    document.querySelectorAll('[data-pwa-install]').forEach(el=>el.classList.toggle('pulse', this.canPrompt() && el.classList.contains('install-chip')));
+    const pm = $('pmUpdateBadge'); if(pm) pm.hidden = !this.updateReady;
+    if(typeof state !== 'undefined' && state.view === 'settings' && !window.__editingMoodEmoji){
+      const box = $('pwaStatusBox'); if(box) box.innerHTML = renderPwaStatus();
+    }
+  },
+  async install(){
+    if(this.standalone()){ toast('JournalOS ইতিমধ্যে অ্যাপ হিসেবে চলছে।', {type:'info'}); return; }
+    const ev = this.deferred;
+    if(ev){
+      this.deferred = null; window.__bip = null;
+      try{
+        ev.prompt();
+        const choice = await ev.userChoice;
+        if(choice && choice.outcome === 'accepted') toast('ইনস্টল হচ্ছে… হোম স্ক্রিন/অ্যাপ লিস্টে JournalOS পাবে।', {type:'success'});
+      }catch(e){ this.openGuide(); }
+      this.refreshUI(); return;
+    }
+    this.openGuide();
+  },
+  openGuide(){
+    let el = $('pwaGuide'); if(el) el.remove();
+    const p = this.platform();
+    let steps;
+    if(!this.secure){
+      steps = `<p class="pg-note">⚠️ ইনস্টল করতে হলে সাইটটি <b>HTTPS</b>-এ (যেমন Firebase Hosting, Netlify, Vercel, GitHub Pages) হোস্ট করা থাকতে হবে। ফাইল সরাসরি খুলে (file://) বা http-তে ইনস্টল হয় না।</p>`;
+    } else if(p === 'ios'){
+      steps = `<ol><li>Safari-তে এই পেজ খোলা রাখো।</li><li>নিচের (বা উপরের) <span class="pg-ic">Share ⬆︎</span> বাটনে ট্যাপ করো।</li><li>নিচে স্ক্রল করে <b>“Add to Home Screen”</b> বেছে নাও।</li><li><b>Add</b> চাপলেই JournalOS অ্যাপ হিসেবে হোম স্ক্রিনে চলে আসবে।</li></ol>`;
+    } else if(p === 'android'){
+      steps = `<ol><li>Chrome-এর <span class="pg-ic">⋮</span> মেনু খোলো।</li><li><b>“Install app”</b> অথবা <b>“Add to Home screen”</b> বেছে নাও।</li><li>নিশ্চিত করলেই অ্যাপ লিস্টে JournalOS যুক্ত হবে।</li></ol><p class="pg-note">অপশনটি না দেখালে পেজটা একবার রিলোড করে কয়েক সেকেন্ড অপেক্ষা করো।</p>`;
+    } else {
+      steps = `<ol><li><b>Chrome / Edge:</b> অ্যাড্রেস বারের ডানদিকের <span class="pg-ic">⊕ Install</span> আইকনে ক্লিক করো (অথবা মেনু → “Install JournalOS”)।</li><li><b>Safari (macOS):</b> File → <b>Add to Dock</b>।</li><li>Firefox ডেস্কটপ PWA ইনস্টল সমর্থন করে না — Chrome বা Edge ব্যবহার করো।</li></ol>`;
+    }
+    el = document.createElement('div');
+    el.className = 'modal-backdrop'; el.id = 'pwaGuide'; el.setAttribute('aria-labelledby', 'pwaGuideTitle');
+    el.innerHTML = `<div class="modal pwa-guide"><h3 id="pwaGuideTitle">JournalOS অ্যাপ ইনস্টল করো</h3>
+      <p>ইনস্টল করলে ব্রাউজার ছাড়াই আলাদা অ্যাপের মতো খুলবে — দ্রুত, ফুল-স্ক্রিন, আর অফলাইনেও লোড হবে।</p>${steps}
+      <div class="row"><button class="btn btn-primary" onclick="PWA.closeGuide()">বুঝেছি</button></div></div>`;
+    el.addEventListener('click', e=>{ if(e.target === el) PWA.closeGuide(); });
+    document.body.appendChild(el);
+    if(window.Dialogs && Dialogs.watch) Dialogs.watch(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+  },
+  closeGuide(){ const el = $('pwaGuide'); if(el){ el.classList.remove('show'); setTimeout(()=>el.remove(), 80); } },
+
+  /* ---- service worker + updates ---- */
+  init(){
+    window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); this.deferred = e; window.__bip = e; this.refreshUI(); this.offerInstallToast(); });
+    window.addEventListener('pwa-bip', ()=>{ this.deferred = window.__bip; this.refreshUI(); this.offerInstallToast(); });
+    window.addEventListener('appinstalled', ()=>{ this.deferred = null; window.__bip = null; toast('JournalOS ইনস্টল হয়েছে। 🎉', {type:'success'}); this.refreshUI(); });
+    matchMedia('(display-mode: standalone)').addEventListener && matchMedia('(display-mode: standalone)').addEventListener('change', ()=>this.refreshUI());
+    this.refreshUI();
+    if(!('serviceWorker' in navigator) || !this.secure){ this.lastResult = this.secure ? 'unsupported' : 'insecure'; return; }
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      if(this.wantReload && !this._reloaded){ this._reloaded = true; location.reload(); }
+    });
+    const register = ()=>navigator.serviceWorker.register('sw.js').then(reg=>{
+      this.reg = reg;
+      if(reg.waiting && navigator.serviceWorker.controller) this.markUpdate();
+      reg.addEventListener('updatefound', ()=>{
+        const w = reg.installing; if(!w) return;
+        w.addEventListener('statechange', ()=>{ if(w.state === 'installed' && navigator.serviceWorker.controller) this.markUpdate(); });
+      });
+      setTimeout(()=>this.check(false), 12000);
+    }).catch(err=>{ this.lastResult = 'sw-failed'; console.warn('SW registration failed', err && err.message); });
+    if(document.readyState === 'complete') register(); else window.addEventListener('load', register);
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && Date.now() - this.lastCheck > 15*60*1000) this.check(false); });
+    window.addEventListener('online', ()=>this.check(false));
+    setInterval(()=>this.check(false), 60*60*1000);
+  },
+  offerInstallToast(){
+    if(this.standalone()) return;
+    let seen = null; try{ seen = localStorage.getItem('journalos_install_offered'); }catch(e){}
+    if(seen) return;
+    try{ localStorage.setItem('journalos_install_offered', '1'); }catch(e){}
+    setTimeout(()=>{ if(state && state.user) toast('JournalOS-কে অ্যাপ হিসেবে ইনস্টল করতে পারো।', {action:{label:'Install', fn:()=>this.install()}, ttl:10000}); }, 4000);
+  },
+  ask(msg, ms){
+    return new Promise(resolve=>{
+      const ctl = navigator.serviceWorker && navigator.serviceWorker.controller;
+      if(!ctl){ resolve(null); return; }
+      const ch = new MessageChannel(); const t = setTimeout(()=>resolve(null), ms || 15000);
+      ch.port1.onmessage = e=>{ clearTimeout(t); resolve(e.data); };
+      try{ ctl.postMessage(msg, [ch.port2]); }catch(e){ clearTimeout(t); resolve(null); }
+    });
+  },
+  // Fallback for browsers/hosts without a controlling worker: compare the <meta name="app-build"> of a fresh copy.
+  async checkViaFetch(){
+    try{
+      const r = await fetch(location.pathname, {cache:'no-store'}); if(!r.ok) return 'error';
+      const m = /<meta\s+name=["']app-build["']\s+content=["']([^"']*)["']/i.exec(await r.text());
+      return (m && this.build && m[1] !== this.build) ? 'updated' : 'current';
+    }catch(e){ return 'offline'; }
+  },
+  async check(manual){
+    if(this.checking) return;
+    if(!navigator.onLine){ this.lastResult = 'offline'; if(manual) toast("অফলাইন — ইন্টারনেট থাকলে আবার চেষ্টা করো।", {type:'error'}); this.refreshUI(); return; }
+    this.checking = true; this.refreshUI();
+    let status = 'current';
+    try{
+      if(this.reg){ try{ await this.reg.update(); }catch(e){} if(this.reg.waiting && navigator.serviceWorker.controller) status = 'updated'; }
+      if(status !== 'updated'){
+        const r = await this.ask({type:'CHECK_UPDATE', build:this.build});
+        status = r ? r.status : await this.checkViaFetch();
+      }
+    }catch(e){ status = 'error'; }
+    this.checking = false; this.lastCheck = Date.now(); this.lastResult = status;
+    if(status === 'updated') this.markUpdate();
+    else if(manual) toast(status === 'current' ? 'আপনি সর্বশেষ ভার্সনেই আছেন। ✓' : status === 'offline' ? 'অফলাইন — আবার চেষ্টা করো।' : "আপডেট চেক করা যায়নি।", {type: status === 'current' ? 'success' : 'error'});
+    this.refreshUI();
+  },
+  markUpdate(){
+    if(this.updateReady) return;
+    this.updateReady = true; this.refreshUI(); this.showBar();
+  },
+  showBar(){
+    let bar = $('updateBar');
+    if(!bar){
+      bar = document.createElement('div'); bar.id = 'updateBar'; bar.className = 'update-bar'; bar.setAttribute('role', 'status'); bar.setAttribute('aria-live', 'polite');
+      bar.innerHTML = `<span class="ub-ic" aria-hidden="true">🚀</span><div class="ub-txt"><b>নতুন আপডেট প্রস্তুত</b><span>রিলোড করলেই সর্বশেষ ভার্সন চালু হবে।</span></div>
+        <div class="ub-act"><button class="btn btn-sm btn-ghost" onclick="PWA.dismissBar()">পরে</button><button class="btn btn-sm btn-primary" onclick="PWA.applyUpdate()">এখনই আপডেট</button></div>`;
+      document.body.appendChild(bar);
+    }
+    requestAnimationFrame(()=>bar.classList.add('show'));
+  },
+  dismissBar(){ const b = $('updateBar'); if(b) b.classList.remove('show'); },
+  applyUpdate(){
+    try{ if(typeof scheduleAutosave === 'function' && window.__draft) scheduleAutosave(); }catch(e){}
+    if(typeof state !== 'undefined' && state.view === 'write' && typeof draftIsDirty === 'function' && draftIsDirty()) toast('অসংরক্ষিত লেখা এই ডিভাইসে ড্রাফট হিসেবে রাখা আছে — রিলোডের পর ফিরে পাবে।', {ttl:3500});
+    this.wantReload = true;
+    const w = this.reg && this.reg.waiting;
+    if(w){ w.postMessage({type:'SKIP_WAITING'}); setTimeout(()=>{ if(!this._reloaded) location.reload(); }, 2500); }
+    else setTimeout(()=>location.reload(), 150);
+  }
+};
+window.PWA = PWA;
+
+function renderPwaStatus(){
+  const inst = PWA.standalone();
+  const res = PWA.lastResult;
+  let upd = PWA.updateReady ? '<span class="badge tone-warn">নতুন আপডেট আছে</span>'
+    : PWA.checking ? '<span class="badge tone-accent">চেক হচ্ছে…</span>'
+    : res === 'current' ? '<span class="badge tone-ok">সর্বশেষ ভার্সন</span>'
+    : res === 'offline' ? '<span class="badge tone-warn">অফলাইন</span>'
+    : res === 'insecure' ? '<span class="badge tone-bad">HTTPS দরকার</span>'
+    : res === 'sw-failed' || res === 'unsupported' ? '<span class="badge tone-bad">সার্ভিস ওয়ার্কার চালু হয়নি</span>'
+    : '<span class="badge">—</span>';
+  return `
+    <div class="settings-row"><div><div class="label">Install status</div><div class="desc">${inst ? 'অ্যাপ হিসেবে চলছে — ব্রাউজার ছাড়াই।' : 'এখনো ব্রাউজারে চলছে। ইনস্টল করলে আলাদা অ্যাপ হিসেবে খুলবে।'}</div></div>
+      ${inst ? '<span class="badge tone-ok">Installed</span>' : `<button class="btn btn-sm btn-primary" onclick="PWA.install()">⬇ Install app</button>`}</div>
+    <div class="settings-row"><div><div class="label">Version</div><div class="desc">JournalOS v${esc(APP.version)}${PWA.build ? ' · build ' + esc(PWA.build) : ''}</div></div>${upd}</div>
+    <div class="settings-row"><div><div class="label">Updates</div><div class="desc">নতুন ভার্সন থাকলে নিজে থেকেই জানানো হয় (প্রতি ঘণ্টায় ও অ্যাপে ফিরলে চেক হয়)।</div></div>
+      ${PWA.updateReady ? '<button class="btn btn-sm btn-primary" onclick="PWA.applyUpdate()">এখনই আপডেট</button>' : `<button class="btn btn-sm" onclick="PWA.check(true)" ${PWA.checking ? 'disabled' : ''}>Check for updates</button>`}</div>`;
+}
+window.renderAppSection = function(){
+  return `<div id="pwaStatusBox">${renderPwaStatus()}</div>
+    <div class="settings-row"><div><div class="label">Command palette</div><div class="desc">যেকোনো জায়গা থেকে <b>Ctrl/⌘ + K</b> চেপে সরাসরি যেকোনো পেজ বা অ্যাকশনে যাও।</div></div><button class="btn btn-sm" onclick="openCmdk()">Open</button></div>`;
+};
+
+/* ================================================================
+   COMMAND PALETTE  (Ctrl/⌘ + K)
+   ================================================================ */
+let cmdItems = [], cmdSel = 0;
+function cmdAll(q){
+  const nav = (icon, label, sub, fn, kw) => ({icon, label, sub, fn, kw: (label + ' ' + (kw||'')).toLowerCase(), group:'Go to'});
+  const act = (icon, label, sub, fn, kw) => ({icon, label, sub, fn, kw: (label + ' ' + (kw||'')).toLowerCase(), group:'Actions'});
+  const items = [
+    act('✍️','Write today’s journal','', ()=>startQuickWrite(), 'new entry likho লেখো জার্নাল'),
+    act('🙂','Log mood','', ()=>openMoodSheet(), 'mood feeling'),
+    nav('🏠','Dashboard','', ()=>go('dashboard'), 'home'),
+    nav('📚','Journal Library','', ()=>go('timeline'), 'entries timeline'),
+    nav('📅','Calendar','', ()=>go('calendar'), ''),
+    nav('📈','Insights','Mood & Writing', ()=>go('insights'), 'analytics mood'),
+    nav('🧠','Life','Achievements, Plans, Memories', ()=>go('life'), 'achievements plans quotes ideas people places'),
+    nav('🔎','Search','', ()=>openAdvancedSearch(), 'find ask'),
+    nav('🗄','Archive','', ()=>go('archive'), ''),
+    nav('⚙️','Settings','', ()=>go('settings'), 'customize preferences'),
+    nav('🔒','Data & Privacy','', ()=>go('privacy'), 'export delete backup'),
+    act('🌓','Toggle light / dark theme','', ()=>toggleThemeQuick(), 'theme dark light'),
+    act('🎯','Focus writing mode','', ()=>{ if(state.view !== 'write') go('write'); setTimeout(()=>toggleFocusMode(true), 120); }, 'distraction'),
+    act('⬇️','Install JournalOS app','', ()=>PWA.install(), 'download pwa app'),
+    act('🔄','Check for updates','', ()=>PWA.check(true), 'upgrade version'),
+    act('🚪','Log out','', ()=>logout(), 'sign out')
+  ];
+  if(isAdminUser && isAdminUser()) items.push(act('🛠','Go to Backend','', ()=>openBackend(), 'admin console'));
+  const s = q.trim().toLowerCase();
+  let out = s ? items.filter(i=>s.split(/\s+/).every(w=>i.kw.includes(w))) : items;
+  if(s) out = out.concat([{icon:'🔎', label:'Search journals for “' + q.trim() + '”', sub:'Enter', group:'Search', kw:'', fn:()=>submitTopSearch(q.trim())}]);
+  return out;
+}
+function cmdRender(){
+  const q = ($('cmdkInput') || {}).value || '';
+  cmdItems = cmdAll(q); if(cmdSel >= cmdItems.length) cmdSel = 0;
+  const list = $('cmdkList'); if(!list) return;
+  if(!cmdItems.length){ list.innerHTML = '<div class="cmdk-empty">কিছু পাওয়া যায়নি।</div>'; return; }
+  let html = '', last = '';
+  cmdItems.forEach((it, i)=>{
+    if(it.group !== last){ html += `<div class="cmdk-group" role="presentation">${esc(it.group)}</div>`; last = it.group; }
+    html += `<button type="button" class="cmdk-item" role="option" id="cmdk-opt-${i}" data-i="${i}" aria-selected="${i === cmdSel}"><span class="ci-ic" aria-hidden="true">${it.icon}</span><span>${esc(it.label)}</span>${it.sub ? `<span class="ci-sub">${esc(it.sub)}</span>` : ''}</button>`;
+  });
+  list.innerHTML = html;
+}
+function cmdRun(i){
+  const it = cmdItems[i]; if(!it) return;
+  closeCmdk();
+  setTimeout(()=>{ try{ it.fn(); }catch(e){ reportError && reportError(e, 'command'); } }, 30);
+}
+window.openCmdk = function(){
+  if(!state.user) return;
+  let el = $('cmdk');
+  if(!el){
+    el = document.createElement('div'); el.id = 'cmdk'; el.className = 'cmdk'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Command palette');
+    el.innerHTML = `<div class="cmdk-box"><div class="cmdk-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="cmdkInput" type="text" placeholder="কোথায় যেতে চাও, বা কী করতে চাও?" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="cmdkList"></div>
+      <div class="cmdk-list" id="cmdkList" role="listbox"></div>
+      <div class="cmdk-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span><span><kbd>Enter</kbd> select</span><span><kbd>Esc</kbd> close</span></div></div>`;
+    document.body.appendChild(el);
+    el.addEventListener('mousedown', e=>{ if(e.target === el) closeCmdk(); });
+    const inp = $('cmdkInput');
+    inp.addEventListener('input', ()=>{ cmdSel = 0; cmdRender(); });
+    inp.addEventListener('keydown', e=>{
+      if(e.key === 'ArrowDown'){ e.preventDefault(); cmdSel = (cmdSel + 1) % Math.max(1, cmdItems.length); cmdRender(); scrollSel(); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); cmdSel = (cmdSel - 1 + cmdItems.length) % Math.max(1, cmdItems.length); cmdRender(); scrollSel(); }
+      else if(e.key === 'Enter'){ e.preventDefault(); cmdRun(cmdSel); }
+      else if(e.key === 'Escape'){ e.preventDefault(); closeCmdk(); }
+    });
+    $('cmdkList').addEventListener('click', e=>{ const b = e.target.closest('.cmdk-item'); if(b) cmdRun(+b.dataset.i); });
+    $('cmdkList').addEventListener('mousemove', e=>{ const b = e.target.closest('.cmdk-item'); if(b && +b.dataset.i !== cmdSel){ cmdSel = +b.dataset.i; document.querySelectorAll('.cmdk-item').forEach(x=>x.setAttribute('aria-selected', String(+x.dataset.i === cmdSel))); } });
+  }
+  closeProfileMenu && closeProfileMenu();
+  cmdSel = 0; $('cmdkInput').value = ''; cmdRender();
+  el.classList.add('show'); setTimeout(()=>$('cmdkInput').focus(), 20);
+};
+function scrollSel(){ const s = $('cmdk-opt-' + cmdSel); if(s && s.scrollIntoView) s.scrollIntoView({block:'nearest'}); }
+window.closeCmdk = function(){ const el = $('cmdk'); if(el) el.classList.remove('show'); };
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k'){
+    e.preventDefault(); const el = $('cmdk'); (el && el.classList.contains('show')) ? closeCmdk() : openCmdk(); return;
+  }
+  if(e.key === '/' && !e.ctrlKey && !e.metaKey){
+    const t = e.target, tag = t && t.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+    const s = $('topSearchInput'); if(s && state.user){ e.preventDefault(); s.focus(); }
+  }
+  if(e.key === 'Escape'){ const g = $('pwaGuide'); if(g && g.classList.contains('show')){ PWA.closeGuide(); } }
+});
+
+PWA.init();
+applyAccent();
+})();
 </script>
 </body>
 </html>
