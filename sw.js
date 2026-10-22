@@ -12,7 +12,7 @@
  * Firebase / Firestore / Auth / Storage / Gemini calls are NEVER cached
  * or intercepted — they always go straight to the network.
  */
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const SHELL_CACHE = 'journalos-shell-' + VERSION;
 const RUNTIME_CACHE = 'journalos-runtime-' + VERSION;
 const SCOPE = self.registration.scope;               // e.g. https://example.com/app/
