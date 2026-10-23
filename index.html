@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-10-23.2">
+<meta name="app-build" content="2026-10-23.3">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:title" content="JournalOS — Write First. Everything Else Second.">
@@ -1619,6 +1619,28 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .pal-pop button{width:26px;height:26px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--rule);cursor:pointer;padding:0;}
 .pal-pop button:hover{transform:scale(1.12);}
 .pal-pop .pal-none{background:var(--paper-card);color:var(--ink-soft);font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+
+/* ---------- Phone writing layout: format bar pinned, app bar only on scroll-up, no bottom nav ---------- */
+@media (max-width:860px){
+  body.write-mode .topbar{transition:transform .24s ease,opacity .2s ease;}
+  body.write-mode:not(.topbar-peek) .topbar{transform:translateY(-130%);opacity:0;}
+  body.write-mode:not(.topbar-peek) .topbar>*{pointer-events:none;}
+  body.write-mode .bottom-nav{display:none!important;}
+  body.write-mode .write-fixed-bar.active{transform:none!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;
+    top:calc(8px + var(--safe-t,0px));transition:top .24s ease;}
+  body.write-mode.topbar-peek .write-fixed-bar.active{top:calc(56px + var(--safe-t,0px));}
+  body.write-mode .main{padding-top:calc(76px + var(--safe-t,0px));}
+  body.write-mode.topbar-peek .main{padding-top:calc(76px + var(--safe-t,0px));}
+  body.write-mode .main{padding-bottom:calc(72px + var(--safe-b,0px));}
+  /* formatting tools first, favourite / important flags at the end of the scroll strip */
+  .write-fixed-bar .wfb-optional{order:8;} .write-fixed-bar .wfb-group:not(.wfb-optional){order:1;}
+  .write-fixed-bar .wfb-group:last-child{order:9;}
+  .save-dock{bottom:calc(14px + var(--safe-b,0px));}
+  body.write-mode .toast-region{bottom:calc(64px + var(--safe-b,0px));}
+  html.kb-open .save-dock{bottom:calc(var(--kb,0px) + 8px);}
+  html.kb-open body.write-mode .main{padding-bottom:calc(var(--kb,0px) + 60px);}
+  .pal-pop{width:176px;}
+}
 
 /* hidden formatting bar must not peek out underneath / over the topbar */
 .write-fixed-bar{transition:transform .22s ease,opacity .18s ease,visibility 0s linear .22s;}
@@ -5003,13 +5025,18 @@ function syncWriteFixedBarVisibility(){
     wfb.classList.add('show'); // visible the moment you enter the editor
     const sd = document.getElementById('writeSaveDock'); if(sd) sd.classList.add('active');
     __wfbLastY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.classList.add('topbar-peek'); // phone: app bar visible on entry, tucks away once you start writing
   } else {
-    document.body.classList.remove('write-mode');
+    document.body.classList.remove('write-mode','topbar-peek');
     wfb.classList.remove('active');
     wfb.classList.remove('show');
     const sd = document.getElementById('writeSaveDock'); if(sd) sd.classList.remove('active');
   }
 }
+document.addEventListener('focusin', e=>{
+  // starting to type (title / editor) tucks the app bar away to leave room on phones
+  if(state.view==='write' && e.target && (e.target.id==='contentInput' || e.target.classList.contains('title-input'))) document.body.classList.remove('topbar-peek');
+});
 (function initWriteFixedBarScroll(){
   let ticking = false;
   window.addEventListener('scroll', function(){
@@ -5021,6 +5048,10 @@ function syncWriteFixedBarVisibility(){
       if(wfb){
         const y = window.scrollY || document.documentElement.scrollTop || 0;
         const delta = y - __wfbLastY;
+        // phone: the app's top bar only appears when you scroll back UP; the format bar itself stays pinned
+        if(y < 6 && !document.documentElement.classList.contains('kb-open')) document.body.classList.add('topbar-peek');
+        else if(delta < -10) document.body.classList.add('topbar-peek');
+        else if(delta > 6) document.body.classList.remove('topbar-peek');
         if(y < 40){
           wfb.classList.add('show'); // near the very top — keep it visible
         } else if(delta > 4){
@@ -5348,17 +5379,17 @@ function renderWrite(){
         <button type="button" class="fmt-btn" id="fmtItalicBtn" aria-label="Italic" title="Italic (Ctrl+I)" onmousedown="event.preventDefault()" onclick="fmtItalic()"><i>I</i></button>
         <button type="button" class="fmt-btn" id="fmtUnderBtn" aria-label="Underline" title="Underline (Ctrl+U)" onmousedown="event.preventDefault()" onclick="fmtUnderline()"><u>U</u></button>
         <button type="button" class="fmt-btn" id="fmtStrikeBtn" aria-label="Strikethrough" title="Strikethrough (Ctrl+Shift+X)" onmousedown="event.preventDefault()" onclick="fmtStrike()"><s>S</s></button>
-        <select class="fmt-size" id="fmtSizeSel" aria-label="Text size" title="Text size (select text first)" onmousedown="saveEditorSelection()" onchange="fmtSize(this.value); this.selectedIndex=0;">
+        <select class="fmt-size" id="fmtSizeSel" aria-label="Text size" title="Text size — select text, or set it before you start typing" onmousedown="saveEditorSelection()" onchange="fmtSize(this.value); this.selectedIndex=0;">
           <option value="" selected>Aa</option>
           ${FONT_SIZES.map(n=>`<option value="${n}">${n}px</option>`).join('')}
         </select>
-        <select class="fmt-size fmt-font" id="fmtFontSel" aria-label="Font" title="Font (select text first)" onmousedown="saveEditorSelection()" onchange="fmtFont(this.value); this.selectedIndex=0;">
+        <select class="fmt-size fmt-font" id="fmtFontSel" aria-label="Font" title="Font — select text, or set it before you start typing" onmousedown="saveEditorSelection()" onchange="fmtFont(this.value); this.selectedIndex=0;">
           <option value="" selected>Font</option>
           <option value="__default">Default</option>
           ${WRITE_FONTS.map(f=>`<option value="${f[0]}" style="font-family:${f[1]}">${f[2]||f[0]}</option>`).join('')}
         </select>
-        <button type="button" class="fmt-btn" aria-label="Text color" title="Text color (select text first)" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('color',this)"><span style="font-weight:700;border-bottom:3px solid #e5484d;line-height:1">A</span></button>
-        <button type="button" class="fmt-btn" aria-label="Highlight" title="Highlight (select text first)" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('hl',this)"><span style="background:#fff3a3;color:#1b1b1f;border-radius:3px;padding:0 4px;font-weight:700">ab</span></button>
+        <button type="button" class="fmt-btn" aria-label="Text color" title="Text color — select text, or set it before you start typing" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('color',this)"><span id="fmtColorChip" style="font-weight:700;border-bottom:3px solid #e5484d;line-height:1">A</span></button>
+        <button type="button" class="fmt-btn" aria-label="Highlight" title="Highlight — select text, or set it before you start typing" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('hl',this)"><span id="fmtHlChip" style="background:#fff3a3;color:#1b1b1f;border-radius:3px;padding:0 4px;font-weight:700">ab</span></button>
         <button type="button" class="fmt-btn" aria-label="Heading" title="Heading" onmousedown="event.preventDefault()" onclick="fmtHeading()">H</button>
         <button type="button" class="fmt-btn" aria-label="Bulleted list" title="Bulleted list" onmousedown="event.preventDefault()" onclick="fmtBullet()">• List</button>
         <button type="button" class="fmt-btn" aria-label="Quote" title="Quote" onmousedown="event.preventDefault()" onclick="fmtQuote()">❝</button>
@@ -5755,7 +5786,7 @@ function _clearAttr(el, attr){
   if(!_spanHasData(el)) _unwrap(el);
 }
 function _splitOutOf(anc, node){
-  const mk = r=>{ const frag = r.extractContents(); if(!frag.textContent) return null; const c = anc.cloneNode(false); c.appendChild(frag); return c; };
+  const mk = r=>{ const frag = r.extractContents(); if(!frag.textContent.replace(/\u200b/g,'')) return null; const c = anc.cloneNode(false); c.appendChild(frag); return c; };
   const r1 = document.createRange(); r1.selectNodeContents(anc); r1.setEndBefore(node);
   const before = mk(r1);
   const r2 = document.createRange(); r2.selectNodeContents(anc); r2.setStartAfter(node);
@@ -5766,16 +5797,29 @@ function _splitOutOf(anc, node){
 function applySpan(attr, val){
   const ed = getContentEditor(); if(!ed) return;
   restoreEditorSelection();
-  const sel = window.getSelection(); if(!sel.rangeCount) return;
-  if(sel.getRangeAt(0).collapsed){ toast('আগে যে লেখাটা বদলাতে চাও সেটা সিলেক্ট করো।'); return; }
-  document.execCommand('styleWithCSS', false, false);
-  document.execCommand('fontSize', false, '7');
+  const sel = window.getSelection();
+  if(!sel.rangeCount || !ed.contains(sel.anchorNode)){
+    const r0 = document.createRange(); r0.selectNodeContents(ed); r0.collapse(false);
+    sel.removeAllRanges(); sel.addRange(r0);
+  }
   const made = [];
-  ed.querySelectorAll('font[size="7"]').forEach(f=>{
+  const caretMode = sel.getRangeAt(0).collapsed;
+  if(caretMode){
+    // Nothing selected: drop an (invisible) styled marker at the caret so whatever is typed next
+    // comes out in this style — works with IME / Bengali keyboards because the caret is simply
+    // inside a real element. The zero-width char is stripped when saving.
     const sp = document.createElement('span');
-    while(f.firstChild) sp.appendChild(f.firstChild);
-    f.parentNode.replaceChild(sp, f); made.push(sp);
-  });
+    sp.appendChild(document.createTextNode('\u200b'));
+    sel.getRangeAt(0).insertNode(sp); made.push(sp);
+  }else{
+    document.execCommand('styleWithCSS', false, false);
+    document.execCommand('fontSize', false, '7');
+    ed.querySelectorAll('font[size="7"]').forEach(f=>{
+      const sp = document.createElement('span');
+      while(f.firstChild) sp.appendChild(f.firstChild);
+      f.parentNode.replaceChild(sp, f); made.push(sp);
+    });
+  }
   if(!made.length) return;
   const firstNode = made[0].firstChild, lastNode = made[made.length-1].lastChild;
   made.forEach(sp=>{
@@ -5797,10 +5841,18 @@ function applySpan(attr, val){
   });
   ed.querySelectorAll('span[data-size]:empty,span[data-font]:empty,span[data-color]:empty,span[data-hl]:empty').forEach(x=>x.remove());
   try{
-    const r = document.createRange(); r.setStartBefore(firstNode); r.setEndAfter(lastNode);
+    const r = document.createRange();
+    if(caretMode){ r.setStart(firstNode, firstNode.nodeValue.length); r.collapse(true); }
+    else{ r.setStartBefore(firstNode); r.setEndAfter(lastNode); }
     sel.removeAllRanges(); sel.addRange(r); __edSavedRange = r.cloneRange();
   }catch(_){}
+  if(val!=null) __paintToolMemory(attr, val);
   syncEditorToDraft();
+}
+/* remember the last colour / highlight so the toolbar buttons show it */
+function __paintToolMemory(attr, val){
+  if(attr==='color'){ const b = document.getElementById('fmtColorChip'); if(b) b.style.borderBottomColor = val; }
+  if(attr==='hl'){ const b = document.getElementById('fmtHlChip'); if(b) b.style.background = val; }
 }
 function fmtSize(px){ px = parseInt(px,10); if(px) applySpan('size', px); }
 function fmtFont(name){
