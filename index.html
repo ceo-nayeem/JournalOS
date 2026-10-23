@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-10-22.1">
+<meta name="app-build" content="2026-10-23.1">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:title" content="JournalOS — Write First. Everything Else Second.">
@@ -1555,39 +1555,43 @@ html.is-standalone .install-banner{display:none!important;}
 .dash-hero::before{background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--sand))!important;}
 
 /* ---------- Save dock: Save / Cancel always reachable (never hides on scroll) ---------- */
-.save-dock{position:fixed;z-index:46;right:calc(20px + var(--safe-r,0px));bottom:calc(20px + var(--safe-b,0px));display:none;align-items:center;gap:10px;
-  padding:8px 8px 8px 18px;border-radius:999px;background:var(--glass-bg-strong);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);
+.save-dock{position:fixed;z-index:46;right:calc(18px + var(--safe-r,0px));bottom:calc(18px + var(--safe-b,0px));display:none;align-items:center;gap:6px;
+  padding:4px;border-radius:999px;background:var(--glass-bg-strong);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);
   border:1px solid color-mix(in srgb,var(--accent) 24%,var(--glass-border));box-shadow:var(--shadow-float);transition:bottom .2s ease;}
 .save-dock.active{display:flex;}
-.save-dock .sd-info{display:flex;flex-direction:column;gap:1px;line-height:1.25;min-width:0;margin-right:4px;}
-.save-dock .word-count{font-size:12.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
-.save-dock .draft-status{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;min-height:1em;}
-.save-dock .btn{min-height:44px;border-radius:999px;font-size:14px;font-weight:600;padding:0 18px;white-space:nowrap;}
-.save-dock .sd-save{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 24px;font-size:14.5px;font-weight:700;
-  color:#fff;border:0;background:var(--grad-vivid);box-shadow:0 8px 20px -8px var(--accent-shadow);}
+/* word count + draft status stay in the DOM (for screen readers / scripts) but take no space */
+.save-dock .sd-info{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.save-dock .sd-btn{width:36px;height:36px;min-width:0;min-height:0;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;gap:0;}
+.save-dock .sd-btn svg{width:17px;height:17px;}
+.save-dock .sd-cancel{background:transparent;border-color:transparent;color:var(--ink-soft);}
+.save-dock .sd-cancel:hover{background:var(--paper-dim);color:var(--ink);border-color:transparent;}
+.save-dock .sd-save{color:#fff;border:0;background:var(--grad-vivid);box-shadow:0 5px 14px -6px var(--accent-shadow);}
 :root[data-theme="dark"] .save-dock .sd-save{color:var(--on-accent);}
-.save-dock .sd-save:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px);}
+.save-dock .sd-save:hover:not(:disabled){filter:brightness(1.06);}
 .save-dock .sd-save:disabled{opacity:.7;cursor:progress;}
-body.write-mode .main{padding-bottom:128px;}
-body.write-mode .toast-region{bottom:calc(96px + var(--safe-b,0px));}
+body.write-mode .main{padding-bottom:84px;}
+body.write-mode .toast-region{bottom:calc(70px + var(--safe-b,0px));}
 body.write-mode .install-banner{display:none!important;}
 @media (max-width:860px){
-  .save-dock{left:calc(10px + var(--safe-l,0px));right:calc(10px + var(--safe-r,0px));bottom:calc(86px + var(--safe-b,0px));
-    padding:8px 8px 8px 14px;gap:8px;border-radius:22px;}
-  .save-dock .sd-info{flex:1;}
-  .save-dock .draft-status{max-width:30vw;overflow:hidden;text-overflow:ellipsis;}
-  .save-dock .sd-save{flex:0 0 auto;min-width:132px;padding:0 20px;min-height:48px;}
-  .save-dock .sd-cancel{min-height:48px;padding:0 16px;}
-  body.write-mode .main{padding-bottom:calc(190px + var(--safe-b,0px));}
-  body.write-mode .toast-region{bottom:calc(160px + var(--safe-b,0px));}
+  .save-dock{left:auto;right:calc(12px + var(--safe-r,0px));bottom:calc(84px + var(--safe-b,0px));gap:4px;padding:3px;}
+  .save-dock .sd-btn{width:34px;height:34px;}
+  .save-dock .sd-btn svg{width:16px;height:16px;}
+  body.write-mode .main{padding-bottom:calc(140px + var(--safe-b,0px));}
+  body.write-mode .toast-region{bottom:calc(132px + var(--safe-b,0px));}
   /* keyboard open: dock rides on top of the keyboard, bottom nav steps aside */
   html.kb-open body.write-mode .bottom-nav{display:none;}
   html.kb-open .save-dock{bottom:calc(var(--kb,0px) + 8px);}
-  html.kb-open body.write-mode .main{padding-bottom:calc(var(--kb,0px) + 110px);}
+  html.kb-open body.write-mode .main{padding-bottom:calc(var(--kb,0px) + 70px);}
 }
-@media (max-width:380px){ .save-dock .sd-save{min-width:0;padding:0 16px;} .save-dock .sd-info{display:none;} .save-dock .sd-save,.save-dock .sd-cancel{flex:1;} .save-dock .sd-save{flex:2;} }
 body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 @media print{ .save-dock{display:none!important;} }
+
+/* ---------- Write page: bold title + faded "Start from here" hint ---------- */
+.title-input{font-size:clamp(26px,4.4vw,34px);font-weight:700;line-height:1.25;letter-spacing:-.02em;padding:4px 0 8px;}
+.title-input::placeholder{color:var(--ink-faint);opacity:.55;font-weight:700;}
+.content-input{position:relative;}
+.content-input.is-empty::before{content:attr(data-placeholder);position:absolute;left:0;top:9px;font-size:14px;font-style:normal;
+  color:var(--ink-faint);opacity:.6;pointer-events:none;}
 
 /* hidden formatting bar must not peek out underneath / over the topbar */
 .write-fixed-bar{transition:transform .22s ease,opacity .18s ease,visibility 0s linear .22s;}
@@ -4582,10 +4586,30 @@ function draftIsDirty(){
     || dr.mood !== saved.mood || dr.moodIntensity !== saved.moodIntensity || dr.date !== saved.date
     || !!dr.favorite !== !!saved.favorite || !!dr.important !== !!saved.important;
 }
+// ✕ closes the editor but never throws work away: unsaved text stays as a draft
+// (already autosaved locally + synced) and is offered back next time you open the editor.
 function cancelWrite(){
-  const leave = ()=>{ clearLocalDraft(); clearRemoteDraft(); state.appliedDraftData = null; go('dashboard'); };
-  if(draftIsDirty()) confirmAction('Discard your changes?', 'What you\'ve written since the last save will be lost.', leave, 'Discard');
-  else leave();
+  const dirty = draftIsDirty();
+  if(dirty){ try{ scheduleAutosave(); }catch(e){} }
+  state.appliedDraftData = null;
+  go('dashboard');
+  if(dirty) toast('ড্রাফটে রাখা হয়েছে।', {type:'info'});
+}
+// Title → Enter moves straight into the journal body (no Tab needed).
+function onTitleKeydown(e){
+  if(e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
+  e.preventDefault();
+  const ed = getContentEditor(); if(!ed) return;
+  ed.focus();
+  try{
+    const sel = window.getSelection(), r = document.createRange();
+    r.selectNodeContents(ed); r.collapse(false);
+    sel.removeAllRanges(); sel.addRange(r);
+  }catch(_){}
+}
+function updateEditorEmpty(){
+  const ed = getContentEditor(); if(!ed) return;
+  ed.classList.toggle('is-empty', !(ed.innerText || '').trim());
 }
 /* ---------------- BOOT ---------------- */
 function resetSessionState(){
@@ -5317,9 +5341,11 @@ function renderWrite(){
         <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
         <span class="draft-status" id="draftStatus" role="status" aria-live="polite"></span>
       </span>
-      <button type="button" class="btn sd-cancel" onclick="cancelWrite()">Cancel</button>
-      <button type="button" class="btn btn-primary sd-save" id="saveBtn" onclick="saveDraft()" title="Save (Ctrl+S)">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="sd-save-label">Save Journal</span>
+      <button type="button" class="btn sd-btn sd-cancel" onclick="cancelWrite()" aria-label="Close (draft is kept)" title="Close — draft is kept">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <button type="button" class="btn btn-primary sd-btn sd-save" id="saveBtn" onclick="saveDraft()" aria-label="Save journal" title="Save (Ctrl+S)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
       </button>`;
   }
 
@@ -5344,9 +5370,9 @@ function renderWrite(){
     </div>` : ''}
 
     <div class="card">
-      <input class="title-input" id="titleInput" aria-label="Title" placeholder="Give today a title…" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();">
+      <input class="title-input" id="titleInput" aria-label="Title" placeholder="Title" enterkeyhint="next" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();" onkeydown="onTitleKeydown(event)">
 
-      <div class="content-input" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="আজ কেমন গেল দিনটা? এখানেই লেখা শুরু করো…" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
+      <div class="content-input${(draft.content||'').trim() ? '' : ' is-empty'}" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="Start from here" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
 
       <div class="focus-hide">
       <details class="notes-box" id="notesBox" ${(draft.notes||'').trim() ? 'open' : ''}>
@@ -5506,6 +5532,7 @@ function editorHtmlToMd(root){
 function syncEditorToDraft(){
   const ed = getContentEditor(); if(!ed || !window.__draft) return;
   window.__draft.content = editorHtmlToMd(ed);
+  updateEditorEmpty();
   updateWordCount(); refreshAIPreview(); scheduleAutosave();
   updateFormatState();
 }
@@ -5906,7 +5933,7 @@ function refreshAIPreview(mode){
 let __saving = false;
 function setSaveBusy(on){
   const b = document.getElementById('saveBtn'); if(!b) return;
-  b.disabled = on; const lb = b.querySelector('.sd-save-label'); if(lb) lb.textContent = on ? 'Saving…' : 'Save Journal'; else b.textContent = on ? 'Saving…' : 'Save Journal';
+  b.disabled = on; b.setAttribute('aria-busy', on ? 'true' : 'false'); b.title = on ? 'Saving…' : 'Save (Ctrl+S)';
 }
 async function saveDraft(){
   if(__saving) return;
