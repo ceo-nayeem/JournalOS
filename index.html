@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-10-23.1">
+<meta name="app-build" content="2026-10-23.2">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:title" content="JournalOS — Write First. Everything Else Second.">
@@ -47,7 +47,7 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();win
 <title>JournalOS — Write First. Everything Else Second.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Lora:wght@400;600&family=Playfair+Display:wght@400;700&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Pacifico&family=Space+Mono:wght@400;700&family=Hind+Siliguri:wght@400;600&family=Noto+Serif+Bengali:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    JOURNALOS — DESIGN TOKENS
@@ -1561,21 +1561,36 @@ html.is-standalone .install-banner{display:none!important;}
 .save-dock.active{display:flex;}
 /* word count + draft status stay in the DOM (for screen readers / scripts) but take no space */
 .save-dock .sd-info{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-.save-dock .sd-btn{width:36px;height:36px;min-width:0;min-height:0;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;gap:0;}
-.save-dock .sd-btn svg{width:17px;height:17px;}
+.save-dock .sd-btn{position:relative;width:28px;height:28px;min-width:0;min-height:0;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;gap:0;transition:background .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease;}
+.save-dock .sd-btn svg{width:14px;height:14px;}
+.save-dock .sd-btn svg path{stroke-linecap:round;stroke-linejoin:round;}
 .save-dock .sd-cancel{background:transparent;border-color:transparent;color:var(--ink-soft);}
-.save-dock .sd-cancel:hover{background:var(--paper-dim);color:var(--ink);border-color:transparent;}
-.save-dock .sd-save{color:#fff;border:0;background:var(--grad-vivid);box-shadow:0 5px 14px -6px var(--accent-shadow);}
+.save-dock .sd-save{color:#fff;border:0;background:var(--grad-vivid);box-shadow:0 4px 10px -6px var(--accent-shadow);}
 :root[data-theme="dark"] .save-dock .sd-save{color:var(--on-accent);}
-.save-dock .sd-save:hover:not(:disabled){filter:brightness(1.06);}
 .save-dock .sd-save:disabled{opacity:.7;cursor:progress;}
+/* hover label (desktop / keyboard focus) */
+.save-dock .sd-btn::after{content:attr(data-label);position:absolute;bottom:calc(100% + 10px);right:0;padding:4px 9px;border-radius:7px;font-size:11.5px;font-weight:600;line-height:1.2;white-space:nowrap;
+  background:var(--ink);color:var(--paper);opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .16s ease,transform .16s ease;}
+@media (hover:hover){
+  .save-dock .sd-btn:hover::after{opacity:1;transform:translateY(0);}
+}
+.save-dock .sd-btn:focus-visible::after{opacity:1;transform:translateY(0);}
+@media (hover:hover){
+  .save-dock .sd-save:hover:not(:disabled){background:var(--success,#2e9e6b);color:#fff;transform:scale(1.14);box-shadow:0 0 0 4px color-mix(in srgb,var(--success,#2e9e6b) 22%,transparent);}
+  .save-dock .sd-save:hover:not(:disabled) svg path{stroke-dasharray:24;stroke-dashoffset:24;animation:sdCheck .45s ease forwards;}
+  .save-dock .sd-cancel:hover{background:color-mix(in srgb,var(--danger,#d64545) 16%,transparent);color:var(--danger,#d64545);transform:scale(1.12);}
+  .save-dock .sd-cancel:hover svg{animation:sdShake .4s ease;}
+}
+@keyframes sdCheck{to{stroke-dashoffset:0;}}
+@keyframes sdShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}60%{transform:rotate(12deg)}}
+@media (prefers-reduced-motion:reduce){.save-dock .sd-btn,.save-dock .sd-btn *{animation:none!important;transition:none!important;}}
 body.write-mode .main{padding-bottom:84px;}
 body.write-mode .toast-region{bottom:calc(70px + var(--safe-b,0px));}
 body.write-mode .install-banner{display:none!important;}
 @media (max-width:860px){
   .save-dock{left:auto;right:calc(12px + var(--safe-r,0px));bottom:calc(84px + var(--safe-b,0px));gap:4px;padding:3px;}
-  .save-dock .sd-btn{width:34px;height:34px;}
-  .save-dock .sd-btn svg{width:16px;height:16px;}
+  .save-dock .sd-btn{width:28px;height:28px;}
+  .save-dock .sd-btn svg{width:14px;height:14px;}
   body.write-mode .main{padding-bottom:calc(140px + var(--safe-b,0px));}
   body.write-mode .toast-region{bottom:calc(132px + var(--safe-b,0px));}
   /* keyboard open: dock rides on top of the keyboard, bottom nav steps aside */
@@ -1592,6 +1607,18 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .content-input{position:relative;}
 .content-input.is-empty::before{content:attr(data-placeholder);position:absolute;left:0;top:9px;font-size:14px;font-style:normal;
   color:var(--ink-faint);opacity:.6;pointer-events:none;}
+
+
+/* ---------- Writing toolbar extras: font / color / highlight / quote ---------- */
+.fmt-font{max-width:112px;}
+.content-input span[data-hl]{border-radius:3px;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
+.content-input span[data-hl]:not([data-color]){color:#1b1b1f;}
+.content-input .bq{border-left:3px solid var(--accent);padding-left:14px;margin-left:2px;color:var(--ink-soft);font-style:italic;}
+.pal-pop{position:fixed;z-index:80;display:flex;flex-wrap:wrap;gap:7px;width:190px;padding:10px;border-radius:14px;background:var(--glass-bg-strong);
+  backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--glass-border);box-shadow:var(--shadow-float);}
+.pal-pop button{width:26px;height:26px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--rule);cursor:pointer;padding:0;}
+.pal-pop button:hover{transform:scale(1.12);}
+.pal-pop .pal-none{background:var(--paper-card);color:var(--ink-soft);font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
 
 /* hidden formatting bar must not peek out underneath / over the topbar */
 .write-fixed-bar{transition:transform .22s ease,opacity .18s ease,visibility 0s linear .22s;}
@@ -5315,6 +5342,8 @@ function renderWrite(){
       </div>
       <div class="wfb-sep wfb-optional"></div>
       <div class="wfb-group">
+        <button type="button" class="fmt-btn" aria-label="Undo" title="Undo (Ctrl+Z)" onmousedown="event.preventDefault()" onclick="edCmd('undo')">↶</button>
+        <button type="button" class="fmt-btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" onmousedown="event.preventDefault()" onclick="edCmd('redo')">↷</button>
         <button type="button" class="fmt-btn" id="fmtBoldBtn" aria-label="Bold" title="Bold (Ctrl+B)" onmousedown="event.preventDefault()" onclick="fmtBold()"><b>B</b></button>
         <button type="button" class="fmt-btn" id="fmtItalicBtn" aria-label="Italic" title="Italic (Ctrl+I)" onmousedown="event.preventDefault()" onclick="fmtItalic()"><i>I</i></button>
         <button type="button" class="fmt-btn" id="fmtUnderBtn" aria-label="Underline" title="Underline (Ctrl+U)" onmousedown="event.preventDefault()" onclick="fmtUnderline()"><u>U</u></button>
@@ -5323,8 +5352,16 @@ function renderWrite(){
           <option value="" selected>Aa</option>
           ${FONT_SIZES.map(n=>`<option value="${n}">${n}px</option>`).join('')}
         </select>
+        <select class="fmt-size fmt-font" id="fmtFontSel" aria-label="Font" title="Font (select text first)" onmousedown="saveEditorSelection()" onchange="fmtFont(this.value); this.selectedIndex=0;">
+          <option value="" selected>Font</option>
+          <option value="__default">Default</option>
+          ${WRITE_FONTS.map(f=>`<option value="${f[0]}" style="font-family:${f[1]}">${f[2]||f[0]}</option>`).join('')}
+        </select>
+        <button type="button" class="fmt-btn" aria-label="Text color" title="Text color (select text first)" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('color',this)"><span style="font-weight:700;border-bottom:3px solid #e5484d;line-height:1">A</span></button>
+        <button type="button" class="fmt-btn" aria-label="Highlight" title="Highlight (select text first)" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('hl',this)"><span style="background:#fff3a3;color:#1b1b1f;border-radius:3px;padding:0 4px;font-weight:700">ab</span></button>
         <button type="button" class="fmt-btn" aria-label="Heading" title="Heading" onmousedown="event.preventDefault()" onclick="fmtHeading()">H</button>
         <button type="button" class="fmt-btn" aria-label="Bulleted list" title="Bulleted list" onmousedown="event.preventDefault()" onclick="fmtBullet()">• List</button>
+        <button type="button" class="fmt-btn" aria-label="Quote" title="Quote" onmousedown="event.preventDefault()" onclick="fmtQuote()">❝</button>
         <button type="button" class="fmt-btn" aria-label="Insert link" title="Link" onmousedown="saveEditorSelection()" onclick="fmtLink()">🔗</button>
         <button type="button" class="fmt-btn" aria-label="Clear formatting" title="Clear formatting" onmousedown="event.preventDefault()" onclick="fmtClear()">⌫</button>
       </div>
@@ -5341,10 +5378,10 @@ function renderWrite(){
         <span class="word-count" id="wordCount">${(draft.content||'').trim().split(/\s+/).filter(Boolean).length} words</span>
         <span class="draft-status" id="draftStatus" role="status" aria-live="polite"></span>
       </span>
-      <button type="button" class="btn sd-btn sd-cancel" onclick="cancelWrite()" aria-label="Close (draft is kept)" title="Close — draft is kept">
+      <button type="button" class="btn sd-btn sd-cancel" onclick="cancelWrite()" aria-label="Cancel (draft is kept)" data-label="Cancel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
-      <button type="button" class="btn btn-primary sd-btn sd-save" id="saveBtn" onclick="saveDraft()" aria-label="Save journal" title="Save (Ctrl+S)">
+      <button type="button" class="btn btn-primary sd-btn sd-save" id="saveBtn" onclick="saveDraft()" aria-label="Save journal" data-label="Save">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
       </button>`;
   }
@@ -5427,9 +5464,33 @@ function renderWrite(){
    still stored as a plain markdown-style string (window.__draft.content), so
    saving, search, AI extraction, export and older entries keep working.
    Storage syntax:  **bold**  *italic*  ~~strike~~  <u>underline</u>
-                    <span data-size="N">sized</span>  ## heading  - list  [text](url)
+                    <span data-size="N" data-font="F" data-color="#hex" data-hl="#hex">styled</span>  > quote  ## heading  - list  [text](url)
    ---------------------------------------------------------------- */
 const FONT_SIZES = [12,14,16,18,20,24,28,34];
+/* [name, css stack, optional label] — Bengali-capable stacks included so বাংলা text also changes look */
+const WRITE_FONTS = [
+  ['Lora',"'Lora','Noto Serif Bengali',serif"],
+  ['Playfair Display',"'Playfair Display','Noto Serif Bengali',serif"],
+  ['Caveat',"'Caveat','Hind Siliguri',cursive"],
+  ['Dancing Script',"'Dancing Script','Hind Siliguri',cursive"],
+  ['Pacifico',"'Pacifico','Hind Siliguri',cursive"],
+  ['Space Mono',"'Space Mono','Hind Siliguri',monospace"],
+  ['Hind Siliguri',"'Hind Siliguri',sans-serif",'Hind Siliguri (বাংলা)'],
+  ['Noto Serif Bengali',"'Noto Serif Bengali',serif",'Noto Serif (বাংলা)']
+];
+const WRITE_FONT_MAP = Object.fromEntries(WRITE_FONTS.map(f=>[f[0],f[1]]));
+const TXT_COLORS = ['#e5484d','#f76b15','#d4a017','#2e9e6b','#0091ff','#6e56cf','#d6409f','#6b7280'];
+const HL_COLORS  = ['#fff3a3','#ffd8b5','#c9f0d4','#bfe3ff','#e1d6ff','#ffd1e8','#d9dde3'];
+const SPAN_ATTRS = {size:'fontSize',font:'fontFamily',color:'color',hl:'backgroundColor'};
+function spanOpenHtml(attrs){
+  const m = {}; attrs.replace(/data-(size|font|color|hl)="([^"]*)"/g,(x,k,v)=>{ m[k]=v; return x; });
+  let a='', st='';
+  if(m.size && /^\d{1,2}$/.test(m.size)){ a+=' data-size="'+m.size+'"'; st+='font-size:'+m.size+'px;'; }
+  if(m.font && WRITE_FONT_MAP[m.font]){ a+=' data-font="'+m.font+'"'; st+='font-family:'+WRITE_FONT_MAP[m.font]+';'; }
+  if(m.color && /^#[0-9a-f]{6}$/i.test(m.color)){ a+=' data-color="'+m.color+'"'; st+='color:'+m.color+';'; }
+  if(m.hl && /^#[0-9a-f]{6}$/i.test(m.hl)){ a+=' data-hl="'+m.hl+'"'; st+='background-color:'+m.hl+';'; }
+  return '<span'+a+(st?' style="'+st+'"':'')+'>';
+}
 function getContentEditor(){ return document.getElementById('contentInput'); }
 function getContentTextarea(){ return getContentEditor(); } // legacy alias (focus mode etc.)
 
@@ -5440,7 +5501,11 @@ function mdInlineToHtml(raw){
   const keep = h => { stash.push(h); return '\u0000' + (stash.length-1) + '\u0000'; };
   let t = raw
     .replace(/<u>([\s\S]*?)<\/u>/g, (m,a)=> keep('<u>') + a + keep('</u>'))
-    .replace(/<span data-size="(\d{1,2})">([\s\S]*?)<\/span>/g, (m,n,a)=> keep('<span data-size="'+n+'" style="font-size:'+n+'px">') + a + keep('</span>'));
+  ;
+  // spans may nest — resolve innermost first, repeat until none are left
+  let prevT; do{ prevT = t;
+    t = t.replace(/<span((?:\s+data-(?:size|font|color|hl)="[^"<>]*")+)\s*>((?:(?!<span)[\s\S])*?)<\/span>/g, (m,at,a)=> keep(spanOpenHtml(at)) + a + keep('</span>'));
+  }while(t!==prevT);
   t = escapeHtml(t);
   t = t
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -5454,6 +5519,8 @@ function mdToEditorHtml(md){
   return lines.map(line=>{
     const h = line.match(/^(#{1,3})\s+(.*)$/);
     if(h){ const lvl = h[1].length; const tag = lvl===1?'h2':(lvl===2?'h3':'h4'); return `<${tag} data-lvl="${lvl}">${mdInlineToHtml(h[2])||'<br>'}</${tag}>`; }
+    const bq = line.match(/^>\s?(.*)$/);
+    if(bq) return `<div class="bq">${mdInlineToHtml(bq[1])||'<br>'}</div>`;
     const li = line.match(/^[-*]\s+(.*)$/);
     if(li) return `<div class="li">${mdInlineToHtml(li[1])||'<br>'}</div>`;
     return `<div>${mdInlineToHtml(line)||'<br>'}</div>`;
@@ -5477,6 +5544,9 @@ function domInlineToMd(node){
     let strk  = tag==='s' || tag==='strike' || tag==='del' || (st.textDecoration||st.textDecorationLine||'').indexOf('line-through')>-1;
     let undl  = tag==='u' || (st.textDecoration||st.textDecorationLine||'').indexOf('underline')>-1;
     const sz  = ch.getAttribute && ch.getAttribute('data-size');
+    const fnt = ch.getAttribute && ch.getAttribute('data-font');
+    const clr = ch.getAttribute && ch.getAttribute('data-color');
+    const hl  = ch.getAttribute && ch.getAttribute('data-hl');
     if(tag==='a'){
       const href = ch.getAttribute('href')||'';
       if(/^https?:\/\//i.test(href)) inner = '['+inner+']('+href+')';
@@ -5485,7 +5555,7 @@ function domInlineToMd(node){
     const lead = inner.match(/^\s*/)[0], trail = inner.match(/\s*$/)[0];
     let core = inner.slice(lead.length, inner.length-trail.length);
     if(core===''){ out += inner; return; }
-    if(sz)   core = '<span data-size="'+sz+'">'+core+'</span>';
+    if(sz||fnt||clr||hl) core = '<span'+(sz?' data-size="'+sz+'"':'')+(fnt?' data-font="'+fnt+'"':'')+(clr?' data-color="'+clr+'"':'')+(hl?' data-hl="'+hl+'"':'')+'>'+core+'</span>';
     if(undl) core = '<u>'+core+'</u>';
     if(strk) core = '~~'+core+'~~';
     if(ital) core = '*'+core+'*';
@@ -5503,6 +5573,7 @@ function editorHtmlToMd(root){
       lines.push('#'.repeat(lvl)+' '+domInlineToMd(el)); return;
     }
     if(tag==='ul'||tag==='ol'){ el.querySelectorAll(':scope > li').forEach(li=>lines.push('- '+domInlineToMd(li))); return; }
+    if(tag==='div' && el.classList && el.classList.contains('bq')){ lines.push('> '+domInlineToMd(el)); return; }
     if(tag==='div' && el.classList && el.classList.contains('li')){ lines.push('- '+domInlineToMd(el)); return; }
     if(tag==='div' || tag==='p'){
       // a div that itself contains block children (browsers sometimes nest) — flatten
@@ -5657,6 +5728,7 @@ function fmtBullet(){
   let n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode;
   if(!n || n.nodeType!==1){ document.execCommand('formatBlock', false, 'div'); n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode; }
   if(n && n.nodeType===1){
+    n.classList.remove('bq');
     if(n.classList.contains('li')) n.classList.remove('li');
     else{ if(/^H[234]$/.test(n.tagName)){ document.execCommand('formatBlock', false, 'div'); const s2=window.getSelection(); n=s2.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n=n.parentNode; } if(n && n.nodeType===1) n.classList.add('li'); }
   }
@@ -5674,33 +5746,106 @@ function fmtLink(){
   else document.execCommand('createLink', false, url.trim());
   syncEditorToDraft();
 }
-/* Font size: wrap the selection in <span data-size="N" style="font-size:Npx"> so it shows live. */
-function fmtSize(px){
+/* Per-selection inline styles (size / font / color / highlight): wrap the selection in
+   <span data-xxx style="..."> so it shows live and survives the markdown round-trip. */
+function _spanHasData(el){ return Object.keys(SPAN_ATTRS).some(k=>el.hasAttribute('data-'+k)); }
+function _unwrap(el){ while(el.firstChild) el.parentNode.insertBefore(el.firstChild, el); el.remove(); }
+function _clearAttr(el, attr){
+  el.removeAttribute('data-'+attr); el.style.removeProperty(attr==='hl'?'background-color':attr==='size'?'font-size':attr==='font'?'font-family':'color');
+  if(!_spanHasData(el)) _unwrap(el);
+}
+function _splitOutOf(anc, node){
+  const mk = r=>{ const frag = r.extractContents(); if(!frag.textContent) return null; const c = anc.cloneNode(false); c.appendChild(frag); return c; };
+  const r1 = document.createRange(); r1.selectNodeContents(anc); r1.setEndBefore(node);
+  const before = mk(r1);
+  const r2 = document.createRange(); r2.selectNodeContents(anc); r2.setStartAfter(node);
+  const after = mk(r2);
+  if(before) anc.parentNode.insertBefore(before, anc);
+  if(after) anc.parentNode.insertBefore(after, anc.nextSibling);
+}
+function applySpan(attr, val){
   const ed = getContentEditor(); if(!ed) return;
-  px = parseInt(px,10); if(!px) return;
   restoreEditorSelection();
   const sel = window.getSelection(); if(!sel.rangeCount) return;
-  const range = sel.getRangeAt(0);
-  if(range.collapsed){ toast('আগে যে লেখার সাইজ বদলাতে চাও সেটা সিলেক্ট করো।'); return; }
-  // execCommand fontSize gives us robust cross-block wrapping; convert its <font> tags after.
+  if(sel.getRangeAt(0).collapsed){ toast('আগে যে লেখাটা বদলাতে চাও সেটা সিলেক্ট করো।'); return; }
   document.execCommand('styleWithCSS', false, false);
   document.execCommand('fontSize', false, '7');
+  const made = [];
   ed.querySelectorAll('font[size="7"]').forEach(f=>{
     const sp = document.createElement('span');
-    sp.setAttribute('data-size', String(px)); sp.style.fontSize = px+'px';
     while(f.firstChild) sp.appendChild(f.firstChild);
-    f.parentNode.replaceChild(sp, f);
-    // collapse nested sized spans so only the innermost/new size applies
-    sp.querySelectorAll('span[data-size]').forEach(inner=>{ while(inner.firstChild) inner.parentNode.insertBefore(inner.firstChild, inner); inner.remove(); });
+    f.parentNode.replaceChild(sp, f); made.push(sp);
   });
-  // pages sometimes leave an emptied outer sized span behind
-  ed.querySelectorAll('span[data-size]:empty').forEach(x=>x.remove());
+  if(!made.length) return;
+  const firstNode = made[0].firstChild, lastNode = made[made.length-1].lastChild;
+  made.forEach(sp=>{
+    // inner spans carrying the same property are overridden
+    sp.querySelectorAll('span[data-'+attr+']').forEach(inner=>_clearAttr(inner, attr));
+    // an outer span carrying it is split around the selection so only the selection changes
+    let anc;
+    while(sp.parentElement && (anc = sp.parentElement.closest('span[data-'+attr+']')) && ed.contains(anc)){
+      _splitOutOf(anc, sp); _clearAttr(anc, attr);
+    }
+    if(val!=null){
+      sp.setAttribute('data-'+attr, String(val));
+      if(attr==='size') sp.style.fontSize = val+'px';
+      else if(attr==='font') sp.style.fontFamily = WRITE_FONT_MAP[val];
+      else if(attr==='color') sp.style.color = val;
+      else sp.style.backgroundColor = val;
+    }
+    if(!_spanHasData(sp)) _unwrap(sp);
+  });
+  ed.querySelectorAll('span[data-size]:empty,span[data-font]:empty,span[data-color]:empty,span[data-hl]:empty').forEach(x=>x.remove());
+  try{
+    const r = document.createRange(); r.setStartBefore(firstNode); r.setEndAfter(lastNode);
+    sel.removeAllRanges(); sel.addRange(r); __edSavedRange = r.cloneRange();
+  }catch(_){}
+  syncEditorToDraft();
+}
+function fmtSize(px){ px = parseInt(px,10); if(px) applySpan('size', px); }
+function fmtFont(name){
+  if(name==='__default') applySpan('font', null);
+  else if(WRITE_FONT_MAP[name]) applySpan('font', name);
+}
+function fmtColor(hex){ applySpan('color', hex||null); }
+function fmtHighlight(hex){ applySpan('hl', hex||null); }
+function closePalette(){ const p = document.getElementById('palPop'); if(p) p.remove(); document.removeEventListener('pointerdown', __palOutside, true); }
+function __palOutside(e){ const p = document.getElementById('palPop'); if(p && !p.contains(e.target)) closePalette(); }
+function openPalette(kind, btn){
+  const had = document.getElementById('palPop'); const same = had && had.dataset.kind===kind; closePalette(); if(same) return;
+  const colors = kind==='hl' ? HL_COLORS : TXT_COLORS;
+  const pop = document.createElement('div'); pop.id='palPop'; pop.className='pal-pop'; pop.dataset.kind = kind; pop.setAttribute('role','menu');
+  pop.innerHTML = colors.map(c=>`<button type="button" style="background:${c}" aria-label="${c}" data-c="${c}"></button>`).join('')
+    + `<button type="button" class="pal-none" aria-label="None" title="Remove" data-c="">✕</button>`;
+  pop.addEventListener('mousedown', e=>e.preventDefault());
+  pop.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    const c = b.getAttribute('data-c'); closePalette();
+    if(kind==='hl') fmtHighlight(c); else fmtColor(c);
+  });
+  document.body.appendChild(pop);
+  const r = btn.getBoundingClientRect(), w = pop.offsetWidth;
+  pop.style.top = (r.bottom + 8) + 'px';
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+  setTimeout(()=>document.addEventListener('pointerdown', __palOutside, true), 0);
+}
+window.addEventListener('scroll', ()=>closePalette(), {passive:true});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePalette(); });
+function fmtQuote(){
+  const ed = getContentEditor(); if(!ed) return; ed.focus();
+  const sel = window.getSelection(); if(!sel.rangeCount) return;
+  let n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode;
+  if(!n || n.nodeType!==1){ document.execCommand('formatBlock', false, 'div'); n = sel.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n = n.parentNode; }
+  if(n && n.nodeType===1){
+    if(/^H[234]$/.test(n.tagName)){ document.execCommand('formatBlock', false, 'div'); const s2=window.getSelection(); n=s2.anchorNode; while(n && n.parentNode && n.parentNode!==ed) n=n.parentNode; }
+    if(n && n.nodeType===1){ n.classList.remove('li'); n.classList.toggle('bq'); }
+  }
   syncEditorToDraft();
 }
 function fmtClear(){
   edCmd('removeFormat');
   const ed = getContentEditor(); if(!ed) return;
-  ed.querySelectorAll('span[data-size]').forEach(sp=>{ while(sp.firstChild) sp.parentNode.insertBefore(sp.firstChild, sp); sp.remove(); });
+  ed.querySelectorAll('span[data-size],span[data-font],span[data-color],span[data-hl]').forEach(sp=>_unwrap(sp));
   syncEditorToDraft();
 }
 let __edSavedRange = null;
@@ -5933,7 +6078,7 @@ function refreshAIPreview(mode){
 let __saving = false;
 function setSaveBusy(on){
   const b = document.getElementById('saveBtn'); if(!b) return;
-  b.disabled = on; b.setAttribute('aria-busy', on ? 'true' : 'false'); b.title = on ? 'Saving…' : 'Save (Ctrl+S)';
+  b.disabled = on; b.setAttribute('aria-busy', on ? 'true' : 'false'); b.dataset.label = on ? 'Saving…' : 'Save';
 }
 async function saveDraft(){
   if(__saving) return;
