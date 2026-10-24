@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-10-23.3">
+<meta name="app-build" content="2026-10-24.1">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:title" content="JournalOS — Write First. Everything Else Second.">
@@ -1642,6 +1642,118 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
   .pal-pop{width:176px;}
 }
 
+/* ---------- Library view switcher ---------- */
+.lib-tabs{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--paper-dim);border:1px solid var(--rule);margin:0 0 14px;max-width:100%;}
+.lib-tab{border:0;background:none;color:var(--ink-soft);font:inherit;font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .2s ease,color .2s ease,box-shadow .2s ease;}
+.lib-tab:hover{color:var(--ink);}
+.lib-tab.on{background:var(--grad-vivid);color:#fff;box-shadow:0 6px 14px -6px var(--accent-shadow);}
+:root[data-theme="dark"] .lib-tab.on{color:var(--on-accent);}
+
+/* ---------- Day detail panel (calendar + pixels) ---------- */
+.dayd{margin:0 18px 16px;padding:14px;border-radius:14px;background:var(--paper-dim);border:1px solid var(--rule);display:flex;flex-direction:column;gap:8px;}
+.dayd.pop{animation:daydPop .28s ease;}
+@keyframes daydPop{from{opacity:.4;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.dayd-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;}
+.dayd-today{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent);color:var(--on-accent);}
+.dayd-empty{font-size:13px;color:var(--ink-faint);padding:2px 0;}
+.dayd .btn{align-self:flex-start;}
+.dayd-entry{position:relative;text-align:left;border:1px solid var(--rule);border-left:4px solid var(--c,var(--accent));background:var(--paper-card);color:var(--ink);font:inherit;border-radius:12px;padding:11px 13px;display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
+.dayd-entry:hover{transform:translateY(-1px);box-shadow:var(--shadow-float);}
+.dayd-title{font-weight:600;font-size:14.5px;}
+.dayd-prev{font-size:12.5px;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.dayd-go{position:absolute;right:12px;top:11px;font-size:11.5px;color:var(--accent);font-weight:600;}
+
+/* ---------- Wall calendar ---------- */
+.wc{padding:0;overflow:hidden;border-radius:22px;position:relative;}
+.wc-rings{display:flex;justify-content:space-around;padding:0 7%;height:0;position:relative;z-index:3;}
+.wc-rings i{display:block;width:11px;height:24px;margin-top:-9px;border-radius:7px;background:linear-gradient(90deg,var(--ink-faint),var(--paper-dim) 45%,var(--ink-faint));box-shadow:0 3px 5px -2px rgba(0,0,0,.35);}
+.wc-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;padding:28px 20px 14px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,var(--paper-card)),var(--paper-card) 70%);border-bottom:1px dashed var(--rule);}
+.wc-month{font-family:var(--font-display);font-size:clamp(26px,5.4vw,40px);font-weight:700;letter-spacing:-.03em;line-height:1.05;}
+.wc-month span{font-weight:400;color:var(--ink-faint);}
+.wc-stats{display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:7px;font-size:12.5px;color:var(--ink-soft);}
+.wc-stats b{color:var(--ink);}
+.wc-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.wc-nb{min-width:34px;height:34px;padding:0 11px;border-radius:999px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);font:inherit;font-size:17px;line-height:1;cursor:pointer;transition:background .15s,border-color .15s,transform .15s;}
+.wc-nb:hover:not(:disabled){border-color:var(--accent);}
+.wc-nb:active:not(:disabled){transform:scale(.92);}
+.wc-nb:disabled{opacity:.35;cursor:default;}
+.wc-today{font-size:12.5px;font-weight:600;}
+.wc-sel{height:34px;border-radius:999px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);font:inherit;font-size:12.5px;padding:0 10px;}
+.wc-body{padding:16px 18px 6px;}
+.wc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:12px;overflow:hidden;}
+.wc-dowrow{margin-bottom:6px;background:none;border:0;gap:1px;}
+.wc-dow{text-align:center;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding:4px 0;background:none;}
+.wc-dow.we{color:var(--rust);}
+.wc-cell{position:relative;text-align:left;border:0;margin:0;font:inherit;color:var(--ink);background:var(--paper-card);min-height:94px;padding:6px 7px;display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0;overflow:hidden;transition:background .15s ease;}
+.wc-cell.we{background:color-mix(in srgb,var(--paper-dim) 55%,var(--paper-card));}
+.wc-cell.out{opacity:.4;}
+.wc-cell.has{background:color-mix(in srgb,var(--mc) var(--mt),var(--paper-card));}
+.wc-cell.has::after{content:'';position:absolute;top:0;right:7px;width:9px;height:14px;background:var(--mc);clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%);}
+.wc-cell.arch::after{opacity:.4;}
+.wc-cell:hover{background:color-mix(in srgb,var(--accent) 12%,var(--paper-card));}
+.wc-cell.has:hover{filter:brightness(.96);}
+.wc-cell.sel{box-shadow:inset 0 0 0 2px var(--accent);z-index:1;}
+.wc-num{font-size:12.5px;font-weight:600;width:24px;height:24px;display:inline-grid;place-items:center;border-radius:50%;flex:none;}
+.wc-cell.today .wc-num{background:var(--accent);color:var(--on-accent);box-shadow:0 4px 10px -3px var(--accent-shadow);}
+.wc-pin{position:absolute;top:5px;right:20px;font-size:10px;line-height:1;}
+.wc-marks{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.wc-chip{display:block;font-size:11px;line-height:1.3;padding:2px 6px;border-radius:6px;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 16%,var(--paper-card));overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wc-more{font-size:10.5px;color:var(--ink-faint);padding-left:3px;}
+.wc-dots{display:none;gap:3px;margin-top:auto;}
+.wc-dots i{width:6px;height:6px;border-radius:50%;display:block;}
+.wc-hint{font-size:11px;color:var(--ink-faint);text-align:center;padding:9px 0 2px;}
+@media (max-width:640px){
+  .wc-top{padding:26px 14px 12px;} .wc-body{padding:12px 10px 4px;}
+  .wc-cell{min-height:54px;padding:4px;align-items:center;gap:2px;}
+  .wc-marks{display:none;} .wc-dots{display:flex;margin-top:0;justify-content:center;}
+  .wc-num{width:22px;height:22px;font-size:12px;}
+  .wc-pin{top:2px;right:12px;font-size:8px;}
+  .wc-cell.has::after{right:4px;width:7px;height:10px;}
+  .wc-sel{padding:0 6px;} .wc-nav{width:100%;}
+  .wc-nav .wc-sel{margin-left:auto;} .wc-nav .wc-sel ~ .wc-sel{margin-left:0;}
+  .dayd{margin:0 10px 14px;}
+  .wc-hint{display:none;}
+  .cal-legend{margin-left:12px!important;margin-right:12px!important;}
+}
+
+/* ---------- Year in Pixels ---------- */
+.px-card{padding:18px;}
+.px-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px;}
+.px-year{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:clamp(28px,6vw,40px);font-weight:700;letter-spacing:-.03em;}
+.px-sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+.px-sub b{color:var(--ink);}
+.px-ring{--p:0;flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--paper-dim) 0);position:relative;}
+.px-ring::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--paper-card);}
+.px-ring span{position:relative;font-size:12px;font-weight:700;}
+.px-bar{display:flex;height:9px;border-radius:99px;overflow:hidden;margin:4px 0 12px;background:var(--paper-dim);}
+.px-bar span{display:block;}
+.px-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.px-chip{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s;}
+.px-chip i{width:9px;height:9px;border-radius:50%;background:var(--c);display:block;}
+.px-chip b{color:var(--ink-faint);font-weight:600;}
+.px-chip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--paper-card));}
+.px-chip.clr{color:var(--ink-soft);}
+.px-grid{display:grid;grid-template-columns:18px repeat(12,minmax(0,1fr));gap:4px;align-items:center;max-width:540px;margin:0 auto 16px;}
+.px-h{font-size:11px;text-align:center;color:var(--ink-faint);font-weight:700;}
+.px-hs{display:none;}
+.px-d{font-size:9px;color:var(--ink-faint);text-align:right;padding-right:2px;}
+.px{aspect-ratio:1;display:block;width:100%;min-width:0;border:0;padding:0;border-radius:6px;background:var(--paper-dim);cursor:pointer;transition:transform .14s ease,opacity .2s ease;}
+.px.has{background:var(--pc);opacity:var(--po,1);}
+.px.off{visibility:hidden;cursor:default;}
+.px.future{background:transparent;border:1px dashed var(--rule);cursor:default;}
+.px.multi{box-shadow:inset 0 0 0 2.5px rgba(255,255,255,.65);}
+.px.today{outline:2px solid var(--accent);outline-offset:1px;}
+.px.dim{opacity:.14!important;}
+.px.sel{outline:2px solid var(--ink);outline-offset:1px;transform:scale(1.18);position:relative;z-index:2;}
+@media (hover:hover){.px.has:hover{transform:scale(1.22);position:relative;z-index:2;}}
+.px-card .dayd{margin:0;}
+@media (max-width:520px){
+  .px-card{padding:12px;} .px-grid{gap:3px;grid-template-columns:14px repeat(12,minmax(0,1fr));}
+  .px{border-radius:4px;} .px-hf{display:none;} .px-hs{display:inline;} .px-d{font-size:8px;}
+  .px-ring{width:48px;height:48px;} .px-ring span{font-size:11px;}
+}
+@media (prefers-reduced-motion:reduce){.dayd.pop,.px,.wc-cell{animation:none!important;transition:none!important;}}
+
 /* hidden formatting bar must not peek out underneath / over the topbar */
 .write-fixed-bar{transition:transform .22s ease,opacity .18s ease,visibility 0s linear .22s;}
 .write-fixed-bar:not(.show){opacity:0;visibility:hidden;pointer-events:none;}
@@ -2689,7 +2801,7 @@ async function deleteAllUserData(){
    ================================================================ */
 
 // ---------- data gating (loading / error states instead of false "empty" screens) ----------
-const VIEW_DATA = {dashboard:['entries'], timeline:['entries'], calendar:['entries'], archive:['entries'], insights:['entries'],
+const VIEW_DATA = {dashboard:['entries'], timeline:['entries'], calendar:['entries'], pixels:['entries'], archive:['entries'], insights:['entries'],
   monthly:['entries'], yearly:['entries'], search:['entries'], life:['life'], privacy:['entries']};
 function dataGate(view){
   let need = VIEW_DATA[view] || [];
@@ -3675,7 +3787,7 @@ function attachEntriesListener(){
     const first = !state.loaded.entries;
     state.loaded.entries = true; state.loadError.entries = null; clearTimeout(window.__entriesLoadTimer);
     syncUserStats(); // keeps the backend's Users table accurate, without exposing anyone's text
-    if(['dashboard','timeline','calendar','search','insights','archive','monthly','yearly','privacy'].includes(state.view)) requestRender();
+    if(['dashboard','timeline','calendar','pixels','search','insights','archive','monthly','yearly','privacy'].includes(state.view)) requestRender();
     else updateStreak();
     if(first) maybeShowOnboarding();
   }, err=>{ reportError(err, 'entries listener'); state.loadError.entries = err; requestRender(); });
@@ -4519,7 +4631,7 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   adminTab:'overview', adminUsers:[], adminUsersLoaded:false, adminUserFilter:'', adminUserStatus:'all',
   adminSelectedUid:null, adminAudit:[], adminPeek:null, adminConfigDraft:null,
   filters:{mood:'',tag:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'},
-  calMonth:new Date(), calendarShowArchived:false,
+  calMonth:new Date(), calendarShowArchived:false, calSel:null, pixYear:new Date().getFullYear(), pixSel:null, pixMood:'',
   draftRecoveryResolved:false, appliedDraftData:null,
   // Module 06: Life Organization — derived, source-linked data built from journals via AI.
   life:{achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]},
@@ -4794,7 +4906,7 @@ function go(view, param){
   else if(enteringWrite) state.focusMode = false; // always open in normal mode; Focus only via the ⛶ Focus button
   if(['search','settings'].includes(view)) ensureSearchIndexListener();
   if(view==='write'){ state.draftRecoveryResolved = false; state.appliedDraftData = null; } // re-check for a recoverable draft on every fresh entry into the editor
-  document.querySelectorAll('.nav-item,.bn-item').forEach(b=>{ const on = b.dataset.view===view; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  document.querySelectorAll('.nav-item,.bn-item').forEach(b=>{ const on = b.dataset.view===view || (view==='pixels' && b.dataset.view==='timeline'); b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   render();
   document.getElementById('sidebar').classList.remove('open');
   document.querySelector('.overlay').classList.remove('show');
@@ -4975,7 +5087,7 @@ let __lastView = null;
 function render(){
   const main = document.getElementById('main');
   const views = {
-    dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar,
+    dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar, pixels: renderPixels,
     search: renderSearch, archive: renderArchive, insights: renderInsights, monthly: renderMonthly,
     yearly: renderYearly, life: renderLifeHub, settings: renderSettings, privacy: renderPrivacy,
     admin: renderAdmin
@@ -6377,11 +6489,11 @@ function renderTimeline(){
     <div class="page-head">
       <h1>Journal Library</h1>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="go('calendar')">📅 Calendar</button>
         <button class="btn btn-ghost btn-sm" onclick="go('archive')">🗄 Archive</button>
         <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
       </div>
     </div>
+    ${libTabs('timeline')}
 
     <div class="lib-filter-bar">
       <button type="button" class="btn btn-sm lib-filter-btn ${open?'is-open':''}" id="libFilterBtn"
@@ -6431,78 +6543,137 @@ function renderTimeline(){
   `;
 }
 
-/* ---------------- CALENDAR (Module 06) ---------------- */
+/* ---------------- LIBRARY VIEWS: List · Calendar · Pixels ----------------
+   One segmented switcher on top of all three. Every view reads the same
+   state.entries, so a journal written anywhere shows up in all of them. */
+function libTabs(active){
+  const t = [['timeline','📋','List'],['calendar','📅','Calendar'],['pixels','▦','Pixels']];
+  return `<div class="lib-tabs" role="tablist" aria-label="Library view">${t.map(([v,i,l])=>
+    `<button type="button" role="tab" aria-selected="${v===active}" class="lib-tab ${v===active?'on':''}" onclick="go('${v}')"><span aria-hidden="true">${i}</span><span>${l}</span></button>`).join('')}</div>`;
+}
+function entriesByDateMap(showArchived){
+  const m = {};
+  state.entries.forEach(e=>{ if(!e.date || (e.archived && !showArchived)) return; (m[e.date] = m[e.date] || []).push(e); });
+  Object.values(m).forEach(a=>a.sort((x,y)=>(x.createdAt||'').localeCompare(y.createdAt||'')));
+  return m;
+}
+// The entry that "colours" a day: the strongest logged mood.
+function dayMoodEntry(list){
+  let best = null;
+  (list||[]).forEach(e=>{ if(hasMood(e.mood) && (!best || (e.moodIntensity||5) > (best.moodIntensity||5))) best = e; });
+  return best;
+}
+function dayDetailHtml(iso, list){
+  if(!iso) return `<div class="dayd-empty">যেকোনো তারিখে ট্যাপ করলে সেদিনের জার্নাল এখানে দেখাবে।</div>`;
+  const today = todayISO();
+  const head = `<div class="dayd-head"><span>${escapeHtml(fmtDate(iso,{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</span>${iso===today?'<span class="dayd-today">Today</span>':''}</div>`;
+  if(!list || !list.length){
+    return head + `<div class="dayd-empty">${iso>today ? 'ভবিষ্যতের দিন — এখনো কিছু লেখা হয়নি।' : iso===today ? 'আজ এখনো কিছু লেখা হয়নি।' : 'এই দিনে কোনো জার্নাল নেই।'}</div>`
+      + (iso===today ? `<button type="button" class="btn btn-primary btn-sm" onclick="go('write')">+ আজকের জার্নাল লেখো</button>` : '');
+  }
+  return head + list.map(e=>`
+    <button type="button" class="dayd-entry" onclick="go('write','${e.id}')" style="--c:${hasMood(e.mood)?moodDotColor(e.mood):'var(--ink-faint)'}">
+      <span class="dayd-title">${escapeHtml(e.title || 'Untitled')} ${e.important?'📌':''}${e.favorite?'<span class="entry-star">★</span>':''}${e.archived?' <span class="archived-pill">🗄</span>':''}</span>
+      <span class="dayd-prev">${escapeHtml(entryPreview(e,140))}</span>
+      <span class="entry-meta">${moodChip(e,{intensity:true})}${notesChip(e)}</span>
+      <span class="dayd-go" aria-hidden="true">খুলুন →</span>
+    </button>`).join('');
+}
+function __popPanel(id, html){
+  const p = document.getElementById(id); if(!p) return;
+  p.innerHTML = html; p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop');
+}
+
+/* ---------------- CALENDAR — wall calendar ---------------- */
 function renderCalendar(){
   const cur = state.calMonth;
   const year = cur.getFullYear(), month = cur.getMonth();
-  const first = new Date(year, month, 1);
-  const startDow = first.getDay();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
   const showArchived = state.calendarShowArchived;
-
-  // Group by date instead of overwriting — a date can have more than one entry.
-  const entriesByDate = {};
-  state.entries.forEach(e=>{
-    if(e.archived && !showArchived) return; // archived stays out of normal calendar activity unless explicitly shown
-    (entriesByDate[e.date] = entriesByDate[e.date] || []).push(e);
-  });
-  window.__calEntriesByDate = entriesByDate; // read by openDayEntries()
+  const entriesByDate = entriesByDateMap(showArchived);
+  window.__calEntriesByDate = entriesByDate; // read by calPick() / openDayEntries()
   const today = todayISO();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const startDow = new Date(year, month, 1).getDay();
+  const total = Math.ceil((startDow + daysInMonth)/7)*7;
+  const monthKey = year + '-' + pad2(month+1);
+
+  // month stats
+  let monthEntries = 0, daysWritten = 0; const moodCount = {};
+  for(let d=1; d<=daysInMonth; d++){
+    const list = entriesByDate[monthKey+'-'+pad2(d)]; if(!list) continue;
+    daysWritten++; monthEntries += list.length;
+    const m = dayMoodEntry(list); if(m) moodCount[m.mood] = (moodCount[m.mood]||0)+1;
+  }
+  const topMoodId = Object.keys(moodCount).sort((a,b)=>moodCount[b]-moodCount[a])[0];
+  const topMood = topMoodId ? moodInfo(topMoodId) : null;
+
+  let sel = state.calSel;
+  if(!sel || sel.slice(0,7)!==monthKey) sel = today.slice(0,7)===monthKey ? today : null;
+  state.calSel = sel;
 
   let cells = '';
-  for(let i=0;i<startDow;i++) cells += `<div class="cal-cell empty"></div>`;
-  for(let day=1; day<=daysInMonth; day++){
-    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const dayEntries = entriesByDate[iso] || [];
-    const isToday = iso===today;
-    const hasImportant = dayEntries.some(e=>e.important);
-    const allArchived = dayEntries.length>0 && dayEntries.every(e=>e.archived);
-
-    let clickAttr = '', dotsHtml = '';
-    if(dayEntries.length===1){
-      const e = dayEntries[0];
-      clickAttr = `onclick="go('write','${e.id}')"`;
-      const op = (0.45 + ((e.moodIntensity||5)/10)*0.55).toFixed(2);
-      dotsHtml = `<span class="cal-dot" style="background:${moodDotColor(e.mood)};opacity:${op}"></span>`;
-    } else if(dayEntries.length>1){
-      clickAttr = `onclick="openDayEntries('${iso}')"`;
-      const mini = dayEntries.slice(0,3).map(e=>{
-        const op = (0.45 + ((e.moodIntensity||5)/10)*0.55).toFixed(2);
-        return `<span class="cal-dot-mini" style="background:${moodDotColor(e.mood)};opacity:${op}"></span>`;
-      }).join('');
-      dotsHtml = `<span class="cal-dot-row">${mini}${dayEntries.length>3?`<span class="cal-more">+${dayEntries.length-3}</span>`:''}</span>`;
-    }
-
-    const dayLabel = fmtDate(iso,{weekday:'long', month:'long', day:'numeric'}) + (dayEntries.length ? ` — ${dayEntries.length} entr${dayEntries.length>1?'ies':'y'} (${[...new Set(dayEntries.map(e=>moodInfo(e.mood).label))].join(', ')})` : ' — no entries') + (isToday ? ', today' : '');
-    cells += `<div class="cal-cell ${dayEntries.length?'has-entry':''} ${isToday?'today':''} ${allArchived?'has-archived':''}" ${clickAttr} aria-label="${escapeAttr(dayLabel)}" ${isToday?'aria-current="date"':''} ${dayEntries.length? `title="${dayEntries.length} entr${dayEntries.length>1?'ies':'y'}"`:''}>
-      ${hasImportant?'<span class="cal-pin">📌</span>':''}
-      <span>${day}</span>
-      ${dotsHtml}
-    </div>`;
+  for(let i=0;i<total;i++){
+    const dt = new Date(year, month, 1 - startDow + i);
+    const iso = dateToISO(dt), inMonth = dt.getMonth()===month;
+    const list = entriesByDate[iso] || [];
+    const me = dayMoodEntry(list);
+    const col = me ? moodDotColor(me.mood) : 'var(--accent)';
+    const pct = me ? Math.round(10 + (me.moodIntensity||5)*2.2) : 12;
+    const chips = list.slice(0,2).map(e=>`<span class="wc-chip" style="--c:${hasMood(e.mood)?moodDotColor(e.mood):'var(--ink-faint)'}">${escapeHtml(e.title || entryPreview(e,26) || 'Untitled')}</span>`).join('')
+      + (list.length>2 ? `<span class="wc-more">+${list.length-2} more</span>` : '');
+    const dots = list.slice(0,4).map(e=>`<i style="background:${hasMood(e.mood)?moodDotColor(e.mood):'var(--ink-faint)'}"></i>`).join('');
+    const dow = dt.getDay();
+    const label = fmtDate(iso,{weekday:'long',month:'long',day:'numeric'}) + (list.length ? ` — ${list.length} entr${list.length>1?'ies':'y'}` : ' — no entries') + (iso===today?', today':'');
+    cells += `<button type="button" class="wc-cell${list.length?' has':''}${iso===today?' today':''}${inMonth?'':' out'}${(dow===0||dow===6)?' we':''}${iso===sel?' sel':''}${list.length&&list.every(e=>e.archived)?' arch':''}"
+      data-iso="${iso}" onclick="calPick('${iso}')" ondblclick="calOpen('${iso}')" aria-label="${escapeAttr(label)}" ${iso===today?'aria-current="date"':''}
+      ${list.length?`style="--mc:${col};--mt:${pct}%"`:''}>
+      <span class="wc-num">${dt.getDate()}</span>
+      ${list.some(e=>e.important)?'<span class="wc-pin">📌</span>':''}
+      <span class="wc-marks">${chips}</span>
+      <span class="wc-dots">${dots}</span>
+    </button>`;
   }
-  const dows = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const years = []; const y0 = Math.min(year, new Date().getFullYear()) - 4, y1 = Math.max(year, new Date().getFullYear()) + 1;
+  for(let y=y0; y<=y1; y++) years.push(y);
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   return `
     <div class="page-head">
-      <h1>Calendar</h1>
+      <h1>Journal Library</h1>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <label class="pill" style="cursor:pointer;">
           <input type="checkbox" ${showArchived?'checked':''} onchange="state.calendarShowArchived=this.checked; render();" style="margin:0;"> Show archived
         </label>
-        <button class="btn btn-ghost btn-sm" onclick="go('timeline')">📋 Journal Library</button>
+        <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
       </div>
     </div>
-    <div class="card">
-      <div class="cal-head">
-        <button class="btn btn-sm" onclick="shiftMonth(-1)" aria-label="Previous month">← Prev</button>
-        <h3 style="margin:0;">${cur.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h3>
-        <button class="btn btn-sm" onclick="shiftMonth(1)" aria-label="Next month">Next →</button>
+    ${libTabs('calendar')}
+    <div class="card wc">
+      <div class="wc-rings" aria-hidden="true">${'<i></i>'.repeat(9)}</div>
+      <div class="wc-top">
+        <div class="wc-titlebox">
+          <div class="wc-month">${months[month]} <span>${year}</span></div>
+          <div class="wc-stats">
+            <span><b>${daysWritten}</b> দিন লেখা</span><span><b>${monthEntries}</b> এন্ট্রি</span>
+            ${topMood?`<span>সবচেয়ে বেশি ${topMood.emoji} <b>${escapeHtml(topMood.label)}</b></span>`:''}
+          </div>
+        </div>
+        <div class="wc-nav">
+          <button class="wc-nb" onclick="shiftMonth(-1)" aria-label="Previous month">‹</button>
+          <button class="wc-nb wc-today" onclick="calToday()">Today</button>
+          <button class="wc-nb" onclick="shiftMonth(1)" aria-label="Next month">›</button>
+          <select class="wc-sel" aria-label="Month" onchange="calJump(${year}, +this.value)">${months.map((m,i)=>`<option value="${i}" ${i===month?'selected':''}>${m.slice(0,3)}</option>`).join('')}</select>
+          <select class="wc-sel" aria-label="Year" onchange="calJump(+this.value, ${month})">${years.map(y=>`<option ${y===year?'selected':''}>${y}</option>`).join('')}</select>
+        </div>
       </div>
-      <div class="cal-grid">
-        ${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}
-        ${cells}
+      <div class="wc-body" ontouchstart="calTouch(event,0)" ontouchend="calTouch(event,1)">
+        <div class="wc-grid wc-dowrow">${dows.map((d,i)=>`<div class="wc-dow ${i===0||i===6?'we':''}">${d}</div>`).join('')}</div>
+        <div class="wc-grid">${cells}</div>
+        <div class="wc-hint">‹ › বা স্ক্রিনে সোয়াইপ করে মাস বদলাও · ডাবল-ক্লিক করলে সরাসরি জার্নাল খোলে</div>
       </div>
-      <div class="cal-legend">
+      <div class="dayd" id="calDetail">${dayDetailHtml(sel, entriesByDate[sel])}</div>
+      <div class="cal-legend" style="margin:0 18px 16px;">
         ${MOODS.map(m=>`<span class="item"><span class="dot" style="background:${moodDotColor(m.id)}"></span>${m.emoji} ${m.label}</span>`).join('')}
         <span class="item">📌 Important</span>
         ${showArchived ? `<span class="item">┄ Archived-only day</span>` : ''}
@@ -6510,10 +6681,116 @@ function renderCalendar(){
     </div>
   `;
 }
+function calPick(iso){
+  const cur = state.calMonth, d = new Date(iso+'T00:00:00');
+  state.calSel = iso;
+  if(d.getMonth()!==cur.getMonth() || d.getFullYear()!==cur.getFullYear()){ state.calMonth = new Date(d.getFullYear(), d.getMonth(), 1); render(); return; }
+  document.querySelectorAll('.wc-cell.sel').forEach(c=>c.classList.remove('sel'));
+  const c = document.querySelector('.wc-cell[data-iso="'+iso+'"]'); if(c) c.classList.add('sel');
+  __popPanel('calDetail', dayDetailHtml(iso, (window.__calEntriesByDate||{})[iso]));
+}
+function calOpen(iso){
+  const l = (window.__calEntriesByDate||{})[iso] || [];
+  if(l.length===1) go('write', l[0].id);
+}
+function calToday(){ const n = new Date(); state.calMonth = new Date(n.getFullYear(), n.getMonth(), 1); state.calSel = todayISO(); render(); }
+function calJump(y, m){ state.calMonth = new Date(y, m, 1); state.calSel = null; render(); }
+let __calTx = null;
+function calTouch(e, end){
+  const t = (end ? e.changedTouches : e.touches)[0]; if(!t) return;
+  if(!end){ __calTx = {x:t.clientX, y:t.clientY}; return; }
+  if(!__calTx) return;
+  const dx = t.clientX - __calTx.x, dy = t.clientY - __calTx.y; __calTx = null;
+  if(Math.abs(dx) > 60 && Math.abs(dy) < 45) shiftMonth(dx < 0 ? 1 : -1);
+}
 function shiftMonth(n){
   state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()+n, 1);
+  state.calSel = null;
   render();
 }
+
+/* ---------------- PIXELS — "Year in Pixels" ----------------
+   One tiny square per day of the year, painted with that day's mood.
+   Twelve month-columns × up to 31 day-rows: a whole year's emotional
+   weather on a single screen (fits a phone width). */
+function renderPixels(){
+  const y = state.pixYear || new Date().getFullYear();
+  const today = todayISO();
+  const byDate = entriesByDateMap(false);
+  window.__pixEntriesByDate = byDate;
+  const mf = state.pixMood || '';
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let logged = 0, totalEntries = 0, streak = 0, best = 0, run = 0; const counts = {};
+  for(let m=0;m<12;m++){
+    const dim = new Date(y, m+1, 0).getDate();
+    for(let d=1; d<=dim; d++){
+      const iso = y+'-'+pad2(m+1)+'-'+pad2(d);
+      const list = byDate[iso];
+      if(list){ logged++; totalEntries += list.length; run++; best = Math.max(best, run);
+        const me = dayMoodEntry(list); const k = me ? me.mood : '__none'; counts[k] = (counts[k]||0)+1; }
+      else run = 0;
+    }
+  }
+  const keys = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+  const topKey = keys.find(k=>k!=='__none');
+  const top = topKey ? moodInfo(topKey) : null;
+  const colorOf = k => k==='__none' ? 'var(--ink-faint)' : moodDotColor(k);
+
+  let grid = '<div></div>' + MN.map(n=>`<div class="px-h"><span class="px-hf">${n}</span><span class="px-hs">${n[0]}</span></div>`).join('');
+  for(let d=1; d<=31; d++){
+    grid += `<div class="px-d">${d}</div>`;
+    for(let m=0; m<12; m++){
+      const dim = new Date(y, m+1, 0).getDate();
+      if(d>dim){ grid += '<span class="px off"></span>'; continue; }
+      const iso = y+'-'+pad2(m+1)+'-'+pad2(d);
+      const list = byDate[iso] || [];
+      const me = dayMoodEntry(list);
+      const dayKey = list.length ? (me ? me.mood : '__none') : '';
+      const op = me ? (0.5 + ((me.moodIntensity||5)/10)*0.5).toFixed(2) : '.55';
+      const label = fmtDate(iso,{weekday:'short',month:'short',day:'numeric'}) + (list.length ? ' — '+(me?moodInfo(me.mood).label:'No mood')+(list.length>1?' ('+list.length+' entries)':'') : (iso>today?'':' — no entry'));
+      grid += `<button type="button" class="px${list.length?' has':''}${iso>today?' future':''}${iso===today?' today':''}${list.length>1?' multi':''}${mf && list.length && dayKey!==mf?' dim':''}${mf && !list.length?' dim':''}${iso===state.pixSel?' sel':''}"
+        data-iso="${iso}" onclick="pixPick('${iso}')" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}"
+        ${list.length?`style="--pc:${colorOf(dayKey)};--po:${op}"`:''}></button>`;
+    }
+  }
+  const legend = keys.map(k=>{
+    const info = k==='__none' ? MOOD_NONE : moodInfo(k);
+    return `<button type="button" class="px-chip${mf===k?' on':''}" onclick="pixFilter('${k}')" style="--c:${colorOf(k)}"><i></i>${info.emoji} ${escapeHtml(info.label)} <b>${counts[k]}</b></button>`;
+  }).join('');
+  const bar = keys.map(k=>`<span style="flex:${counts[k]};background:${colorOf(k)}" title="${escapeAttr((k==='__none'?MOOD_NONE:moodInfo(k)).label)}: ${counts[k]}"></span>`).join('');
+  const yearsList = Object.keys(byDate).map(s=>+s.slice(0,4));
+  const minY = Math.min(y, ...(yearsList.length?yearsList:[y])), maxY = new Date().getFullYear();
+
+  return `
+    <div class="page-head">
+      <h1>Journal Library</h1>
+      <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
+    </div>
+    ${libTabs('pixels')}
+    <div class="card px-card">
+      <div class="px-top">
+        <div>
+          <div class="px-year"><button class="wc-nb" onclick="pixShift(-1)" aria-label="Previous year" ${y<=minY?'disabled':''}>‹</button><span>${y}</span><button class="wc-nb" onclick="pixShift(1)" aria-label="Next year" ${y>=maxY?'disabled':''}>›</button></div>
+          <div class="px-sub">${logged ? `<b>${logged}</b> দিন লেখা হয়েছে · সবচেয়ে লম্বা ধারা <b>${best}</b> দিন${top?` · সবচেয়ে বেশি ${top.emoji} ${escapeHtml(top.label)}`:''}` : 'এই বছরে এখনো কোনো জার্নাল নেই।'}</div>
+        </div>
+        <div class="px-ring" style="--p:${Math.round(logged/ (y%4===0&&(y%100!==0||y%400===0)?366:365)*100)}"><span>${Math.round(logged/(y%4===0&&(y%100!==0||y%400===0)?366:365)*100)}%</span></div>
+      </div>
+      ${bar ? `<div class="px-bar" aria-hidden="true">${bar}</div>` : ''}
+      <div class="px-legend">${legend}${mf?`<button type="button" class="px-chip clr" onclick="pixFilter('')">✕ Clear</button>`:''}</div>
+      <div class="px-grid">${grid}</div>
+      <div class="dayd" id="pixDetail">${dayDetailHtml(state.pixSel, byDate[state.pixSel])}</div>
+    </div>
+  `;
+}
+function pixPick(iso){
+  state.pixSel = iso;
+  document.querySelectorAll('.px.sel').forEach(c=>c.classList.remove('sel'));
+  const c = document.querySelector('.px[data-iso="'+iso+'"]'); if(c) c.classList.add('sel');
+  __popPanel('pixDetail', dayDetailHtml(iso, (window.__pixEntriesByDate||{})[iso]));
+}
+function pixShift(n){ state.pixYear = (state.pixYear || new Date().getFullYear()) + n; state.pixSel = null; render(); }
+function pixFilter(k){ state.pixMood = (state.pixMood===k) ? '' : k; render(); }
 
 /* ---- Day popover: a date with 2+ entries opens a small list instead of
    silently jumping into (or hiding) just one of them. ---- */
@@ -9001,6 +9278,7 @@ function cmdAll(q){
     nav('🏠','Dashboard','', ()=>go('dashboard'), 'home'),
     nav('📚','Journal Library','', ()=>go('timeline'), 'entries timeline'),
     nav('📅','Calendar','', ()=>go('calendar'), ''),
+    nav('▦','Year in Pixels','', ()=>go('pixels'), 'pixels year mood'),
     nav('📈','Insights','Mood & Writing', ()=>go('insights'), 'analytics mood'),
     nav('🧠','Life','Achievements, Plans, Memories', ()=>go('life'), 'achievements plans quotes ideas people places'),
     nav('🔎','Search','', ()=>openAdvancedSearch(), 'find ask'),
