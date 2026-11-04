@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-10-30.1">
+<meta name="app-build" content="2026-11-04.1">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -1633,6 +1633,42 @@ body.hdr-click .dock-add:not(.open):hover .dock-menu,body.hdr-click .theme-wrap:
 }
 @media (prefers-reduced-motion:reduce){ .dock::before{animation:none!important;} .dock *,.theme-pop,.dock-menu{transition-duration:.01s!important;} }
 
+
+/* ===== Voice typing ===== */
+.dict-btn{position:relative;gap:2px;}
+.dict-btn .dict-wave{display:none;align-items:center;gap:2px;height:14px;margin-left:4px;}
+.dict-btn .dict-wave i{width:2.5px;border-radius:2px;background:currentColor;height:5px;animation:dictBar 1s ease-in-out infinite;}
+.dict-btn .dict-wave i:nth-child(2){animation-delay:.15s}.dict-btn .dict-wave i:nth-child(3){animation-delay:.3s}.dict-btn .dict-wave i:nth-child(4){animation-delay:.45s}
+@keyframes dictBar{0%,100%{height:4px}50%{height:14px}}
+.dict-btn.on{background:#E5484D;color:#fff;border-color:transparent;width:auto;padding:0 10px;animation:dictPulse 1.8s ease-out infinite;}
+.dict-btn.on .dict-wave{display:inline-flex;}
+@keyframes dictPulse{0%{box-shadow:0 0 0 0 rgba(229,72,77,.55)}70%{box-shadow:0 0 0 10px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+.dict-lang{width:auto!important;padding:0 8px;font-size:11.5px;font-weight:700;letter-spacing:.02em;}
+.dict-ghost{opacity:.62;background:var(--accent-soft);border-radius:6px;padding:0 2px;border-bottom:2px dotted var(--accent);font-style:normal;user-select:none;-webkit-user-select:none;animation:ghostIn .25s var(--ease);}
+@keyframes ghostIn{from{opacity:0;transform:translateY(3px)}}
+.dict-strip{position:fixed;left:50%;top:calc(124px + var(--safe-t,0px));transform:translate(-50%,-14px) scale(.96);z-index:60;display:flex;align-items:center;gap:8px;padding:7px 8px 7px 14px;border-radius:999px;background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border:1px solid var(--glass-border);box-shadow:var(--shadow-float);font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s,transform .5s var(--ease);white-space:nowrap;max-width:calc(100vw - 20px);}
+.dict-strip.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+.dict-strip .ds-dot{width:9px;height:9px;border-radius:50%;background:#E5484D;animation:dictPulse 1.5s infinite;}
+.dict-strip #dsMsg{color:var(--ink-faint);max-width:34vw;overflow:hidden;text-overflow:ellipsis;}
+.dict-strip button{border:none;border-radius:999px;height:28px;padding:0 12px;font-weight:600;font-size:12.5px;background:var(--accent-soft);color:var(--accent);}
+.dict-strip .ds-stop{background:#E5484D;color:#fff;}
+@media (max-width:860px){ .dict-strip{top:calc(112px + var(--safe-t,0px));} }
+body.focus-mode .dict-strip{top:76px;}
+.dict-pop{position:fixed;z-index:95;width:282px;padding:8px;border-radius:18px;background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border:1px solid var(--glass-border);box-shadow:var(--shadow-float);opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity .2s,transform .35s var(--ease),visibility 0s .35s;}
+.dict-pop.show{opacity:1;visibility:visible;transform:none;transition-delay:0s;}
+.dp-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:6px 10px;}
+.dp-opt{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 12px;border:none;background:none;border-radius:11px;color:var(--ink);font-size:14px;text-align:left;min-height:42px;}
+.dp-opt:hover,.dp-opt.on{background:var(--accent-soft);} .dp-opt i{font-style:normal;color:var(--accent);font-weight:700;}
+.dp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;font-size:13.5px;} .dp-row small{display:block;color:var(--ink-faint);font-size:11.5px;} .dp-row input{width:18px;height:18px;accent-color:var(--accent);flex:none;}
+.dp-sep{height:1px;background:var(--rule);margin:6px 4px;}
+.dict-modal{position:fixed;inset:0;z-index:300;background:rgba(10,14,20,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px;}
+.dict-modal.show{display:flex;}
+.dm-card{width:min(520px,100%);max-height:88vh;overflow:auto;background:var(--paper,#fff);color:var(--ink);border-radius:22px;padding:22px;box-shadow:0 40px 100px -30px rgba(0,0,0,.6);}
+.dm-card h3{margin-bottom:6px;} .dm-p{color:var(--ink-soft);font-size:13.5px;margin-bottom:12px;line-height:1.55;}
+.dm-card textarea{width:100%;border:1px solid var(--rule);border-radius:12px;padding:10px 12px;background:var(--glass-bg);color:var(--ink);font:inherit;resize:vertical;margin-bottom:12px;}
+.dm-card code{background:var(--accent-soft);padding:1px 6px;border-radius:6px;font-size:12.5px;}
+.dm-grid{display:grid;grid-template-columns:76px 1fr;gap:10px 12px;font-size:13.5px;} .dm-grid b{color:var(--accent);}
+.dm-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
 @media (prefers-reduced-motion:reduce){ body::before{animation:none;} #splash .sp-mark,#splash .sp-bar::after,.install-chip.pulse{animation:none;} }
 @media (forced-colors:active){ .btn-primary,.btn-accent{border:1px solid ButtonText;} }
 @media print{ body::before,body::after,#splash,.update-bar,.cmdk{display:none!important;} .page-head h1{-webkit-text-fill-color:currentColor;background:none;} }
@@ -5651,6 +5687,11 @@ function renderWrite(){
         <button class="btn btn-sm" id="impBtn" aria-pressed="${!!draft.important}" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
       </div>
       <div class="wfb-sep wfb-optional"></div>
+      <div class="wfb-group dict-group">
+        <button type="button" class="fmt-btn dict-btn" id="dictBtn" aria-label="Voice typing" aria-pressed="false" title="ভয়েস টাইপিং — লাইভ বলে লেখো (Ctrl+Shift+M)" onmousedown="event.preventDefault()" onclick="Dictate.toggle()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span class="dict-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
+        <button type="button" class="fmt-btn dict-lang" id="dictLangBtn" aria-label="Voice language" title="ভয়েসের ভাষা ও সেটিংস" onmousedown="event.preventDefault()" onclick="Dictate.langMenu(this)">বাং+EN</button>
+      </div>
+      <div class="wfb-sep"></div>
       <div class="wfb-group">
         <button type="button" class="fmt-btn" aria-label="Undo" title="Undo (Ctrl+Z)" onmousedown="event.preventDefault()" onclick="edCmd('undo')">↶</button>
         <button type="button" class="fmt-btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" onmousedown="event.preventDefault()" onclick="edCmd('redo')">↷</button>
@@ -9657,307 +9698,172 @@ function applyHeaderConfig(){
 Object.assign(window,{dockClose,dockToggle,themeChipClick,applyHeaderConfig,headerCfg,syncHeaderTheme});
 
 /* ================================================================
-   PWA — install + update
+   VOICE TYPING (live dictation) — Bangla · English · mixed
+   Uses the browser's built-in speech recogniser (free, no keys), then
+   runs our own pipeline on top: context-aware choice between the engine's
+   alternatives, spoken punctuation, voice commands, Bangla-script →
+   English-letter conversion for common English words, a personal
+   vocabulary, spacing + capitalisation. Text appears live (ghost text)
+   inside the journal editor and turns solid when the phrase is final.
    ================================================================ */
-const PWA = {
-  reg: null, deferred: window.__bip || null, updateReady: false, wantReload: false,
-  checking: false, lastCheck: 0, lastResult: '', secure: window.isSecureContext && /^https?:$/.test(location.protocol),
-  build: (document.querySelector('meta[name="app-build"]') || {}).content || '',
-  standalone(){ return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: minimal-ui)').matches || navigator.standalone === true; },
-  platform(){
-    const ua = navigator.userAgent || '';
-    if(/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
-    if(/android/i.test(ua)) return 'android';
-    return 'desktop';
-  },
-  canPrompt(){ return !!this.deferred; },
-  refreshUI(){
-    root.classList.toggle('is-standalone', this.standalone());
-    root.classList.toggle('has-update', this.updateReady);
-    document.querySelectorAll('[data-pwa-install]').forEach(el=>el.classList.toggle('pulse', this.canPrompt() && el.classList.contains('install-chip')));
-    const pm = $('pmUpdateBadge'); if(pm) pm.hidden = !this.updateReady;
-    if(typeof state !== 'undefined' && state.view === 'settings' && !window.__editingMoodEmoji){
-      const box = $('pwaStatusBox'); if(box) box.innerHTML = renderPwaStatus();
-    }
-  },
-  async install(){
-    if(this.standalone()){ toast('JournalOS ইতিমধ্যে অ্যাপ হিসেবে চলছে।', {type:'info'}); return; }
-    const ev = this.deferred;
-    if(ev){
-      this.deferred = null; window.__bip = null;
-      try{
-        ev.prompt();
-        const choice = await ev.userChoice;
-        if(choice && choice.outcome === 'accepted') toast('ইনস্টল হচ্ছে… হোম স্ক্রিন/অ্যাপ লিস্টে JournalOS পাবে।', {type:'success'});
-      }catch(e){ this.openGuide(); }
-      this.refreshUI(); return;
-    }
-    this.openGuide();
-  },
-  openGuide(){
-    let el = $('pwaGuide'); if(el) el.remove();
-    const p = this.platform();
-    let steps;
-    if(!this.secure){
-      steps = `<p class="pg-note">⚠️ ইনস্টল করতে হলে সাইটটি <b>HTTPS</b>-এ (যেমন Firebase Hosting, Netlify, Vercel, GitHub Pages) হোস্ট করা থাকতে হবে। ফাইল সরাসরি খুলে (file://) বা http-তে ইনস্টল হয় না।</p>`;
-    } else if(p === 'ios'){
-      steps = `<ol><li>Safari-তে এই পেজ খোলা রাখো।</li><li>নিচের (বা উপরের) <span class="pg-ic">Share ⬆︎</span> বাটনে ট্যাপ করো।</li><li>নিচে স্ক্রল করে <b>“Add to Home Screen”</b> বেছে নাও।</li><li><b>Add</b> চাপলেই JournalOS অ্যাপ হিসেবে হোম স্ক্রিনে চলে আসবে।</li></ol>`;
-    } else if(p === 'android'){
-      steps = `<ol><li>Chrome-এর <span class="pg-ic">⋮</span> মেনু খোলো।</li><li><b>“Install app”</b> অথবা <b>“Add to Home screen”</b> বেছে নাও।</li><li>নিশ্চিত করলেই অ্যাপ লিস্টে JournalOS যুক্ত হবে।</li></ol><p class="pg-note">অপশনটি না দেখালে পেজটা একবার রিলোড করে কয়েক সেকেন্ড অপেক্ষা করো।</p>`;
-    } else {
-      steps = `<ol><li><b>Chrome / Edge:</b> অ্যাড্রেস বারের ডানদিকের <span class="pg-ic">⊕ Install</span> আইকনে ক্লিক করো (অথবা মেনু → “Install JournalOS”)।</li><li><b>Safari (macOS):</b> File → <b>Add to Dock</b>।</li><li>Firefox ডেস্কটপ PWA ইনস্টল সমর্থন করে না — Chrome বা Edge ব্যবহার করো।</li></ol>`;
-    }
-    el = document.createElement('div');
-    el.className = 'modal-backdrop'; el.id = 'pwaGuide'; el.setAttribute('aria-labelledby', 'pwaGuideTitle');
-    el.innerHTML = `<div class="modal pwa-guide"><h3 id="pwaGuideTitle">JournalOS অ্যাপ ইনস্টল করো</h3>
-      <p>ইনস্টল করলে ব্রাউজার ছাড়াই আলাদা অ্যাপের মতো খুলবে — দ্রুত, ফুল-স্ক্রিন, আর অফলাইনেও লোড হবে।</p>${steps}
-      <div class="row"><button class="btn btn-primary" onclick="PWA.closeGuide()">বুঝেছি</button></div></div>`;
-    el.addEventListener('click', e=>{ if(e.target === el) PWA.closeGuide(); });
-    document.body.appendChild(el);
-    if(window.Dialogs && Dialogs.watch) Dialogs.watch(el);
-    requestAnimationFrame(()=>el.classList.add('show'));
-  },
-  closeGuide(){ const el = $('pwaGuide'); if(el){ el.classList.remove('show'); setTimeout(()=>el.remove(), 80); } },
+const Dictate = (function(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const KEY = 'journalos_dict_v1';
+  const ANDROID = /Android/i.test(navigator.userAgent);
+  const LANGS = {mix:{code:'bn-BD', label:'বাংলা + English', short:'বাং+EN'}, bn:{code:'bn-BD', label:'শুধু বাংলা', short:'বাংলা'}, en:{code:'en-US', label:'English', short:'EN'}};
+  let cfg = Object.assign({lang:'mix', latin:true, autoPunct:false, dict:[]}, (function(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } })());
+  const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} };
 
-  /* ---- service worker + updates ---- */
-  init(){
-    window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); this.deferred = e; window.__bip = e; this.refreshUI(); this.offerInstallToast(); });
-    window.addEventListener('pwa-bip', ()=>{ this.deferred = window.__bip; this.refreshUI(); this.offerInstallToast(); });
-    window.addEventListener('appinstalled', ()=>{ this.deferred = null; window.__bip = null; toast('JournalOS ইনস্টল হয়েছে। 🎉', {type:'success'}); this.refreshUI(); });
-    matchMedia('(display-mode: standalone)').addEventListener && matchMedia('(display-mode: standalone)').addEventListener('change', ()=>this.refreshUI());
-    this.refreshUI();
-    if(!('serviceWorker' in navigator) || !this.secure){ this.lastResult = this.secure ? 'unsupported' : 'insecure'; return; }
-    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
-      if(this.wantReload && !this._reloaded){ this._reloaded = true; location.reload(); }
-    });
-    const register = ()=>navigator.serviceWorker.register('/app/sw.js', {scope:'/app/'}).then(reg=>{
-      this.reg = reg;
-      if(reg.waiting && navigator.serviceWorker.controller) this.markUpdate();
-      reg.addEventListener('updatefound', ()=>{
-        const w = reg.installing; if(!w) return;
-        w.addEventListener('statechange', ()=>{ if(w.state === 'installed' && navigator.serviceWorker.controller) this.markUpdate(); });
-      });
-      setTimeout(()=>this.check(false), 12000);
-    }).catch(err=>{ this.lastResult = 'sw-failed'; console.warn('SW registration failed', err && err.message); });
-    if(document.readyState === 'complete') register(); else window.addEventListener('load', register);
-    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && Date.now() - this.lastCheck > 15*60*1000) this.check(false); });
-    window.addEventListener('online', ()=>this.check(false));
-    setInterval(()=>this.check(false), 60*60*1000);
-  },
-  offerInstallToast(){
-    if(this.standalone()) return;
-    let seen = null; try{ seen = localStorage.getItem('journalos_install_offered'); }catch(e){}
-    if(seen) return;
-    try{ localStorage.setItem('journalos_install_offered', '1'); }catch(e){}
-    setTimeout(()=>{ if(state && state.user) toast('JournalOS-কে অ্যাপ হিসেবে ইনস্টল করতে পারো।', {action:{label:'Install', fn:()=>this.install()}, ttl:10000}); }, 4000);
-  },
-  ask(msg, ms){
-    return new Promise(resolve=>{
-      const ctl = navigator.serviceWorker && navigator.serviceWorker.controller;
-      if(!ctl){ resolve(null); return; }
-      const ch = new MessageChannel(); const t = setTimeout(()=>resolve(null), ms || 15000);
-      ch.port1.onmessage = e=>{ clearTimeout(t); resolve(e.data); };
-      try{ ctl.postMessage(msg, [ch.port2]); }catch(e){ clearTimeout(t); resolve(null); }
-    });
-  },
-  // Fallback for browsers/hosts without a controlling worker: compare the <meta name="app-build"> of a fresh copy.
-  async checkViaFetch(){
-    try{
-      const r = await fetch(location.pathname, {cache:'no-store'}); if(!r.ok) return 'error';
-      const m = /<meta\s+name=["']app-build["']\s+content=["']([^"']*)["']/i.exec(await r.text());
-      return (m && this.build && m[1] !== this.build) ? 'updated' : 'current';
-    }catch(e){ return 'offline'; }
-  },
-  async check(manual){
-    if(this.checking) return;
-    if(!navigator.onLine){ this.lastResult = 'offline'; if(manual) toast("অফলাইন — ইন্টারনেট থাকলে আবার চেষ্টা করো।", {type:'error'}); this.refreshUI(); return; }
-    this.checking = true; this.refreshUI();
-    let status = 'current';
-    try{
-      if(this.reg){ try{ await this.reg.update(); }catch(e){} if(this.reg.waiting && navigator.serviceWorker.controller) status = 'updated'; }
-      if(status !== 'updated'){
-        const r = await this.ask({type:'CHECK_UPDATE', build:this.build});
-        status = r ? r.status : await this.checkViaFetch();
-      }
-    }catch(e){ status = 'error'; }
-    this.checking = false; this.lastCheck = Date.now(); this.lastResult = status;
-    if(status === 'updated') this.markUpdate();
-    else if(manual) toast(status === 'current' ? 'আপনি সর্বশেষ ভার্সনেই আছেন। ✓' : status === 'offline' ? 'অফলাইন — আবার চেষ্টা করো।' : "আপডেট চেক করা যায়নি।", {type: status === 'current' ? 'success' : 'error'});
-    this.refreshUI();
-  },
-  markUpdate(){
-    if(this.updateReady) return;
-    this.updateReady = true; this.refreshUI(); this.showBar();
-  },
-  showBar(){
-    let bar = $('updateBar');
-    if(!bar){
-      bar = document.createElement('div'); bar.id = 'updateBar'; bar.className = 'update-bar'; bar.setAttribute('role', 'status'); bar.setAttribute('aria-live', 'polite');
-      bar.innerHTML = `<span class="ub-ic" aria-hidden="true">🚀</span><div class="ub-txt"><b>নতুন আপডেট প্রস্তুত</b><span>রিলোড করলেই সর্বশেষ ভার্সন চালু হবে।</span></div>
-        <div class="ub-act"><button class="btn btn-sm btn-ghost" onclick="PWA.dismissBar()">পরে</button><button class="btn btn-sm btn-primary" onclick="PWA.applyUpdate()">এখনই আপডেট</button></div>`;
-      document.body.appendChild(bar);
-    }
-    requestAnimationFrame(()=>bar.classList.add('show'));
-  },
-  dismissBar(){ const b = $('updateBar'); if(b) b.classList.remove('show'); },
-  applyUpdate(){
-    try{ if(typeof scheduleAutosave === 'function' && window.__draft) scheduleAutosave(); }catch(e){}
-    if(typeof state !== 'undefined' && state.view === 'write' && typeof draftIsDirty === 'function' && draftIsDirty()) toast('অসংরক্ষিত লেখা এই ডিভাইসে ড্রাফট হিসেবে রাখা আছে — রিলোডের পর ফিরে পাবে।', {ttl:3500});
-    this.wantReload = true;
-    const w = this.reg && this.reg.waiting;
-    if(w){ w.postMessage({type:'SKIP_WAITING'}); setTimeout(()=>{ if(!this._reloaded) location.reload(); }, 2500); }
-    else setTimeout(()=>location.reload(), 150);
-  }
-};
-window.PWA = PWA;
+  /* ---------- lexicon: Bangla-script spelling → English word ---------- */
+  const LEX_SRC = 'অ্যাপ|এ্যাপ|অ্যাপস=app|অ্যাপ্লিকেশন=application|মোবাইল=mobile|ল্যাপটপ=laptop|কম্পিউটার=computer|ইন্টারনেট=internet|ওয়াইফাই=WiFi|ওয়েবসাইট=website|সফটওয়্যার|সফটওয়ার=software|হার্ডওয়্যার=hardware|ইমেইল|ইমেল=email|মেসেজ=message|মিটিং=meeting|প্রজেক্ট=project|ডেডলাইন=deadline|টাস্ক=task|টিম=team|ম্যানেজার=manager|ক্লায়েন্ট=client|কাস্টমার=customer|ইন্টারভিউ=interview|প্রেজেন্টেশন=presentation|রিপোর্ট=report|প্ল্যান=plan|আইডিয়া=idea|টার্গেট=target|বাজেট=budget|স্যালারি=salary|বিজনেস=business|মার্কেটিং=marketing|সেলস=sales|অনলাইন=online|অফলাইন=offline|আপডেট=update|ডাউনলোড=download|আপলোড=upload|ইনস্টল=install|লগইন=login|পাসওয়ার্ড=password|অ্যাকাউন্ট=account|প্রোফাইল=profile|সেটিং=setting|সেটিংস=settings|বাটন=button|ক্লিক=click|ভিডিও=video|অডিও=audio|পিকচার=picture|ক্যামেরা=camera|ফেসবুক=Facebook|ইউটিউব=YouTube|গুগল=Google|হোয়াটসঅ্যাপ=WhatsApp|ইনস্টাগ্রাম=Instagram|মেসেঞ্জার=Messenger|টেলিগ্রাম=Telegram|চ্যাটজিপিটি=ChatGPT|এআই=AI|অ্যান্ড্রয়েড=Android|আইফোন=iPhone|উইন্ডোজ=Windows|ক্রোম=Chrome|জার্নালওএস=JournalOS|ভেরি গুড=very good|গুড মর্নিং=good morning|গুড নাইট=good night|নাইস=nice|পারফেক্ট=perfect|প্রবলেম=problem|সলিউশন=solution|ইস্যু=issue|সাপোর্ট=support|সার্ভিস=service|ফিডব্যাক=feedback|রিভিউ=review|ফিচার=feature|ডিজাইন=design|ডেভেলপার=developer|কোডিং=coding|কোড=code|বাগ=bug|সার্ভার=server|ডাটাবেস=database|ডেটা|ডাটা=data|ক্লাউড=cloud|লিংক=link|ফাইল=file|ফোল্ডার=folder|স্ক্রিন=screen|নোটিফিকেশন=notification|রিমাইন্ডার=reminder|শিডিউল=schedule|ক্যালেন্ডার=calendar|উইকেন্ড=weekend|বার্থডে=birthday|শপিং=shopping|ওয়ার্কআউট=workout|এক্সারসাইজ=exercise|ডায়েট=diet|স্ট্রেস=stress|টেনশন=tension|ডিপ্রেশন=depression|অ্যাংজাইটি=anxiety|মোটিভেশন=motivation|কনফিডেন্স=confidence|ফোকাস=focus|হ্যাবিট=habit|রুটিন=routine|সরি=sorry|থ্যাংকস=thanks|থ্যাংক ইউ=thank you|প্লিজ=please|ওকে|ওকে=okay|হ্যালো=hello|হাই=hi|বাই=bye|এক্সাম=exam|অ্যাসাইনমেন্ট=assignment|ইউনিভার্সিটি=university|স্টুডেন্ট=student|রেজাল্ট=result|সিজিপিএ=CGPA|জার্নাল ওএস=JournalOS|আপডেট=update|ওভারথিংকিং=overthinking|টাইম ম্যানেজমেন্ট=time management|ওয়ার্ক=work|ব্যাকআপ=backup|ডিলিট=delete|সেভ=save|শেয়ার=share|পোস্ট=post|কমেন্ট=comment|ফলো=follow|সাবস্ক্রাইব=subscribe|চ্যানেল=channel|কনটেন্ট=content|ব্লগ=blog|পডকাস্ট=podcast|লেভেল=level|স্কোর=score|রেকর্ড=record|ভয়েস=voice|টেক্সট=text|ট্যাগ=tag';
+  const LEX = new Map();
+  (function(){ // "a|b=x|c=y": names collected until an '=' assigns them
+    let pend = []; LEX_SRC.split('|').forEach(part=>{ if(part.indexOf('=')>-1){ const [k,v] = part.split('='); pend.push(k); pend.forEach(p=>LEX.set(p.replace(/[‌‍]/g,''), v)); pend = []; } else pend.push(part); });
+  })();
+  const LEX_KEYS = Array.from(LEX.keys());
+  const LEX_MULTI = LEX_KEYS.filter(k=>k.indexOf(' ')>-1).sort((a,b)=>b.length-a.length);
+  const SUFFIX = ['গুলোর','গুলোকে','গুলো','গুলি','দের','টার','টাকে','টা','টি','খানা','ের','কে','তে','য়ে','য়','ে','র','ও','ই','এ'];
 
-function renderPwaStatus(){
-  const inst = PWA.standalone();
-  const res = PWA.lastResult;
-  let upd = PWA.updateReady ? '<span class="badge tone-warn">নতুন আপডেট আছে</span>'
-    : PWA.checking ? '<span class="badge tone-accent">চেক হচ্ছে…</span>'
-    : res === 'current' ? '<span class="badge tone-ok">সর্বশেষ ভার্সন</span>'
-    : res === 'offline' ? '<span class="badge tone-warn">অফলাইন</span>'
-    : res === 'insecure' ? '<span class="badge tone-bad">HTTPS দরকার</span>'
-    : res === 'sw-failed' || res === 'unsupported' ? '<span class="badge tone-bad">সার্ভিস ওয়ার্কার চালু হয়নি</span>'
-    : '<span class="badge">—</span>';
-  return `
-    <div class="settings-row"><div><div class="label">Install status</div><div class="desc">${inst ? 'অ্যাপ হিসেবে চলছে — ব্রাউজার ছাড়াই।' : 'এখনো ব্রাউজারে চলছে। ইনস্টল করলে আলাদা অ্যাপ হিসেবে খুলবে।'}</div></div>
-      ${inst ? '<span class="badge tone-ok">Installed</span>' : `<button class="btn btn-sm btn-primary" onclick="PWA.install()">⬇ Install app</button>`}</div>
-    <div class="settings-row"><div><div class="label">Version</div><div class="desc">JournalOS v${esc(APP.version)}${PWA.build ? ' · build ' + esc(PWA.build) : ''}</div></div>${upd}</div>
-    <div class="settings-row"><div><div class="label">Updates</div><div class="desc">নতুন ভার্সন থাকলে নিজে থেকেই জানানো হয় (প্রতি ঘণ্টায় ও অ্যাপে ফিরলে চেক হয়)।</div></div>
-      ${PWA.updateReady ? '<button class="btn btn-sm btn-primary" onclick="PWA.applyUpdate()">এখনই আপডেট</button>' : `<button class="btn btn-sm" onclick="PWA.check(true)" ${PWA.checking ? 'disabled' : ''}>Check for updates</button>`}</div>`;
-}
-window.renderAppSection = function(){
-  return `<div id="pwaStatusBox">${renderPwaStatus()}</div>
-    <div class="settings-row"><div><div class="label">Command palette</div><div class="desc">যেকোনো জায়গা থেকে <b>Ctrl/⌘ + K</b> চেপে সরাসরি যেকোনো পেজ বা অ্যাকশনে যাও।</div></div><button class="btn btn-sm" onclick="openCmdk()">Open</button></div>`;
-};
-
-/* ================================================================
-   COMMAND PALETTE  (Ctrl/⌘ + K)
-   ================================================================ */
-let cmdItems = [], cmdSel = 0;
-function cmdAll(q){
-  const nav = (icon, label, sub, fn, kw) => ({icon, label, sub, fn, kw: (label + ' ' + (kw||'')).toLowerCase(), group:'Go to'});
-  const act = (icon, label, sub, fn, kw) => ({icon, label, sub, fn, kw: (label + ' ' + (kw||'')).toLowerCase(), group:'Actions'});
-  const items = [
-    act('✍️','Write today’s journal','', ()=>startQuickWrite(), 'new entry likho লেখো জার্নাল'),
-    act('🙂','Log mood','', ()=>openMoodSheet(), 'mood feeling'),
-    nav('🏠','Dashboard','', ()=>go('dashboard'), 'home'),
-    nav('📚','Journal Library','', ()=>go('timeline'), 'entries timeline'),
-    nav('📅','Calendar','', ()=>go('calendar'), ''),
-    nav('▦','Year in Pixels','', ()=>go('pixels'), 'pixels year mood'),
-    nav('📈','Insights','Mood & Writing', ()=>go('insights'), 'analytics mood'),
-    nav('🧠','Life','Achievements, Plans, Memories', ()=>go('life'), 'achievements plans quotes ideas people places'),
-    nav('🔎','Search','', ()=>openAdvancedSearch(), 'find ask'),
-    nav('🗄','Archive','', ()=>go('archive'), ''),
-    nav('⚙️','Settings','', ()=>go('settings'), 'customize preferences'),
-    nav('🔒','Data & Privacy','', ()=>go('privacy'), 'export delete backup'),
-    act('🌓','Toggle light / dark theme','', ()=>toggleThemeQuick(), 'theme dark light'),
-    act('🎯','Focus writing mode','', ()=>{ if(state.view !== 'write') go('write'); setTimeout(()=>toggleFocusMode(true), 120); }, 'distraction'),
-    act('⬇️','Install JournalOS app','', ()=>PWA.install(), 'download pwa app'),
-    act('🔄','Check for updates','', ()=>PWA.check(true), 'upgrade version'),
-    act('🚪','Log out','', ()=>logout(), 'sign out')
+  /* ---------- spoken punctuation & commands ---------- */
+  const PUNCT = [
+    [/(?:^|\s)(?:প্রশ্নবোধক চিহ্ন|প্রশ্নবোধক|question mark)(?=\s|$)/gi, '?'], [/(?:^|\s)(?:বিস্ময় চিহ্ন|বিস্ময়সূচক চিহ্ন|বিস্ময়বোধক চিহ্ন|exclamation mark|exclamation point)(?=\s|$)/gi, '!'],
+    [/(?:^|\s)(?:সেমিকোলন|semicolon)(?=\s|$)/gi, ';'], [/(?:^|\s)(?:কোলন|colon)(?=\s|$)/gi, ':'], [/(?:^|\s)(?:কমা|comma)(?=\s|$)/gi, ','],
+    [/(?:^|\s)(?:দাঁড়ি|দাড়ি|দাঁড়ী|পূর্ণচ্ছেদ)(?=\s|$)/gi, '।'], [/(?:^|\s)(?:full stop|fullstop|period)(?=\s|$)/gi, '.'],
+    [/(?:^|\s)(?:হাইফেন|hyphen|ড্যাশ|dash)(?=\s|$)/gi, '-'], [/(?:^|\s)(?:ওপেন ব্র্যাকেট|open bracket)(?=\s|$)/gi, ' ('], [/(?:^|\s)(?:ক্লোজ ব্র্যাকেট|close bracket)(?=\s|$)/gi, ')'],
+    [/(?:^|\s)(?:নতুন অনুচ্ছেদ|new paragraph)(?=\s|$)/gi, '\n\n'], [/(?:^|\s)(?:নতুন লাইন|নিউ লাইন|new line|next line)(?=\s|$)/gi, '\n']
   ];
-  if(isAdminUser && isAdminUser()) items.push(act('🛠','Go to Backend','', ()=>openBackend(), 'admin console'));
-  const s = q.trim().toLowerCase();
-  let out = s ? items.filter(i=>s.split(/\s+/).every(w=>i.kw.includes(w))) : items;
-  if(s) out = out.concat([{icon:'🔎', label:'Search journals for “' + q.trim() + '”', sub:'Enter', group:'Search', kw:'', fn:()=>submitTopSearch(q.trim())}]);
-  return out;
-}
-function cmdRender(){
-  const q = ($('cmdkInput') || {}).value || '';
-  cmdItems = cmdAll(q); if(cmdSel >= cmdItems.length) cmdSel = 0;
-  const list = $('cmdkList'); if(!list) return;
-  if(!cmdItems.length){ list.innerHTML = '<div class="cmdk-empty">কিছু পাওয়া যায়নি।</div>'; return; }
-  let html = '', last = '';
-  cmdItems.forEach((it, i)=>{
-    if(it.group !== last){ html += `<div class="cmdk-group" role="presentation">${esc(it.group)}</div>`; last = it.group; }
-    html += `<button type="button" class="cmdk-item" role="option" id="cmdk-opt-${i}" data-i="${i}" aria-selected="${i === cmdSel}"><span class="ci-ic" aria-hidden="true">${it.icon}</span><span>${esc(it.label)}</span>${it.sub ? `<span class="ci-sub">${esc(it.sub)}</span>` : ''}</button>`;
-  });
-  list.innerHTML = html;
-}
-function cmdRun(i){
-  const it = cmdItems[i]; if(!it) return;
-  closeCmdk();
-  setTimeout(()=>{ try{ it.fn(); }catch(e){ reportError && reportError(e, 'command'); } }, 30);
-}
-window.openCmdk = function(){
-  if(!state.user) return;
-  let el = $('cmdk');
-  if(!el){
-    el = document.createElement('div'); el.id = 'cmdk'; el.className = 'cmdk'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Command palette');
-    el.innerHTML = `<div class="cmdk-box"><div class="cmdk-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input id="cmdkInput" type="text" placeholder="কোথায় যেতে চাও, বা কী করতে চাও?" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="cmdkList"></div>
-      <div class="cmdk-list" id="cmdkList" role="listbox"></div>
-      <div class="cmdk-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span><span><kbd>Enter</kbd> select</span><span><kbd>Esc</kbd> close</span></div></div>`;
-    document.body.appendChild(el);
-    el.addEventListener('mousedown', e=>{ if(e.target === el) closeCmdk(); });
-    const inp = $('cmdkInput');
-    inp.addEventListener('input', ()=>{ cmdSel = 0; cmdRender(); });
-    inp.addEventListener('keydown', e=>{
-      if(e.key === 'ArrowDown'){ e.preventDefault(); cmdSel = (cmdSel + 1) % Math.max(1, cmdItems.length); cmdRender(); scrollSel(); }
-      else if(e.key === 'ArrowUp'){ e.preventDefault(); cmdSel = (cmdSel - 1 + cmdItems.length) % Math.max(1, cmdItems.length); cmdRender(); scrollSel(); }
-      else if(e.key === 'Enter'){ e.preventDefault(); cmdRun(cmdSel); }
-      else if(e.key === 'Escape'){ e.preventDefault(); closeCmdk(); }
+  const norm = s=>s.toLowerCase().replace(/[।,.?!‌‍]/g,'').replace(/\s+/g,' ').trim();
+  const CMD = {
+    stop:['থামো','থামুন','থামাও','রেকর্ড বন্ধ','ভয়েস বন্ধ','ভয়েস টাইপিং বন্ধ','রেকর্ডিং বন্ধ','stop listening','stop dictation','stop recording','stop typing'],
+    undo:['মুছে ফেলো','মুছে ফেল','ওটা মুছো','ওটা মুছে ফেলো','আগেরটা মুছো','আগেরটা মুছে ফেলো','ডিলিট দ্যাট','delete that','scratch that','undo that','remove that'],
+    en:['ইংলিশ মোড','ইংরেজি মোড','english mode','switch to english'], bn:['বাংলা মোড','বাংলা মুড','bangla mode','bengali mode','switch to bangla'], mix:['মিক্স মোড','মিক্সড মোড','mixed mode','mix mode']
+  };
+  function commandOf(t){ const n = norm(t); for(const k in CMD){ if(CMD[k].some(x=>norm(x)===n)) return k; } return null; }
+
+  /* ---------- state ---------- */
+  let rec = null, wantOn = false, running = false, ghost = null, savedRange = null, history = [], quickEnds = 0, lastStart = 0, hadResult = false, watchdog = null;
+  const $ = id=>document.getElementById(id);
+  const ed = ()=>$('contentInput');
+
+  function supported(){ return !!SR; }
+  function say(msg){ const m = $('dsMsg'); if(m) m.textContent = msg; }
+  function paintUI(){
+    const on = wantOn, b = $('dictBtn'); if(b){ b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.title = on ? 'ভয়েস টাইপিং বন্ধ করো (Ctrl+Shift+M)' : 'ভয়েস টাইপিং — লাইভ বলে লেখো (Ctrl+Shift+M)'; }
+    const l = $('dictLangBtn'); if(l) l.textContent = LANGS[cfg.lang].short;
+    let s = $('dictStrip'); if(!s){ s = document.createElement('div'); s.id = 'dictStrip'; s.className = 'dict-strip'; s.setAttribute('role','status'); s.setAttribute('aria-live','polite');
+      s.innerHTML = '<span class="ds-dot"></span><b id="dsLang"></b><span id="dsMsg"></span><button type="button" class="ds-lang" onclick="Dictate.cycleLang()" title="ভাষা বদলাও">⇄</button><button type="button" class="ds-stop" onclick="Dictate.stop()">থামাও</button>'; document.body.appendChild(s); }
+    s.classList.toggle('show', on); $('dsLang').textContent = LANGS[cfg.lang].label;
+  }
+
+  /* ---------- selection helpers ---------- */
+  function ensureCaret(){
+    const e = ed(); if(!e) return false;
+    const sel = window.getSelection();
+    if(sel.rangeCount && e.contains(sel.anchorNode) && !(ghost && ghost.contains(sel.anchorNode))){ savedRange = sel.getRangeAt(0).cloneRange(); return true; }
+    e.focus();
+    if(savedRange && e.contains(savedRange.startContainer)){ sel.removeAllRanges(); sel.addRange(savedRange); return true; }
+    const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange(); return true;
+  }
+  function textBefore(){
+    const e = ed(), sel = window.getSelection(); if(!e || !sel.rangeCount) return '';
+    const r = sel.getRangeAt(0); let n = r.startContainer; while(n && n.parentNode && n.parentNode !== e) n = n.parentNode;
+    const blk = (n && n !== e && n.nodeType === 1) ? n : e; const rr = document.createRange(); rr.selectNodeContents(blk);
+    try{ rr.setEnd(r.startContainer, r.startOffset); }catch(_){ return ''; } return rr.toString().replace(/​/g,'').replace(/ /g,' ');
+  }
+  function removeGhost(){ if(ghost && ghost.parentNode){ ghost.parentNode.removeChild(ghost); } ghost = null; }
+
+  /* ---------- text pipeline ---------- */
+  const BN = /[ঀ-৿]/, LAT = /[A-Za-z]/;
+  function vocab(){ const v = new Set(); const e = ed(); const t = ((e && e.innerText) || '').slice(-4000); (t.match(/[ঀ-৿]+|[A-Za-z']+/g) || []).forEach(w=>v.add(w.toLowerCase())); cfg.dict.forEach(p=>String(p[1]).split(/\s+/).forEach(w=>v.add(w.toLowerCase()))); LEX_KEYS.forEach(k=>v.add(k)); return v; }
+  function pickBest(res){
+    if(res.length === 1) return res[0].transcript;
+    const V = vocab(); let best = null, bs = -1;
+    for(let i=0;i<res.length;i++){ const a = res[i], toks = (a.transcript.match(/[ঀ-৿]+|[A-Za-z']+/g) || []); if(!toks.length) continue;
+      const hit = toks.filter(w=>V.has(w.toLowerCase())).length / toks.length, sc = (a.confidence || (i === 0 ? .6 : .4)) + .25 * hit - .02 * i; if(sc > bs){ bs = sc; best = a.transcript; } }
+    return best != null ? best : res[0].transcript;
+  }
+  function lexConvert(text){
+    if(!cfg.latin || cfg.lang === 'en') return text;
+    LEX_MULTI.forEach(k=>{ const re = new RegExp('(^|\\s)' + k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?=\\s|$|[।,.?!])', 'g'); text = text.replace(re, (m,a)=>a + LEX.get(k)); });
+    return text.replace(/[ঀ-৿‌‍]+/g, tok=>{
+      const t = tok.replace(/[‌‍]/g,''); if(LEX.has(t) && !t.includes(' ')) return LEX.get(t);
+      for(const k of LEX_KEYS){ if(t.length > k.length && t.startsWith(k) && k.indexOf(' ') < 0){ const suf = t.slice(k.length); if(SUFFIX.indexOf(suf) > -1) return LEX.get(k) + '-' + suf; } }
+      return tok;
     });
-    $('cmdkList').addEventListener('click', e=>{ const b = e.target.closest('.cmdk-item'); if(b) cmdRun(+b.dataset.i); });
-    $('cmdkList').addEventListener('mousemove', e=>{ const b = e.target.closest('.cmdk-item'); if(b && +b.dataset.i !== cmdSel){ cmdSel = +b.dataset.i; document.querySelectorAll('.cmdk-item').forEach(x=>x.setAttribute('aria-selected', String(+x.dataset.i === cmdSel))); } });
   }
-  closeProfileMenu && closeProfileMenu();
-  cmdSel = 0; $('cmdkInput').value = ''; cmdRender();
-  el.classList.add('show'); setTimeout(()=>$('cmdkInput').focus(), 20);
-};
-function scrollSel(){ const s = $('cmdk-opt-' + cmdSel); if(s && s.scrollIntoView) s.scrollIntoView({block:'nearest'}); }
-window.closeCmdk = function(){ const el = $('cmdk'); if(el) el.classList.remove('show'); };
-document.addEventListener('keydown', e=>{
-  if((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k'){
-    e.preventDefault(); const el = $('cmdk'); (el && el.classList.contains('show')) ? closeCmdk() : openCmdk(); return;
+  function customConvert(text){
+    cfg.dict.forEach(p=>{ const from = String(p[0]||'').trim(), to = String(p[1]||''); if(!from) return; const re = new RegExp('(^|\\s)' + from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+') + '(?=\\s|$|[।,.?!])', 'gi'); text = text.replace(re, (m,a)=>a + to); });
+    return text;
   }
-  if(e.key === '/' && !e.ctrlKey && !e.metaKey){
-    const t = e.target, tag = t && t.tagName;
-    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
-    const s = $('topSearchInput'); if(s && state.user){ e.preventDefault(); s.focus(); }
+  function punctuate(text){
+    PUNCT.forEach(([re, ch])=>{ text = text.replace(re, ()=>ch); });
+    // "." from a spoken full stop becomes "।" when the sentence is Bangla
+    text = text.replace(/([ঀ-৿][^.!?।\n]*)\.(?=\s|$)/g, '$1।');
+    return text.replace(/\s+([,;:?!।.)])/g, '$1').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n');
   }
-  if(e.key === 'Escape'){ const g = $('pwaGuide'); if(g && g.classList.contains('show')){ PWA.closeGuide(); } }
-});
+  function polish(text, before){
+    if(!text) return text;
+    if(cfg.lang !== 'bn'){ text = text.replace(/\bi(?=\b|'m|'ll|'ve|'d)(?!\w)/g, 'I').replace(/\bi'(m|ll|ve|d)\b/g, "I'$1"); }
+    const atStart = !before.trim() || /[.!?।]\s*$/.test(before) || /\n\s*$/.test(before);
+    if(atStart){ text = text.replace(/^(\s*)([a-z])/, (m,s,c)=>s + c.toUpperCase()); }
+    text = text.replace(/([.!?])(\s+)([a-z])/g, (m,p,s,c)=>p + s + c.toUpperCase());
+    text = text.replace(/(\n)([a-z])/g, (m,n,c)=>n + c.toUpperCase());
+    return text;
+  }
+  function needSpace(before, text){
+    if(!text || /^[\s,;:?!।.)\-]/.test(text) && !/^-\s/.test(text)) return '';
+    if(!before || /[\s\n( ]$/.test(before)) return '';
+    return ' ';
+  }
+  function process(raw, interim){
+    let t = raw.replace(/\s+/g,' ').trim(); if(!t) return '';
+    t = punctuate(lexConvert(t)); t = customConvert(t);
+    return t;
+  }
 
+  /* ---------- insert / ghost ---------- */
+  function showGhost(text){
+    if(!ensureCaret()) return; removeGhost(); const sel = window.getSelection(); if(!sel.rangeCount) return;
+    const r = sel.getRangeAt(0); if(!r.collapsed) r.collapse(false);
+    const before = textBefore(), t = process(text, true); if(!t){ return; }
+    const g = document.createElement('span'); g.className = 'dict-ghost'; g.contentEditable = 'false'; g.setAttribute('aria-hidden','true'); g.textContent = needSpace(before, t) + polish(t.replace(/\n+/g,' ⏎ '), before);
+    r.insertNode(g); const r2 = document.createRange(); r2.setStartBefore(g); r2.collapse(true); sel.removeAllRanges(); sel.addRange(r2); ghost = g;
+    const e = ed(); if(e) e.classList.remove('is-empty'); try{ g.scrollIntoView({block:'nearest'}); }catch(_){}
+  }
+  function insertFinal(text){
+    removeGhost(); if(!ensureCaret()) return;
+    const before = textBefore(); let t = polish(text, before); const sp = needSpace(before, t); t = sp + t;
+    const parts = t.split('\n'); let first = true;
+    parts.forEach((seg, i)=>{ if(i > 0) document.execCommand('insertParagraph'); if(seg) document.execCommand('insertText', false, seg); });
+    history.push({text:t, multi: parts.length > 1}); if(history.length > 30) history.shift();
+    const sel = window.getSelection(); if(sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+    syncEditorToDraft();
+  }
+  function undoLast(){
+    removeGhost(); const h = history.pop(); if(!h){ say('মোছার মতো কিছু নেই'); return; }
+    ensureCaret(); const sel = window.getSelection();
+    if(h.multi){ document.execCommand('undo'); syncEditorToDraft(); return; }
+    let n = h.text.length; const e = ed();
+    const walker = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); const nodes = []; let x; while((x = walker.nextNode())) nodes.push(x);
+    const r = sel.getRangeAt(0); let idx = nodes.indexOf(r.startContainer), off = r.startOffset; if(idx < 0) return;
+    let rem = n; let sn = idx, so = off;
+    while(rem > 0 && sn >= 0){ if(so >= rem){ so -= rem; rem = 0; } else { rem -= so; sn--; if(sn >= 0) so = nodes[sn].nodeValue.length; } }
+    if(sn < 0){ sn = 0; so = 0; }
+    const dr = document.createRange(); dr.setStart(nodes[sn], so); dr.setEnd(r.startContainer, r.startOffset); sel.removeAllRanges(); sel.addRange(dr); document.execCommand('delete');
+    const s2 = window.getSelection(); if(s2.rangeCount) savedRange = s2.getRangeAt(0).cloneRange(); syncEditorToDraft(); say('মুছে ফেলেছি');
+  }
 
-/* ---- install banner ---- */
-(function(){
-  const KEY='journalos_ib_dismissed';
-  function dismissedRecently(){ try{ const t=+localStorage.getItem(KEY)||0; return Date.now()-t < 3*864e5; }catch(e){ return false; } }
+  /* ---------- recogniser ---------- */
   function build(){
-    if(document.getElementById('installBanner')) return;
-    const b=document.createElement('div'); b.id='installBanner'; b.className='install-banner'; b.setAttribute('data-pwa-install','');
-    b.setAttribute('role','region'); b.setAttribute('aria-label','অ্যাপ ডাউনলোড');
-    b.innerHTML='<div class="ib-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></div>'
-      +'<div class="ib-body"><div class="ib-title">JournalOS অ্যাপ ডাউনলোড করুন</div>'
-      +'<div class="ib-desc">এটি একটি <b>Progressive Web App (PWA)</b> — ব্রাউজার ছাড়াই ফোন ও কম্পিউটারে অ্যাপের মতো চলবে, দ্রুত খোলে, নিজে নিজে আপডেট হয়।</div>'
-      +'<div class="ib-actions"><button type="button" class="ib-btn" id="ibInstall">ডাউনলোড করুন</button><button type="button" class="ib-later" id="ibLater">পরে</button></div></div>';
-    document.body.appendChild(b);
-    document.getElementById('ibInstall').onclick=function(){ PWA.install(); };
-    document.getElementById('ibLater').onclick=function(){ try{ localStorage.setItem(KEY,String(Date.now())); }catch(e){} b.classList.remove('show'); };
-  }
-  function show(){ if(PWA.standalone() || dismissedRecently()) return; build(); document.getElementById('installBanner').classList.add('show'); }
-  window.addEventListener('appinstalled',function(){ const b=document.getElementById('installBanner'); if(b) b.remove(); });
-  setTimeout(show, 2500);
-})();
-
-/* ---- save dock: keep it above the on-screen keyboard (visualViewport) ---- */
-(function(){
-  const vv = window.visualViewport; if(!vv) return;
-  const root = document.documentElement;
-  function sync(){
-    const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-    if(kb > 120){ root.style.setProperty('--kb', kb + 'px'); root.classList.add('kb-open'); }
-    else { root.style.removeProperty('--kb'); root.classList.remove('kb-open'); }
-  }
-  vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); sync();
-})();
-PWA.init();
-applyAccent();
-})();
-</script>
-</body>
-</html>
+    const r = new SR(); r.lang = LANGS[cfg.lang].code; r.continuous = !ANDROID; r.interimResults = true; r.maxAlternatives = 4;
+    r.onstart = ()=>{ running = true; lastStart = Date.now(); hadResult = false; say('শুনছি… বলো'); };
+    r.onresult = ev=>{
+      hadResult = true; quickEnds = 0; let interim = '';
+      for(let i = ev.resultIndex; i < ev.results.length; i++){
+        const res = ev.results[i];
+        if(res.isFinal){
+          const alts = []; for(let k=0;k<res.length;k++) alts.push({transcript:res[k].transcript, confidence:res[k].confidence});
+          handleFinal(pickBest(alts));
+        } else interim += res[0].transcript;
+      }
+      if(interim.trim()){ const c = comm
