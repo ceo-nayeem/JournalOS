@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-04.1">
+<meta name="app-build" content="2026-11-04.2">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -1669,6 +1669,12 @@ body.focus-mode .dict-strip{top:76px;}
 .dm-card code{background:var(--accent-soft);padding:1px 6px;border-radius:6px;font-size:12.5px;}
 .dm-grid{display:grid;grid-template-columns:76px 1fr;gap:10px 12px;font-size:13.5px;} .dm-grid b{color:var(--accent);}
 .dm-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+
+.auth-diag{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--rust-soft,rgba(214,64,90,.12));border:1px solid var(--rust,#D6405A);font-size:13.5px;line-height:1.5;color:var(--ink);text-align:left;}
+.auth-diag p{margin:4px 0 8px;color:var(--ink-soft);} .auth-diag code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:6px;word-break:break-all;}
+.auth-diag .ad-acts{display:flex;gap:8px;flex-wrap:wrap;}
+.auth-spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){ body::before{animation:none;} #splash .sp-mark,#splash .sp-bar::after,.install-chip.pulse{animation:none;} }
 @media (forced-colors:active){ .btn-primary,.btn-accent{border:1px solid ButtonText;} }
 @media print{ body::before,body::after,#splash,.update-bar,.cmdk{display:none!important;} .page-head h1{-webkit-text-fill-color:currentColor;background:none;} }
@@ -1932,6 +1938,7 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
     <h1>JournalOS</h1>
     <p class="tag">Write First. Everything Else Second.</p>
     <div id="authForm"></div>
+    <div id="authDiag" class="auth-diag" hidden></div>
     <div class="auth-install" data-pwa-install><button type="button" class="btn btn-ghost" onclick="PWA.install()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> অ্যাপ ডাউনলোড করো</button><p class="auth-install-desc">এটি একটি Progressive Web App (PWA) — ব্রাউজার ছাড়াই ফোন বা কম্পিউটারে চলবে।</p></div>
     <div class="auth-links"><a href="/">← হোম পেজ</a><a href="/#pricing">প্ল্যান ও প্রাইস</a></div>
     <div class="auth-version" id="authVersion"></div>
@@ -4996,8 +5003,14 @@ function boot(){
   document.body.classList.toggle('sb-expanded', sbExpanded);
   initSidebarTooltips();
   renderAuthForm();
+  // A redirect sign-in (used when popups are blocked) comes back to this page: pick up its result / error.
+  auth.getRedirectResult().catch(err=>{ console.error(err); authDiag(authErrorHelp(err)); });
+  // If Firebase never answers (stale cache, blocked storage, unauthorised domain…) say so instead of spinning forever.
+  clearTimeout(window.__authWatch);
+  window.__authWatch = setTimeout(()=>{ if(!window.__authResolved){ releaseSplash && releaseSplash(); authDiag('<b>লগইন চেক হতে বেশি সময় নিচ্ছে</b><p>ইন্টারনেট ঠিক থাকলে অ্যাপ ক্যাশ রিসেট করলে সাধারণত ঠিক হয়ে যায়।</p><div class="ad-acts"><button class="btn btn-sm btn-primary" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button><button class="btn btn-sm" onclick="location.reload()">রিলোড</button></div>'); document.getElementById('auth').style.display = 'flex'; } }, 10000);
 
   auth.onAuthStateChanged(function(user){
+    window.__authResolved = true; authDiag('');
     if(unsubEntries){ unsubEntries(); unsubEntries=null; }
     if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
     detachLifeListeners();
@@ -5076,14 +5089,40 @@ function renderAuthForm(){
     <div class="auth-switch">Google দিয়ে সাইন-ইন করলে তোমার এন্ট্রি নিরাপদে Firebase-এ সংরক্ষিত হবে ও যেকোনো ডিভাইস থেকে দেখা যাবে।</div>
   `;
 }
+let __signing = false;
+function authDiag(html){ const d = document.getElementById('authDiag'); if(!d) return; d.hidden = !html; d.innerHTML = html || ''; }
+function authBusy(on, msg){
+  const b = document.querySelector('#authForm button'); if(!b) return;
+  if(on){ b.dataset.label = b.dataset.label || b.innerHTML; b.disabled = true; b.innerHTML = '<span class="auth-spin"></span> ' + (msg || 'অপেক্ষা করো…'); }
+  else if(b.dataset.label){ b.disabled = false; b.innerHTML = b.dataset.label; delete b.dataset.label; }
+}
+// Wipes the installed service worker + caches, then reloads. The fix for "stuck on loading" after an update or a domain move.
+async function resetAppCache(){
+  try{ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch(e){}
+  try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
+  location.replace(location.pathname + '?fresh=' + Date.now());
+}
+function authErrorHelp(err){
+  const host = location.hostname, c = (err && err.code) || '';
+  const tools = '<div class="ad-acts"><button class="btn btn-sm" onclick="googleSignIn()">আবার চেষ্টা করো</button><button class="btn btn-sm btn-ghost" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button></div>';
+  if(c === 'auth/unauthorized-domain') return '<b>এই ডোমেইন Firebase-এ অনুমোদিত নয়</b><p>Firebase Console → Authentication → Settings → <b>Authorized domains</b>-এ এটা যোগ করো: <code>' + escapeHtml(host) + '</code></p>' + tools;
+  if(c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') return '<b>সাইন-ইন উইন্ডো বন্ধ হয়ে গেছে</b><p>Google উইন্ডোটা বন্ধ না করে অ্যাকাউন্ট বেছে নাও।</p>' + tools;
+  if(c === 'auth/network-request-failed') return '<b>ইন্টারনেট সংযোগে সমস্যা</b><p>নেট চেক করে আবার চেষ্টা করো। VPN/অ্যাড-ব্লকার থাকলে বন্ধ করে দেখো।</p>' + tools;
+  if(c === 'auth/web-storage-unsupported' || c === 'auth/operation-not-supported-in-this-environment') return '<b>এই ব্রাউজারে সাইন-ইন আটকে যাচ্ছে</b><p>প্রাইভেট/ইনকগনিটো মোড বা কুকি বন্ধ থাকলে এমন হয়। সাধারণ উইন্ডোতে Chrome-এ খোলো।</p>' + tools;
+  return '<b>সাইন-ইন হয়নি</b><p>' + escapeHtml(c || (err && err.message) || 'অজানা সমস্যা') + '</p>' + tools;
+}
 function googleSignIn(){
+  if(__signing) return; __signing = true; authDiag(''); authBusy(true, 'Google-এ সংযোগ হচ্ছে…');
+  const slow = setTimeout(()=>{ authDiag('<b>এখনো অপেক্ষা করছি…</b><p>Google-এর পপআপ না এলে অ্যাড্রেস বারের পপআপ-ব্লক আইকন দেখো, অথবা নিচের বাটনে চাপো।</p><div class="ad-acts"><button class="btn btn-sm" onclick="googleSignInRedirect()">পপআপ ছাড়া সাইন-ইন</button><button class="btn btn-sm btn-ghost" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button></div>'); }, 12000);
   auth.signInWithPopup(googleProvider).then(result=>{
-    toast(`স্বাগতম, ${result.user.displayName || 'You'}!`);
+    toast(`স্বাগতম, ${result.user.displayName || 'You'}!`); authDiag('');
   }).catch(err=>{
     console.error(err);
-    toastError(err, "We couldn't sign you in.");
-  });
+    if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')){ googleSignInRedirect(); return; }
+    authDiag(authErrorHelp(err));
+  }).finally(()=>{ clearTimeout(slow); __signing = false; authBusy(false); });
 }
+function googleSignInRedirect(){ authBusy(true, 'Google-এ নিয়ে যাচ্ছি…'); auth.signInWithRedirect(googleProvider).catch(err=>{ authBusy(false); authDiag(authErrorHelp(err)); }); }
 function logout(){
   confirmAction('লগ আউট করবেন?', 'তোমার এন্ট্রিগুলো Firebase-এ নিরাপদে সংরক্ষিত থাকবে।', ()=>{
     auth.signOut();
@@ -9792,78 +9831,4 @@ const Dictate = (function(){
     });
   }
   function customConvert(text){
-    cfg.dict.forEach(p=>{ const from = String(p[0]||'').trim(), to = String(p[1]||''); if(!from) return; const re = new RegExp('(^|\\s)' + from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+') + '(?=\\s|$|[।,.?!])', 'gi'); text = text.replace(re, (m,a)=>a + to); });
-    return text;
-  }
-  function punctuate(text){
-    PUNCT.forEach(([re, ch])=>{ text = text.replace(re, ()=>ch); });
-    // "." from a spoken full stop becomes "।" when the sentence is Bangla
-    text = text.replace(/([ঀ-৿][^.!?।\n]*)\.(?=\s|$)/g, '$1।');
-    return text.replace(/\s+([,;:?!।.)])/g, '$1').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n');
-  }
-  function polish(text, before){
-    if(!text) return text;
-    if(cfg.lang !== 'bn'){ text = text.replace(/\bi(?=\b|'m|'ll|'ve|'d)(?!\w)/g, 'I').replace(/\bi'(m|ll|ve|d)\b/g, "I'$1"); }
-    const atStart = !before.trim() || /[.!?।]\s*$/.test(before) || /\n\s*$/.test(before);
-    if(atStart){ text = text.replace(/^(\s*)([a-z])/, (m,s,c)=>s + c.toUpperCase()); }
-    text = text.replace(/([.!?])(\s+)([a-z])/g, (m,p,s,c)=>p + s + c.toUpperCase());
-    text = text.replace(/(\n)([a-z])/g, (m,n,c)=>n + c.toUpperCase());
-    return text;
-  }
-  function needSpace(before, text){
-    if(!text || /^[\s,;:?!।.)\-]/.test(text) && !/^-\s/.test(text)) return '';
-    if(!before || /[\s\n( ]$/.test(before)) return '';
-    return ' ';
-  }
-  function process(raw, interim){
-    let t = raw.replace(/\s+/g,' ').trim(); if(!t) return '';
-    t = punctuate(lexConvert(t)); t = customConvert(t);
-    return t;
-  }
-
-  /* ---------- insert / ghost ---------- */
-  function showGhost(text){
-    if(!ensureCaret()) return; removeGhost(); const sel = window.getSelection(); if(!sel.rangeCount) return;
-    const r = sel.getRangeAt(0); if(!r.collapsed) r.collapse(false);
-    const before = textBefore(), t = process(text, true); if(!t){ return; }
-    const g = document.createElement('span'); g.className = 'dict-ghost'; g.contentEditable = 'false'; g.setAttribute('aria-hidden','true'); g.textContent = needSpace(before, t) + polish(t.replace(/\n+/g,' ⏎ '), before);
-    r.insertNode(g); const r2 = document.createRange(); r2.setStartBefore(g); r2.collapse(true); sel.removeAllRanges(); sel.addRange(r2); ghost = g;
-    const e = ed(); if(e) e.classList.remove('is-empty'); try{ g.scrollIntoView({block:'nearest'}); }catch(_){}
-  }
-  function insertFinal(text){
-    removeGhost(); if(!ensureCaret()) return;
-    const before = textBefore(); let t = polish(text, before); const sp = needSpace(before, t); t = sp + t;
-    const parts = t.split('\n'); let first = true;
-    parts.forEach((seg, i)=>{ if(i > 0) document.execCommand('insertParagraph'); if(seg) document.execCommand('insertText', false, seg); });
-    history.push({text:t, multi: parts.length > 1}); if(history.length > 30) history.shift();
-    const sel = window.getSelection(); if(sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
-    syncEditorToDraft();
-  }
-  function undoLast(){
-    removeGhost(); const h = history.pop(); if(!h){ say('মোছার মতো কিছু নেই'); return; }
-    ensureCaret(); const sel = window.getSelection();
-    if(h.multi){ document.execCommand('undo'); syncEditorToDraft(); return; }
-    let n = h.text.length; const e = ed();
-    const walker = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); const nodes = []; let x; while((x = walker.nextNode())) nodes.push(x);
-    const r = sel.getRangeAt(0); let idx = nodes.indexOf(r.startContainer), off = r.startOffset; if(idx < 0) return;
-    let rem = n; let sn = idx, so = off;
-    while(rem > 0 && sn >= 0){ if(so >= rem){ so -= rem; rem = 0; } else { rem -= so; sn--; if(sn >= 0) so = nodes[sn].nodeValue.length; } }
-    if(sn < 0){ sn = 0; so = 0; }
-    const dr = document.createRange(); dr.setStart(nodes[sn], so); dr.setEnd(r.startContainer, r.startOffset); sel.removeAllRanges(); sel.addRange(dr); document.execCommand('delete');
-    const s2 = window.getSelection(); if(s2.rangeCount) savedRange = s2.getRangeAt(0).cloneRange(); syncEditorToDraft(); say('মুছে ফেলেছি');
-  }
-
-  /* ---------- recogniser ---------- */
-  function build(){
-    const r = new SR(); r.lang = LANGS[cfg.lang].code; r.continuous = !ANDROID; r.interimResults = true; r.maxAlternatives = 4;
-    r.onstart = ()=>{ running = true; lastStart = Date.now(); hadResult = false; say('শুনছি… বলো'); };
-    r.onresult = ev=>{
-      hadResult = true; quickEnds = 0; let interim = '';
-      for(let i = ev.resultIndex; i < ev.results.length; i++){
-        const res = ev.results[i];
-        if(res.isFinal){
-          const alts = []; for(let k=0;k<res.length;k++) alts.push({transcript:res[k].transcript, confidence:res[k].confidence});
-          handleFinal(pickBest(alts));
-        } else interim += res[0].transcript;
-      }
-      if(interim.trim()){ const c = comm
+    cfg.dict.forEach(p=>{ const from = String(p[0]||'').trim(), to = String(p[1]||''); if(!fr
