@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-10-30.1">
+<meta name="app-build" content="2026-11-04.2">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -1633,6 +1633,48 @@ body.hdr-click .dock-add:not(.open):hover .dock-menu,body.hdr-click .theme-wrap:
 }
 @media (prefers-reduced-motion:reduce){ .dock::before{animation:none!important;} .dock *,.theme-pop,.dock-menu{transition-duration:.01s!important;} }
 
+
+/* ===== Voice typing ===== */
+.dict-btn{position:relative;gap:2px;}
+.dict-btn .dict-wave{display:none;align-items:center;gap:2px;height:14px;margin-left:4px;}
+.dict-btn .dict-wave i{width:2.5px;border-radius:2px;background:currentColor;height:5px;animation:dictBar 1s ease-in-out infinite;}
+.dict-btn .dict-wave i:nth-child(2){animation-delay:.15s}.dict-btn .dict-wave i:nth-child(3){animation-delay:.3s}.dict-btn .dict-wave i:nth-child(4){animation-delay:.45s}
+@keyframes dictBar{0%,100%{height:4px}50%{height:14px}}
+.dict-btn.on{background:#E5484D;color:#fff;border-color:transparent;width:auto;padding:0 10px;animation:dictPulse 1.8s ease-out infinite;}
+.dict-btn.on .dict-wave{display:inline-flex;}
+@keyframes dictPulse{0%{box-shadow:0 0 0 0 rgba(229,72,77,.55)}70%{box-shadow:0 0 0 10px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+.dict-lang{width:auto!important;padding:0 8px;font-size:11.5px;font-weight:700;letter-spacing:.02em;}
+.dict-ghost{opacity:.62;background:var(--accent-soft);border-radius:6px;padding:0 2px;border-bottom:2px dotted var(--accent);font-style:normal;user-select:none;-webkit-user-select:none;animation:ghostIn .25s var(--ease);}
+@keyframes ghostIn{from{opacity:0;transform:translateY(3px)}}
+.dict-strip{position:fixed;left:50%;top:calc(124px + var(--safe-t,0px));transform:translate(-50%,-14px) scale(.96);z-index:60;display:flex;align-items:center;gap:8px;padding:7px 8px 7px 14px;border-radius:999px;background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border:1px solid var(--glass-border);box-shadow:var(--shadow-float);font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s,transform .5s var(--ease);white-space:nowrap;max-width:calc(100vw - 20px);}
+.dict-strip.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+.dict-strip .ds-dot{width:9px;height:9px;border-radius:50%;background:#E5484D;animation:dictPulse 1.5s infinite;}
+.dict-strip #dsMsg{color:var(--ink-faint);max-width:34vw;overflow:hidden;text-overflow:ellipsis;}
+.dict-strip button{border:none;border-radius:999px;height:28px;padding:0 12px;font-weight:600;font-size:12.5px;background:var(--accent-soft);color:var(--accent);}
+.dict-strip .ds-stop{background:#E5484D;color:#fff;}
+@media (max-width:860px){ .dict-strip{top:calc(112px + var(--safe-t,0px));} }
+body.focus-mode .dict-strip{top:76px;}
+.dict-pop{position:fixed;z-index:95;width:282px;padding:8px;border-radius:18px;background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border:1px solid var(--glass-border);box-shadow:var(--shadow-float);opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity .2s,transform .35s var(--ease),visibility 0s .35s;}
+.dict-pop.show{opacity:1;visibility:visible;transform:none;transition-delay:0s;}
+.dp-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:6px 10px;}
+.dp-opt{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 12px;border:none;background:none;border-radius:11px;color:var(--ink);font-size:14px;text-align:left;min-height:42px;}
+.dp-opt:hover,.dp-opt.on{background:var(--accent-soft);} .dp-opt i{font-style:normal;color:var(--accent);font-weight:700;}
+.dp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;font-size:13.5px;} .dp-row small{display:block;color:var(--ink-faint);font-size:11.5px;} .dp-row input{width:18px;height:18px;accent-color:var(--accent);flex:none;}
+.dp-sep{height:1px;background:var(--rule);margin:6px 4px;}
+.dict-modal{position:fixed;inset:0;z-index:300;background:rgba(10,14,20,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px;}
+.dict-modal.show{display:flex;}
+.dm-card{width:min(520px,100%);max-height:88vh;overflow:auto;background:var(--paper,#fff);color:var(--ink);border-radius:22px;padding:22px;box-shadow:0 40px 100px -30px rgba(0,0,0,.6);}
+.dm-card h3{margin-bottom:6px;} .dm-p{color:var(--ink-soft);font-size:13.5px;margin-bottom:12px;line-height:1.55;}
+.dm-card textarea{width:100%;border:1px solid var(--rule);border-radius:12px;padding:10px 12px;background:var(--glass-bg);color:var(--ink);font:inherit;resize:vertical;margin-bottom:12px;}
+.dm-card code{background:var(--accent-soft);padding:1px 6px;border-radius:6px;font-size:12.5px;}
+.dm-grid{display:grid;grid-template-columns:76px 1fr;gap:10px 12px;font-size:13.5px;} .dm-grid b{color:var(--accent);}
+.dm-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+
+.auth-diag{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--rust-soft,rgba(214,64,90,.12));border:1px solid var(--rust,#D6405A);font-size:13.5px;line-height:1.5;color:var(--ink);text-align:left;}
+.auth-diag p{margin:4px 0 8px;color:var(--ink-soft);} .auth-diag code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:6px;word-break:break-all;}
+.auth-diag .ad-acts{display:flex;gap:8px;flex-wrap:wrap;}
+.auth-spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){ body::before{animation:none;} #splash .sp-mark,#splash .sp-bar::after,.install-chip.pulse{animation:none;} }
 @media (forced-colors:active){ .btn-primary,.btn-accent{border:1px solid ButtonText;} }
 @media print{ body::before,body::after,#splash,.update-bar,.cmdk{display:none!important;} .page-head h1{-webkit-text-fill-color:currentColor;background:none;} }
@@ -1896,6 +1938,7 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
     <h1>JournalOS</h1>
     <p class="tag">Write First. Everything Else Second.</p>
     <div id="authForm"></div>
+    <div id="authDiag" class="auth-diag" hidden></div>
     <div class="auth-install" data-pwa-install><button type="button" class="btn btn-ghost" onclick="PWA.install()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> অ্যাপ ডাউনলোড করো</button><p class="auth-install-desc">এটি একটি Progressive Web App (PWA) — ব্রাউজার ছাড়াই ফোন বা কম্পিউটারে চলবে।</p></div>
     <div class="auth-links"><a href="/">← হোম পেজ</a><a href="/#pricing">প্ল্যান ও প্রাইস</a></div>
     <div class="auth-version" id="authVersion"></div>
@@ -4960,8 +5003,14 @@ function boot(){
   document.body.classList.toggle('sb-expanded', sbExpanded);
   initSidebarTooltips();
   renderAuthForm();
+  // A redirect sign-in (used when popups are blocked) comes back to this page: pick up its result / error.
+  auth.getRedirectResult().catch(err=>{ console.error(err); authDiag(authErrorHelp(err)); });
+  // If Firebase never answers (stale cache, blocked storage, unauthorised domain…) say so instead of spinning forever.
+  clearTimeout(window.__authWatch);
+  window.__authWatch = setTimeout(()=>{ if(!window.__authResolved){ releaseSplash && releaseSplash(); authDiag('<b>লগইন চেক হতে বেশি সময় নিচ্ছে</b><p>ইন্টারনেট ঠিক থাকলে অ্যাপ ক্যাশ রিসেট করলে সাধারণত ঠিক হয়ে যায়।</p><div class="ad-acts"><button class="btn btn-sm btn-primary" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button><button class="btn btn-sm" onclick="location.reload()">রিলোড</button></div>'); document.getElementById('auth').style.display = 'flex'; } }, 10000);
 
   auth.onAuthStateChanged(function(user){
+    window.__authResolved = true; authDiag('');
     if(unsubEntries){ unsubEntries(); unsubEntries=null; }
     if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
     detachLifeListeners();
@@ -5040,14 +5089,40 @@ function renderAuthForm(){
     <div class="auth-switch">Google দিয়ে সাইন-ইন করলে তোমার এন্ট্রি নিরাপদে Firebase-এ সংরক্ষিত হবে ও যেকোনো ডিভাইস থেকে দেখা যাবে।</div>
   `;
 }
+let __signing = false;
+function authDiag(html){ const d = document.getElementById('authDiag'); if(!d) return; d.hidden = !html; d.innerHTML = html || ''; }
+function authBusy(on, msg){
+  const b = document.querySelector('#authForm button'); if(!b) return;
+  if(on){ b.dataset.label = b.dataset.label || b.innerHTML; b.disabled = true; b.innerHTML = '<span class="auth-spin"></span> ' + (msg || 'অপেক্ষা করো…'); }
+  else if(b.dataset.label){ b.disabled = false; b.innerHTML = b.dataset.label; delete b.dataset.label; }
+}
+// Wipes the installed service worker + caches, then reloads. The fix for "stuck on loading" after an update or a domain move.
+async function resetAppCache(){
+  try{ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch(e){}
+  try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
+  location.replace(location.pathname + '?fresh=' + Date.now());
+}
+function authErrorHelp(err){
+  const host = location.hostname, c = (err && err.code) || '';
+  const tools = '<div class="ad-acts"><button class="btn btn-sm" onclick="googleSignIn()">আবার চেষ্টা করো</button><button class="btn btn-sm btn-ghost" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button></div>';
+  if(c === 'auth/unauthorized-domain') return '<b>এই ডোমেইন Firebase-এ অনুমোদিত নয়</b><p>Firebase Console → Authentication → Settings → <b>Authorized domains</b>-এ এটা যোগ করো: <code>' + escapeHtml(host) + '</code></p>' + tools;
+  if(c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') return '<b>সাইন-ইন উইন্ডো বন্ধ হয়ে গেছে</b><p>Google উইন্ডোটা বন্ধ না করে অ্যাকাউন্ট বেছে নাও।</p>' + tools;
+  if(c === 'auth/network-request-failed') return '<b>ইন্টারনেট সংযোগে সমস্যা</b><p>নেট চেক করে আবার চেষ্টা করো। VPN/অ্যাড-ব্লকার থাকলে বন্ধ করে দেখো।</p>' + tools;
+  if(c === 'auth/web-storage-unsupported' || c === 'auth/operation-not-supported-in-this-environment') return '<b>এই ব্রাউজারে সাইন-ইন আটকে যাচ্ছে</b><p>প্রাইভেট/ইনকগনিটো মোড বা কুকি বন্ধ থাকলে এমন হয়। সাধারণ উইন্ডোতে Chrome-এ খোলো।</p>' + tools;
+  return '<b>সাইন-ইন হয়নি</b><p>' + escapeHtml(c || (err && err.message) || 'অজানা সমস্যা') + '</p>' + tools;
+}
 function googleSignIn(){
+  if(__signing) return; __signing = true; authDiag(''); authBusy(true, 'Google-এ সংযোগ হচ্ছে…');
+  const slow = setTimeout(()=>{ authDiag('<b>এখনো অপেক্ষা করছি…</b><p>Google-এর পপআপ না এলে অ্যাড্রেস বারের পপআপ-ব্লক আইকন দেখো, অথবা নিচের বাটনে চাপো।</p><div class="ad-acts"><button class="btn btn-sm" onclick="googleSignInRedirect()">পপআপ ছাড়া সাইন-ইন</button><button class="btn btn-sm btn-ghost" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button></div>'); }, 12000);
   auth.signInWithPopup(googleProvider).then(result=>{
-    toast(`স্বাগতম, ${result.user.displayName || 'You'}!`);
+    toast(`স্বাগতম, ${result.user.displayName || 'You'}!`); authDiag('');
   }).catch(err=>{
     console.error(err);
-    toastError(err, "We couldn't sign you in.");
-  });
+    if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')){ googleSignInRedirect(); return; }
+    authDiag(authErrorHelp(err));
+  }).finally(()=>{ clearTimeout(slow); __signing = false; authBusy(false); });
 }
+function googleSignInRedirect(){ authBusy(true, 'Google-এ নিয়ে যাচ্ছি…'); auth.signInWithRedirect(googleProvider).catch(err=>{ authBusy(false); authDiag(authErrorHelp(err)); }); }
 function logout(){
   confirmAction('লগ আউট করবেন?', 'তোমার এন্ট্রিগুলো Firebase-এ নিরাপদে সংরক্ষিত থাকবে।', ()=>{
     auth.signOut();
@@ -5651,6 +5726,11 @@ function renderWrite(){
         <button class="btn btn-sm" id="impBtn" aria-pressed="${!!draft.important}" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
       </div>
       <div class="wfb-sep wfb-optional"></div>
+      <div class="wfb-group dict-group">
+        <button type="button" class="fmt-btn dict-btn" id="dictBtn" aria-label="Voice typing" aria-pressed="false" title="ভয়েস টাইপিং — লাইভ বলে লেখো (Ctrl+Shift+M)" onmousedown="event.preventDefault()" onclick="Dictate.toggle()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span class="dict-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
+        <button type="button" class="fmt-btn dict-lang" id="dictLangBtn" aria-label="Voice language" title="ভয়েসের ভাষা ও সেটিংস" onmousedown="event.preventDefault()" onclick="Dictate.langMenu(this)">বাং+EN</button>
+      </div>
+      <div class="wfb-sep"></div>
       <div class="wfb-group">
         <button type="button" class="fmt-btn" aria-label="Undo" title="Undo (Ctrl+Z)" onmousedown="event.preventDefault()" onclick="edCmd('undo')">↶</button>
         <button type="button" class="fmt-btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" onmousedown="event.preventDefault()" onclick="edCmd('redo')">↷</button>
@@ -9657,6 +9737,262 @@ function applyHeaderConfig(){
 Object.assign(window,{dockClose,dockToggle,themeChipClick,applyHeaderConfig,headerCfg,syncHeaderTheme});
 
 /* ================================================================
+   VOICE TYPING (live dictation) — Bangla · English · mixed
+   Uses the browser's built-in speech recogniser (free, no keys), then
+   runs our own pipeline on top: context-aware choice between the engine's
+   alternatives, spoken punctuation, voice commands, Bangla-script →
+   English-letter conversion for common English words, a personal
+   vocabulary, spacing + capitalisation. Text appears live (ghost text)
+   inside the journal editor and turns solid when the phrase is final.
+   ================================================================ */
+const Dictate = (function(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const KEY = 'journalos_dict_v1';
+  const ANDROID = /Android/i.test(navigator.userAgent);
+  const LANGS = {mix:{code:'bn-BD', label:'বাংলা + English', short:'বাং+EN'}, bn:{code:'bn-BD', label:'শুধু বাংলা', short:'বাংলা'}, en:{code:'en-US', label:'English', short:'EN'}};
+  let cfg = Object.assign({lang:'mix', latin:true, autoPunct:false, dict:[]}, (function(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } })());
+  const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} };
+
+  /* ---------- lexicon: Bangla-script spelling → English word ---------- */
+  const LEX_SRC = 'অ্যাপ|এ্যাপ|অ্যাপস=app|অ্যাপ্লিকেশন=application|মোবাইল=mobile|ল্যাপটপ=laptop|কম্পিউটার=computer|ইন্টারনেট=internet|ওয়াইফাই=WiFi|ওয়েবসাইট=website|সফটওয়্যার|সফটওয়ার=software|হার্ডওয়্যার=hardware|ইমেইল|ইমেল=email|মেসেজ=message|মিটিং=meeting|প্রজেক্ট=project|ডেডলাইন=deadline|টাস্ক=task|টিম=team|ম্যানেজার=manager|ক্লায়েন্ট=client|কাস্টমার=customer|ইন্টারভিউ=interview|প্রেজেন্টেশন=presentation|রিপোর্ট=report|প্ল্যান=plan|আইডিয়া=idea|টার্গেট=target|বাজেট=budget|স্যালারি=salary|বিজনেস=business|মার্কেটিং=marketing|সেলস=sales|অনলাইন=online|অফলাইন=offline|আপডেট=update|ডাউনলোড=download|আপলোড=upload|ইনস্টল=install|লগইন=login|পাসওয়ার্ড=password|অ্যাকাউন্ট=account|প্রোফাইল=profile|সেটিং=setting|সেটিংস=settings|বাটন=button|ক্লিক=click|ভিডিও=video|অডিও=audio|পিকচার=picture|ক্যামেরা=camera|ফেসবুক=Facebook|ইউটিউব=YouTube|গুগল=Google|হোয়াটসঅ্যাপ=WhatsApp|ইনস্টাগ্রাম=Instagram|মেসেঞ্জার=Messenger|টেলিগ্রাম=Telegram|চ্যাটজিপিটি=ChatGPT|এআই=AI|অ্যান্ড্রয়েড=Android|আইফোন=iPhone|উইন্ডোজ=Windows|ক্রোম=Chrome|জার্নালওএস=JournalOS|ভেরি গুড=very good|গুড মর্নিং=good morning|গুড নাইট=good night|নাইস=nice|পারফেক্ট=perfect|প্রবলেম=problem|সলিউশন=solution|ইস্যু=issue|সাপোর্ট=support|সার্ভিস=service|ফিডব্যাক=feedback|রিভিউ=review|ফিচার=feature|ডিজাইন=design|ডেভেলপার=developer|কোডিং=coding|কোড=code|বাগ=bug|সার্ভার=server|ডাটাবেস=database|ডেটা|ডাটা=data|ক্লাউড=cloud|লিংক=link|ফাইল=file|ফোল্ডার=folder|স্ক্রিন=screen|নোটিফিকেশন=notification|রিমাইন্ডার=reminder|শিডিউল=schedule|ক্যালেন্ডার=calendar|উইকেন্ড=weekend|বার্থডে=birthday|শপিং=shopping|ওয়ার্কআউট=workout|এক্সারসাইজ=exercise|ডায়েট=diet|স্ট্রেস=stress|টেনশন=tension|ডিপ্রেশন=depression|অ্যাংজাইটি=anxiety|মোটিভেশন=motivation|কনফিডেন্স=confidence|ফোকাস=focus|হ্যাবিট=habit|রুটিন=routine|সরি=sorry|থ্যাংকস=thanks|থ্যাংক ইউ=thank you|প্লিজ=please|ওকে|ওকে=okay|হ্যালো=hello|হাই=hi|বাই=bye|এক্সাম=exam|অ্যাসাইনমেন্ট=assignment|ইউনিভার্সিটি=university|স্টুডেন্ট=student|রেজাল্ট=result|সিজিপিএ=CGPA|জার্নাল ওএস=JournalOS|আপডেট=update|ওভারথিংকিং=overthinking|টাইম ম্যানেজমেন্ট=time management|ওয়ার্ক=work|ব্যাকআপ=backup|ডিলিট=delete|সেভ=save|শেয়ার=share|পোস্ট=post|কমেন্ট=comment|ফলো=follow|সাবস্ক্রাইব=subscribe|চ্যানেল=channel|কনটেন্ট=content|ব্লগ=blog|পডকাস্ট=podcast|লেভেল=level|স্কোর=score|রেকর্ড=record|ভয়েস=voice|টেক্সট=text|ট্যাগ=tag';
+  const LEX = new Map();
+  (function(){ // "a|b=x|c=y": names collected until an '=' assigns them
+    let pend = []; LEX_SRC.split('|').forEach(part=>{ if(part.indexOf('=')>-1){ const [k,v] = part.split('='); pend.push(k); pend.forEach(p=>LEX.set(p.replace(/[‌‍]/g,''), v)); pend = []; } else pend.push(part); });
+  })();
+  const LEX_KEYS = Array.from(LEX.keys());
+  const LEX_MULTI = LEX_KEYS.filter(k=>k.indexOf(' ')>-1).sort((a,b)=>b.length-a.length);
+  const SUFFIX = ['গুলোর','গুলোকে','গুলো','গুলি','দের','টার','টাকে','টা','টি','খানা','ের','কে','তে','য়ে','য়','ে','র','ও','ই','এ'];
+
+  /* ---------- spoken punctuation & commands ---------- */
+  const PUNCT = [
+    [/(?:^|\s)(?:প্রশ্নবোধক চিহ্ন|প্রশ্নবোধক|question mark)(?=\s|$)/gi, '?'], [/(?:^|\s)(?:বিস্ময় চিহ্ন|বিস্ময়সূচক চিহ্ন|বিস্ময়বোধক চিহ্ন|exclamation mark|exclamation point)(?=\s|$)/gi, '!'],
+    [/(?:^|\s)(?:সেমিকোলন|semicolon)(?=\s|$)/gi, ';'], [/(?:^|\s)(?:কোলন|colon)(?=\s|$)/gi, ':'], [/(?:^|\s)(?:কমা|comma)(?=\s|$)/gi, ','],
+    [/(?:^|\s)(?:দাঁড়ি|দাড়ি|দাঁড়ী|পূর্ণচ্ছেদ)(?=\s|$)/gi, '।'], [/(?:^|\s)(?:full stop|fullstop|period)(?=\s|$)/gi, '.'],
+    [/(?:^|\s)(?:হাইফেন|hyphen|ড্যাশ|dash)(?=\s|$)/gi, '-'], [/(?:^|\s)(?:ওপেন ব্র্যাকেট|open bracket)(?=\s|$)/gi, ' ('], [/(?:^|\s)(?:ক্লোজ ব্র্যাকেট|close bracket)(?=\s|$)/gi, ')'],
+    [/(?:^|\s)(?:নতুন অনুচ্ছেদ|new paragraph)(?=\s|$)/gi, '\n\n'], [/(?:^|\s)(?:নতুন লাইন|নিউ লাইন|new line|next line)(?=\s|$)/gi, '\n']
+  ];
+  const norm = s=>s.toLowerCase().replace(/[।,.?!‌‍]/g,'').replace(/\s+/g,' ').trim();
+  const CMD = {
+    stop:['থামো','থামুন','থামাও','রেকর্ড বন্ধ','ভয়েস বন্ধ','ভয়েস টাইপিং বন্ধ','রেকর্ডিং বন্ধ','stop listening','stop dictation','stop recording','stop typing'],
+    undo:['মুছে ফেলো','মুছে ফেল','ওটা মুছো','ওটা মুছে ফেলো','আগেরটা মুছো','আগেরটা মুছে ফেলো','ডিলিট দ্যাট','delete that','scratch that','undo that','remove that'],
+    en:['ইংলিশ মোড','ইংরেজি মোড','english mode','switch to english'], bn:['বাংলা মোড','বাংলা মুড','bangla mode','bengali mode','switch to bangla'], mix:['মিক্স মোড','মিক্সড মোড','mixed mode','mix mode']
+  };
+  function commandOf(t){ const n = norm(t); for(const k in CMD){ if(CMD[k].some(x=>norm(x)===n)) return k; } return null; }
+
+  /* ---------- state ---------- */
+  let rec = null, wantOn = false, running = false, ghost = null, savedRange = null, history = [], quickEnds = 0, lastStart = 0, hadResult = false, watchdog = null;
+  const $ = id=>document.getElementById(id);
+  const ed = ()=>$('contentInput');
+
+  function supported(){ return !!SR; }
+  function say(msg){ const m = $('dsMsg'); if(m) m.textContent = msg; }
+  function paintUI(){
+    const on = wantOn, b = $('dictBtn'); if(b){ b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.title = on ? 'ভয়েস টাইপিং বন্ধ করো (Ctrl+Shift+M)' : 'ভয়েস টাইপিং — লাইভ বলে লেখো (Ctrl+Shift+M)'; }
+    const l = $('dictLangBtn'); if(l) l.textContent = LANGS[cfg.lang].short;
+    let s = $('dictStrip'); if(!s){ s = document.createElement('div'); s.id = 'dictStrip'; s.className = 'dict-strip'; s.setAttribute('role','status'); s.setAttribute('aria-live','polite');
+      s.innerHTML = '<span class="ds-dot"></span><b id="dsLang"></b><span id="dsMsg"></span><button type="button" class="ds-lang" onclick="Dictate.cycleLang()" title="ভাষা বদলাও">⇄</button><button type="button" class="ds-stop" onclick="Dictate.stop()">থামাও</button>'; document.body.appendChild(s); }
+    s.classList.toggle('show', on); $('dsLang').textContent = LANGS[cfg.lang].label;
+  }
+
+  /* ---------- selection helpers ---------- */
+  function ensureCaret(){
+    const e = ed(); if(!e) return false;
+    const sel = window.getSelection();
+    if(sel.rangeCount && e.contains(sel.anchorNode) && !(ghost && ghost.contains(sel.anchorNode))){ savedRange = sel.getRangeAt(0).cloneRange(); return true; }
+    e.focus();
+    if(savedRange && e.contains(savedRange.startContainer)){ sel.removeAllRanges(); sel.addRange(savedRange); return true; }
+    const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange(); return true;
+  }
+  function textBefore(){
+    const e = ed(), sel = window.getSelection(); if(!e || !sel.rangeCount) return '';
+    const r = sel.getRangeAt(0); let n = r.startContainer; while(n && n.parentNode && n.parentNode !== e) n = n.parentNode;
+    const blk = (n && n !== e && n.nodeType === 1) ? n : e; const rr = document.createRange(); rr.selectNodeContents(blk);
+    try{ rr.setEnd(r.startContainer, r.startOffset); }catch(_){ return ''; } return rr.toString().replace(/​/g,'').replace(/ /g,' ');
+  }
+  function removeGhost(){ if(ghost && ghost.parentNode){ ghost.parentNode.removeChild(ghost); } ghost = null; }
+
+  /* ---------- text pipeline ---------- */
+  const BN = /[ঀ-৿]/, LAT = /[A-Za-z]/;
+  function vocab(){ const v = new Set(); const e = ed(); const t = ((e && e.innerText) || '').slice(-4000); (t.match(/[ঀ-৿]+|[A-Za-z']+/g) || []).forEach(w=>v.add(w.toLowerCase())); cfg.dict.forEach(p=>String(p[1]).split(/\s+/).forEach(w=>v.add(w.toLowerCase()))); LEX_KEYS.forEach(k=>v.add(k)); return v; }
+  function pickBest(res){
+    if(res.length === 1) return res[0].transcript;
+    const V = vocab(); let best = null, bs = -1;
+    for(let i=0;i<res.length;i++){ const a = res[i], toks = (a.transcript.match(/[ঀ-৿]+|[A-Za-z']+/g) || []); if(!toks.length) continue;
+      const hit = toks.filter(w=>V.has(w.toLowerCase())).length / toks.length, sc = (a.confidence || (i === 0 ? .6 : .4)) + .25 * hit - .02 * i; if(sc > bs){ bs = sc; best = a.transcript; } }
+    return best != null ? best : res[0].transcript;
+  }
+  function lexConvert(text){
+    if(!cfg.latin || cfg.lang === 'en') return text;
+    LEX_MULTI.forEach(k=>{ const re = new RegExp('(^|\\s)' + k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?=\\s|$|[।,.?!])', 'g'); text = text.replace(re, (m,a)=>a + LEX.get(k)); });
+    return text.replace(/[ঀ-৿‌‍]+/g, tok=>{
+      const t = tok.replace(/[‌‍]/g,''); if(LEX.has(t) && !t.includes(' ')) return LEX.get(t);
+      for(const k of LEX_KEYS){ if(t.length > k.length && t.startsWith(k) && k.indexOf(' ') < 0){ const suf = t.slice(k.length); if(SUFFIX.indexOf(suf) > -1) return LEX.get(k) + '-' + suf; } }
+      return tok;
+    });
+  }
+  function customConvert(text){
+    cfg.dict.forEach(p=>{ const from = String(p[0]||'').trim(), to = String(p[1]||''); if(!from) return; const re = new RegExp('(^|\\s)' + from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+') + '(?=\\s|$|[।,.?!])', 'gi'); text = text.replace(re, (m,a)=>a + to); });
+    return text;
+  }
+  function punctuate(text){
+    PUNCT.forEach(([re, ch])=>{ text = text.replace(re, ()=>ch); });
+    // "." from a spoken full stop becomes "।" when the sentence is Bangla
+    text = text.replace(/([ঀ-৿][^.!?।\n]*)\.(?=\s|$)/g, '$1।');
+    return text.replace(/\s+([,;:?!।.)])/g, '$1').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n');
+  }
+  function polish(text, before){
+    if(!text) return text;
+    if(cfg.lang !== 'bn'){ text = text.replace(/\bi(?=\b|'m|'ll|'ve|'d)(?!\w)/g, 'I').replace(/\bi'(m|ll|ve|d)\b/g, "I'$1"); }
+    const atStart = !before.trim() || /[.!?।]\s*$/.test(before) || /\n\s*$/.test(before);
+    if(atStart){ text = text.replace(/^(\s*)([a-z])/, (m,s,c)=>s + c.toUpperCase()); }
+    text = text.replace(/([.!?])(\s+)([a-z])/g, (m,p,s,c)=>p + s + c.toUpperCase());
+    text = text.replace(/(\n)([a-z])/g, (m,n,c)=>n + c.toUpperCase());
+    return text;
+  }
+  function needSpace(before, text){
+    if(!text || /^[\s,;:?!।.)\-]/.test(text) && !/^-\s/.test(text)) return '';
+    if(!before || /[\s\n( ]$/.test(before)) return '';
+    return ' ';
+  }
+  function process(raw, interim){
+    let t = raw.replace(/\s+/g,' ').trim(); if(!t) return '';
+    t = punctuate(lexConvert(t)); t = customConvert(t);
+    return t;
+  }
+
+  /* ---------- insert / ghost ---------- */
+  function showGhost(text){
+    if(!ensureCaret()) return; removeGhost(); const sel = window.getSelection(); if(!sel.rangeCount) return;
+    const r = sel.getRangeAt(0); if(!r.collapsed) r.collapse(false);
+    const before = textBefore(), t = process(text, true); if(!t){ return; }
+    const g = document.createElement('span'); g.className = 'dict-ghost'; g.contentEditable = 'false'; g.setAttribute('aria-hidden','true'); g.textContent = needSpace(before, t) + polish(t.replace(/\n+/g,' ⏎ '), before);
+    r.insertNode(g); const r2 = document.createRange(); r2.setStartBefore(g); r2.collapse(true); sel.removeAllRanges(); sel.addRange(r2); ghost = g;
+    const e = ed(); if(e) e.classList.remove('is-empty'); try{ g.scrollIntoView({block:'nearest'}); }catch(_){}
+  }
+  function insertFinal(text){
+    removeGhost(); if(!ensureCaret()) return;
+    const before = textBefore(); let t = polish(text, before); const sp = needSpace(before, t); t = sp + t;
+    const parts = t.split('\n'); let first = true;
+    parts.forEach((seg, i)=>{ if(i > 0) document.execCommand('insertParagraph'); if(seg) document.execCommand('insertText', false, seg); });
+    history.push({text:t, multi: parts.length > 1}); if(history.length > 30) history.shift();
+    const sel = window.getSelection(); if(sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+    syncEditorToDraft();
+  }
+  function undoLast(){
+    removeGhost(); const h = history.pop(); if(!h){ say('মোছার মতো কিছু নেই'); return; }
+    ensureCaret(); const sel = window.getSelection();
+    if(h.multi){ document.execCommand('undo'); syncEditorToDraft(); return; }
+    let n = h.text.length; const e = ed();
+    const walker = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); const nodes = []; let x; while((x = walker.nextNode())) nodes.push(x);
+    const r = sel.getRangeAt(0); let idx = nodes.indexOf(r.startContainer), off = r.startOffset; if(idx < 0) return;
+    let rem = n; let sn = idx, so = off;
+    while(rem > 0 && sn >= 0){ if(so >= rem){ so -= rem; rem = 0; } else { rem -= so; sn--; if(sn >= 0) so = nodes[sn].nodeValue.length; } }
+    if(sn < 0){ sn = 0; so = 0; }
+    const dr = document.createRange(); dr.setStart(nodes[sn], so); dr.setEnd(r.startContainer, r.startOffset); sel.removeAllRanges(); sel.addRange(dr); document.execCommand('delete');
+    const s2 = window.getSelection(); if(s2.rangeCount) savedRange = s2.getRangeAt(0).cloneRange(); syncEditorToDraft(); say('মুছে ফেলেছি');
+  }
+
+  /* ---------- recogniser ---------- */
+  function build(){
+    const r = new SR(); r.lang = LANGS[cfg.lang].code; r.continuous = !ANDROID; r.interimResults = true; r.maxAlternatives = 4;
+    r.onstart = ()=>{ running = true; lastStart = Date.now(); hadResult = false; say('শুনছি… বলো'); };
+    r.onresult = ev=>{
+      hadResult = true; quickEnds = 0; let interim = '';
+      for(let i = ev.resultIndex; i < ev.results.length; i++){
+        const res = ev.results[i];
+        if(res.isFinal){
+          const alts = []; for(let k=0;k<res.length;k++) alts.push({transcript:res[k].transcript, confidence:res[k].confidence});
+          handleFinal(pickBest(alts));
+        } else interim += res[0].transcript;
+      }
+      if(interim.trim()){ const c = commandOf(interim); if(c){ removeGhost(); say('কমান্ড বুঝেছি…'); } else showGhost(interim); } else if(!ghostPendingFinal) removeGhost();
+    };
+    r.onerror = e=>{
+      const code = e.error;
+      if(code === 'no-speech' || code === 'aborted') return;
+      if(code === 'not-allowed' || code === 'service-not-allowed'){ fail('মাইক্রোফোনের অনুমতি দেওয়া নেই। ব্রাউজারের অ্যাড্রেস বারের 🔒 থেকে Microphone → Allow করো।'); }
+      else if(code === 'audio-capture'){ fail('কোনো মাইক্রোফোন পাওয়া যায়নি।'); }
+      else if(code === 'network'){ fail('ভয়েস সার্ভিসে সংযোগ হচ্ছে না। ইন্টারনেট চেক করো (Brave ব্রাউজারে এই ফিচার বন্ধ থাকে — Chrome/Edge ব্যবহার করো)।'); }
+      else if(code === 'language-not-supported'){ fail('এই ভাষা এই ব্রাউজারে সাপোর্ট করে না। English মোড চেষ্টা করো।'); }
+    };
+    r.onend = ()=>{
+      running = false; removeGhostCommit();
+      if(!wantOn) return;
+      const quick = Date.now() - lastStart < 1500 && !hadResult; quickEnds = quick ? quickEnds + 1 : 0;
+      if(quickEnds >= 5){ fail('ভয়েস চালু রাখা যাচ্ছে না। ইন্টারনেট ও মাইক চেক করে আবার চেষ্টা করো।'); return; }
+      setTimeout(()=>{ if(wantOn && !running) startRec(); }, quick ? 500 : 120);
+    };
+    return r;
+  }
+  let ghostPendingFinal = false;
+  function removeGhostCommit(){ // an interrupted phrase: keep what was heard instead of losing it
+    if(ghost){ const txt = ghost.textContent; removeGhost(); const t = txt.replace(/ ⏎ /g,'\n').trim(); if(t) insertFinal(t); }
+  }
+  function handleFinal(raw){
+    ghostPendingFinal = true; removeGhost();
+    const c = commandOf(raw);
+    if(c){
+      if(c === 'stop'){ stop(); }
+      else if(c === 'undo'){ undoLast(); }
+      else { setLang(c, true); }
+      ghostPendingFinal = false; return;
+    }
+    let t = process(raw); if(!t){ ghostPendingFinal = false; return; }
+    if(cfg.autoPunct && !/[.!?।\n]$/.test(t) && t.split(/\s+/).length >= 3) t += (BN.test(t) ? '।' : '.');
+    insertFinal(t); say('শুনছি…'); ghostPendingFinal = false;
+  }
+  function startRec(){ try{ rec = build(); rec.start(); }catch(e){ if(!/already started/i.test(String(e))) fail('ভয়েস চালু করা যায়নি: ' + e.message); } }
+  function fail(msg){ wantOn = false; try{ rec && rec.abort(); }catch(_){} removeGhostCommit(); paintUI(); if(typeof toast === 'function') toast(msg, {type:'error'}); }
+
+  function start(){
+    if(!$('contentInput')){ toast('আগে লেখার পেজ খোলো (New Journal), তারপর ভয়েস চালাও।'); return; }
+    if(!supported()){ toast('এই ব্রাউজারে লাইভ ভয়েস টাইপিং চলে না। Chrome, Edge বা Safari ব্যবহার করো।', {type:'error'}); return; }
+    if(typeof canUseFeature === 'function' && !canUseFeature('voice')){ toast('ভয়েস ফিচারটা এখন বন্ধ আছে।'); return; }
+    ensureCaret(); wantOn = true; history = []; quickEnds = 0; paintUI(); startRec();
+  }
+  function stop(){ wantOn = false; try{ rec && rec.stop(); }catch(_){} removeGhostCommit(); paintUI(); const e = ed(); if(e){ e.focus(); } }
+  function toggle(){ wantOn ? stop() : start(); }
+  function setLang(l, announce){
+    if(!LANGS[l]) return; cfg.lang = l; save(); paintUI(); if(announce) toast('ভাষা: ' + LANGS[l].label);
+    if(wantOn){ try{ rec && rec.abort(); }catch(_){} } // onend restarts with the new language
+    const b = $('dictLangBtn'); if(b) b.textContent = LANGS[l].short; refreshPop();
+  }
+  function cycleLang(){ const o = ['mix','bn','en']; setLang(o[(o.indexOf(cfg.lang) + 1) % 3], true); }
+
+  /* ---------- settings popover + vocabulary + help ---------- */
+  function refreshPop(){ const p = $('dictPop'); if(p && p.classList.contains('show')) fillPop(); }
+  function fillPop(){
+    const p = $('dictPop'); p.innerHTML =
+      '<div class="dp-h">ভয়েস টাইপিং</div>' + ['mix','bn','en'].map(k=>'<button type="button" class="dp-opt' + (cfg.lang === k ? ' on' : '') + '" onclick="Dictate.setLang(\'' + k + '\')"><span>' + LANGS[k].label + '</span>' + (cfg.lang === k ? '<i>✓</i>' : '') + '</button>').join('') +
+      '<div class="dp-sep"></div><label class="dp-row"><span>English শব্দ ইংরেজি হরফে<small>meeting, project, app…</small></span><input type="checkbox" ' + (cfg.latin ? 'checked' : '') + ' onchange="Dictate.opt(\'latin\',this.checked)"></label>' +
+      '<label class="dp-row"><span>স্বয়ংক্রিয় দাঁড়ি / full stop<small>থামলে বাক্যের শেষে বসবে</small></span><input type="checkbox" ' + (cfg.autoPunct ? 'checked' : '') + ' onchange="Dictate.opt(\'autoPunct\',this.checked)"></label>' +
+      '<div class="dp-sep"></div><button type="button" class="dp-opt" onclick="Dictate.vocabModal()"><span>📚 আমার শব্দভান্ডার</span></button><button type="button" class="dp-opt" onclick="Dictate.helpModal()"><span>❔ ভয়েস কমান্ড</span></button>';
+  }
+  function langMenu(btn){
+    let p = $('dictPop'); if(!p){ p = document.createElement('div'); p.id = 'dictPop'; p.className = 'dict-pop'; document.body.appendChild(p); document.addEventListener('click', e=>{ const q = $('dictPop'); if(q && q.classList.contains('show') && !q.contains(e.target) && e.target.id !== 'dictLangBtn') q.classList.remove('show'); }); }
+    if(p.classList.contains('show')){ p.classList.remove('show'); return; }
+    fillPop(); const r = btn.getBoundingClientRect(); p.style.top = (r.bottom + 8) + 'px'; p.style.left = Math.max(8, Math.min(window.innerWidth - 290, r.left - 100)) + 'px'; p.classList.add('show');
+  }
+  function modal(html){ let m = $('dictModal'); if(!m){ m = document.createElement('div'); m.id = 'dictModal'; m.className = 'dict-modal'; m.onclick = e=>{ if(e.target === m) m.classList.remove('show'); }; document.body.appendChild(m); } m.innerHTML = '<div class="dm-card">' + html + '<div class="dm-acts"><button type="button" class="btn btn-sm" onclick="document.getElementById(\'dictModal\').classList.remove(\'show\')">বন্ধ করো</button></div></div>'; m.classList.add('show'); return m; }
+  function helpModal(){
+    modal('<h3>ভয়েস কমান্ড</h3><p class="dm-p">বাক্যের মাঝে বললে চিহ্ন বসে। নিচের কমান্ডগুলো আলাদা করে (একা) বলতে হবে।</p><div class="dm-grid"><b>চিহ্ন</b><span>“কমা” · “দাঁড়ি” · “full stop” · “প্রশ্নবোধক চিহ্ন” · “বিস্ময় চিহ্ন” · “কোলন” · “হাইফেন”</span><b>লাইন</b><span>“নতুন লাইন” / “new line” · “নতুন অনুচ্ছেদ” / “new paragraph”</span><b>মোছা</b><span>“মুছে ফেলো” / “delete that” — শেষ বলা অংশ মুছে যায়</span><b>ভাষা</b><span>“ইংলিশ মোড” · “বাংলা মোড” · “মিক্স মোড” — না থেমেই বদলায়</span><b>থামা</b><span>“থামো” / “stop listening”</span><b>শর্টকাট</b><span>Ctrl + Shift + M</span></div>');
+  }
+  function vocabModal(){
+    modal('<h3>আমার শব্দভান্ডার</h3><p class="dm-p">যে শব্দ ভুল শোনে, তার সঠিক রূপ শিখিয়ে দাও। প্রতি লাইনে একটা: <code>যা শোনে = যা লিখবে</code><br>যেমন: <code>জার্নাল ওএস = JournalOS</code></p><textarea id="dictVocab" rows="7" spellcheck="false" placeholder="অফিসিয়াল = official\nনায়েম = Nayeem">' + cfg.dict.map(p=>p[0] + ' = ' + p[1]).join('\n').replace(/</g,'&lt;') + '</textarea><div class="dm-acts" style="margin:0 0 -4px"><button type="button" class="btn btn-sm btn-primary" onclick="Dictate.saveVocab()">সেভ</button></div>');
+  }
+  function saveVocab(){ const v = $('dictVocab').value.split('\n').map(l=>l.split('=')).filter(a=>a.length >= 2 && a[0].trim()).map(a=>[a[0].trim(), a.slice(1).join('=').trim()]); cfg.dict = v; save(); toast('শব্দভান্ডার সেভ হয়েছে (' + v.length + 'টি)', {type:'success'}); $('dictModal').classList.remove('show'); }
+  function opt(k, v){ cfg[k] = v; save(); }
+
+  document.addEventListener('keydown', e=>{ if((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'm'){ e.preventDefault(); toggle(); } });
+  document.addEventListener('mousedown', e=>{ if(wantOn && ghost && ed() && ed().contains(e.target)) removeGhostCommit(); });
+  setInterval(()=>{ if(wantOn && !ed()) stop(); }, 1000);
+  window.addEventListener('pagehide', ()=>{ if(wantOn) stop(); });
+  return {toggle, start, stop, setLang, cycleLang, langMenu, helpModal, vocabModal, saveVocab, opt, supported, _t:{process, pickBest, lexConvert, punctuate, commandOf, polish, needSpace, cfg:()=>cfg}};
+})();
+window.Dictate = Dictate;
+
+
+/* ================================================================
    PWA — install + update
    ================================================================ */
 const PWA = {
@@ -9950,4 +10286,14 @@ document.addEventListener('keydown', e=>{
   const root = document.documentElement;
   function sync(){
     const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-    if(kb > 120){ root.style.setProperty('--kb', kb + 'px'); r
+    if(kb > 120){ root.style.setProperty('--kb', kb + 'px'); root.classList.add('kb-open'); }
+    else { root.style.removeProperty('--kb'); root.classList.remove('kb-open'); }
+  }
+  vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); sync();
+})();
+PWA.init();
+applyAccent();
+})();
+</script>
+</body>
+</html>
