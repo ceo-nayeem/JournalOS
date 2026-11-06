@@ -14,10 +14,10 @@ A.DEF_CFG = {
   appName:'JournalOS', tagline:'Write First. Everything Else Second.', signupsEnabled:true,
   maintenance:{enabled:false,message:'JournalOS is briefly down for maintenance. Your journals are safe — please check back shortly.'},
   announcement:{enabled:false,text:'',tone:'info'},
-  features:{aiAnalysis:true,semanticSearch:true,askYourLife:true,voice:true,voiceTranscription:true,media:true,advancedInsights:true,export:true},
+  features:{aiAnalysis:true,semanticSearch:true,askYourLife:true,voice:true,voiceTranscription:true,media:true,advancedInsights:true,export:true,books:true},
   defaults:{theme:'system',accent:'brand',dailyReminder:true,dailyReminderTime:'20:00',weeklySummary:true,aiExtraction:true},
   header:{showQuickAdd:true,showAddMood:true,showSearch:true,showThemeMenu:true,showStreak:true,showDownload:true,openOn:'hover',accents:['brand','indigo','rose','emerald']},
-  moodLabels:{},moodEmojis:{},entryLimitDefault:0,requirePro:true,pendingMaxDays:14
+  moodLabels:{},moodEmojis:{},entryLimitDefault:0,maxBooks:0,requirePro:true,pendingMaxDays:14
 };
 A.DEF_RESTR = {suspended:false,readOnly:false,aiDisabled:false,mediaDisabled:false,exportDisabled:false,entryLimit:0};
 A.MOODS = [['happy','Happy','🙂'],['excited','Excited','🤩'],['grateful','Grateful','🥰'],['calm','Calm','😌'],['neutral','Neutral','😐'],['tired','Tired','😴'],['sad','Sad','😔'],['anxious','Anxious','😟'],['stressed','Stressed','😣'],['angry','Angry','😠']];
