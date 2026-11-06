@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-04.2">
+<meta name="app-build" content="2026-11-06.1">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -37,6 +37,17 @@ window.__ACCENTS__={
  violet:{light:{a:'#7C3AED',b:'#EC4899',s:'#E6DAFB',sh:'rgba(124,58,237,.45)'},dark:{a:'#B79CFF',b:'#FF9AD0',s:'#34265F',sh:'rgba(183,156,255,.35)'}},
  amber:{light:{a:'#B45309',b:'#EF4444',s:'#F6E1C3',sh:'rgba(180,83,9,.45)'},dark:{a:'#F5B25A',b:'#FF8A6B',s:'#44311A',sh:'rgba(245,178,90,.35)'}}
 };
+/* boot watchdog: if the app has not reached the sign-in screen or the dashboard within 9s, say why instead of spinning */
+window.__bootErr=[];
+window.addEventListener('error',function(e){try{window.__bootErr.push((e.message||'error')+(e.lineno?' @'+e.lineno:''));}catch(x){}});
+window.addEventListener('unhandledrejection',function(e){try{var r=e.reason;window.__bootErr.push('promise: '+((r&&(r.code||r.message))||r));}catch(x){}});
+window.__fixApp=function(){var p=[];try{p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));}catch(x){}try{p.push(caches.keys().then(function(k){return Promise.all(k.map(function(n){return caches.delete(n);}));}));}catch(x){}Promise.all(p).catch(function(){}).then(function(){location.replace(location.pathname+'?fresh='+Date.now());});};
+setTimeout(function(){if(window.__ready||document.getElementById('bootWatch'))return;
+var d=document.createElement('div');d.id='bootWatch';d.setAttribute('role','alert');
+d.style.cssText='position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(246,241,230,.96);font-family:system-ui,sans-serif;color:#1c2a2a';
+var errs=(window.__bootErr||[]).slice(0,4).map(function(m){return String(m).replace(/</g,'&lt;');}).join('<br>');
+d.innerHTML='<div style="max-width:420px;text-align:center"><div style="font-size:38px">\u23F3</div><h2 style="margin:8px 0">\u0985\u09CD\u09AF\u09BE\u09AA \u099A\u09BE\u09B2\u09C1 \u09B9\u09A4\u09C7 \u09AC\u09C7\u09B6\u09BF \u09B8\u09AE\u09DF \u09B2\u09BE\u0997\u099B\u09C7</h2><p style="color:#556;line-height:1.5">Host: <b>'+location.hostname+'</b></p>'+(errs?'<p style="font-family:monospace;font-size:12px;background:#0001;padding:8px;border-radius:8px;text-align:left;word-break:break-word">'+errs+'</p>':'')+'<p style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button onclick="__fixApp()" style="padding:10px 16px;border:0;border-radius:10px;background:#0F6F6B;color:#fff;font-weight:600">Reset &amp; reload</button><button onclick="location.reload()" style="padding:10px 16px;border:1px solid #0F6F6B;border-radius:10px;background:#fff;color:#0F6F6B;font-weight:600">Reload</button></p></div>';
+(document.body||document.documentElement).appendChild(d);},9000);
 (function(){var r=document.documentElement;
 try{r.classList.add('booting');
 var k=localStorage.getItem('journalos_accent')||'brand',A=window.__ACCENTS__,a=A[k]||A.brand,dk=r.getAttribute('data-theme')==='dark',c=dk?a.dark:a.light,st=r.style;
@@ -1870,43 +1881,197 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
   .cal-legend{margin-left:12px!important;margin-right:12px!important;}
 }
 
-/* ---------- Year in Pixels ---------- */
-.px-card{padding:18px;}
-.px-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px;}
-.px-year{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:clamp(28px,6vw,40px);font-weight:700;letter-spacing:-.03em;}
-.px-sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
-.px-sub b{color:var(--ink);}
-.px-ring{--p:0;flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--paper-dim) 0);position:relative;}
-.px-ring::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--paper-card);}
-.px-ring span{position:relative;font-size:12px;font-weight:700;}
-.px-bar{display:flex;height:9px;border-radius:99px;overflow:hidden;margin:4px 0 12px;background:var(--paper-dim);}
-.px-bar span{display:block;}
-.px-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-.px-chip{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s;}
-.px-chip i{width:9px;height:9px;border-radius:50%;background:var(--c);display:block;}
-.px-chip b{color:var(--ink-faint);font-weight:600;}
-.px-chip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--paper-card));}
-.px-chip.clr{color:var(--ink-soft);}
-.px-grid{display:grid;grid-template-columns:18px repeat(12,minmax(0,1fr));gap:4px;align-items:center;max-width:540px;margin:0 auto 16px;}
-.px-h{font-size:11px;text-align:center;color:var(--ink-faint);font-weight:700;}
-.px-hs{display:none;}
-.px-d{font-size:9px;color:var(--ink-faint);text-align:right;padding-right:2px;}
-.px{aspect-ratio:1;display:block;width:100%;min-width:0;border:0;padding:0;border-radius:6px;background:var(--paper-dim);cursor:pointer;transition:transform .14s ease,opacity .2s ease;}
-.px.has{background:var(--pc);opacity:var(--po,1);}
-.px.off{visibility:hidden;cursor:default;}
-.px.future{background:transparent;border:1px dashed var(--rule);cursor:default;}
-.px.multi{box-shadow:inset 0 0 0 2.5px rgba(255,255,255,.65);}
-.px.today{outline:2px solid var(--accent);outline-offset:1px;}
-.px.dim{opacity:.14!important;}
-.px.sel{outline:2px solid var(--ink);outline-offset:1px;transform:scale(1.18);position:relative;z-index:2;}
-@media (hover:hover){.px.has:hover{transform:scale(1.22);position:relative;z-index:2;}}
-.px-card .dayd{margin:0;}
-@media (max-width:520px){
-  .px-card{padding:12px;} .px-grid{gap:3px;grid-template-columns:14px repeat(12,minmax(0,1fr));}
-  .px{border-radius:4px;} .px-hf{display:none;} .px-hs{display:inline;} .px-d{font-size:8px;}
-  .px-ring{width:48px;height:48px;} .px-ring span{font-size:11px;}
+/* ---------- Bookshelf (library view) ---------- */
+.shelf-room{position:relative;border-radius:var(--radius-lg);padding:20px 14px 26px;overflow:hidden;isolation:isolate;color:#f6ead6;
+  background:
+    radial-gradient(120% 70% at 10% -12%,rgba(255,196,112,.34),transparent 55%),
+    radial-gradient(90% 60% at 104% 0%,rgba(110,225,255,.13),transparent 60%),
+    linear-gradient(180deg,#2b1d14 0%,#1a110c 100%);
+  box-shadow:var(--shadow-float),inset 0 0 0 1px rgba(255,214,150,.12),inset 0 0 90px rgba(0,0,0,.5);}
+.shelf-room::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.7;
+  background-image:linear-gradient(rgba(255,214,150,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,214,150,.05) 1px,transparent 1px);
+  background-size:34px 34px;-webkit-mask-image:radial-gradient(85% 80% at 50% 35%,#000,transparent);mask-image:radial-gradient(85% 80% at 50% 35%,#000,transparent);}
+.sh-dust{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;}
+.sh-dust i{position:absolute;left:var(--x);bottom:-6px;width:var(--sz);height:var(--sz);border-radius:50%;background:#ffe2a8;opacity:0;box-shadow:0 0 8px #ffd48a;animation:shDust var(--d) linear var(--dl) infinite;}
+@keyframes shDust{0%{transform:translate(0,0);opacity:0}15%{opacity:.7}85%{opacity:.5}100%{transform:translate(26px,-420px);opacity:0}}
+.sh-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 8px 6px;}
+.sh-kick{font-size:10.5px;letter-spacing:.2em;font-weight:700;color:#ffcf7d;text-shadow:0 0 12px rgba(255,190,90,.55);}
+.sh-top h2{margin:4px 0 2px;font-size:clamp(20px,4.2vw,28px);color:#fff4df;}
+.sh-top p{margin:0;font-size:12.5px;color:rgba(246,234,214,.66);}
+.sh-new{background:rgba(255,214,150,.12)!important;border:1px solid rgba(255,214,150,.4)!important;color:#ffe9c4!important;backdrop-filter:blur(6px);}
+.sh-new:hover{background:rgba(255,214,150,.22)!important;box-shadow:0 0 18px -2px rgba(255,190,90,.5);}
+.sh-case{--s:1;display:flex;flex-direction:column;gap:6px;min-height:240px;}
+.sh-row{position:relative;margin-top:14px;padding:0 6px;}
+.sh-row::before{content:'';position:absolute;left:0;right:0;top:0;bottom:10px;border-radius:6px 6px 0 0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.1));box-shadow:inset 0 12px 24px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,214,150,.06);}
+.sh-books{position:relative;display:flex;align-items:flex-end;gap:3px;padding:0 10px;min-height:calc(214px*var(--s,1));}
+.sh-decor{margin-left:auto;align-self:flex-end;font-size:calc(46px*var(--s,1));line-height:1;margin-bottom:2px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(255,190,90,.35));opacity:.92;user-select:none;pointer-events:none;}
+.sh-plank{position:relative;height:16px;margin:0 -2px;border-radius:3px 3px 9px 9px;
+  background:linear-gradient(180deg,#9a6840 0%,#74472a 42%,#3d2312 100%);
+  box-shadow:inset 0 1px 0 rgba(255,226,180,.4),0 16px 22px -8px rgba(0,0,0,.75),0 10px 26px -6px rgba(255,170,70,.3);}
+.sh-plank::before{content:'';position:absolute;inset:0;border-radius:inherit;opacity:.35;background:repeating-linear-gradient(90deg,rgba(0,0,0,.18) 0 2px,transparent 2px 9px,rgba(255,220,170,.08) 9px 10px,transparent 10px 23px);}
+.sh-plank::after{content:'';position:absolute;left:5%;right:5%;bottom:-4px;height:2px;border-radius:2px;filter:blur(.5px);
+  background:linear-gradient(90deg,transparent,rgba(120,232,255,.8),rgba(255,196,110,.9),transparent);}
+
+/* a single spine */
+.bk{--w:52px;--h:180px;--c1:#8a2434;--c2:#4a0f19;--foil:#f0cf7a;position:relative;flex:none;appearance:none;
+  width:calc(var(--w)*var(--s,1));height:calc(var(--h)*var(--s,1));padding:calc(11px*var(--s,1)) 0 calc(9px*var(--s,1));margin:0;border:0;border-radius:3px 3px 2px 2px;
+  cursor:pointer;color:var(--foil);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.2),rgba(255,255,255,0) 15%,rgba(0,0,0,0) 68%,rgba(0,0,0,.4)),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.045) 0 2px,rgba(0,0,0,.055) 2px 4px),
+    linear-gradient(180deg,var(--c1),var(--c2));
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset -1px 0 0 rgba(255,255,255,.07),3px 0 4px -1px rgba(0,0,0,.45);
+  transform-origin:50% 100%;transition:transform .38s var(--ease),box-shadow .38s var(--ease),filter .3s ease;
+  animation:bkIn .55s var(--ease) both;animation-delay:calc(var(--i,0)*45ms);-webkit-tap-highlight-color:transparent;}
+@keyframes bkIn{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+.bk::before,.bk::after{content:'';position:absolute;left:0;right:0;height:5px;border-block:1px solid var(--foil);opacity:.75;pointer-events:none;}
+.bk::before{top:calc(40px*var(--s,1));}
+.bk::after{bottom:calc(36px*var(--s,1));}
+.bk .em{font-size:calc(18px*var(--s,1));line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45));}
+.bk .ti{flex:1;min-height:0;margin:calc(14px*var(--s,1)) 0 calc(10px*var(--s,1));display:flex;align-items:center;justify-content:center;max-width:100%;
+  writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-weight:700;letter-spacing:.05em;font-size:calc(13.5px*var(--s,1));color:var(--foil);text-shadow:0 1px 0 rgba(0,0,0,.5);}
+.bk .ct{font-size:calc(10px*var(--s,1));font-weight:700;padding:1px 6px;border-radius:99px;background:rgba(0,0,0,.32);color:var(--foil);white-space:nowrap;}
+@media (hover:hover){
+  .bk:hover{transform:translateY(-14px) rotate(-1.4deg);z-index:3;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),3px 0 4px -1px rgba(0,0,0,.45),0 18px 24px -10px rgba(0,0,0,.7),0 0 22px -4px var(--foil);}
 }
-@media (prefers-reduced-motion:reduce){.dayd.pop,.px,.wc-cell{animation:none!important;transition:none!important;}}
+.bk:focus-visible{outline:2px solid var(--foil);outline-offset:3px;transform:translateY(-10px);z-index:3;}
+.bk:active{transform:translateY(-6px) scale(.98);}
+.bk.pulling{animation:none;transform:translateY(-34px) scale(1.12) rotate(-3deg);opacity:.0;transition:transform .3s var(--ease),opacity .3s ease .05s;z-index:4;}
+/* label spine */
+.bk.st-band::before,.bk.st-band::after{display:none;}
+.bk.st-band .ti{margin:calc(10px*var(--s,1)) 0;padding:calc(8px*var(--s,1)) 0;width:72%;background:rgba(255,248,232,.93);color:#2b1a10;text-shadow:none;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.4);flex:1;}
+/* neon spine */
+.bk.st-neon{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--foil) 55%,transparent),inset -1px 0 0 rgba(255,255,255,.07),0 0 14px -3px var(--foil);}
+.bk.st-neon::before,.bk.st-neon::after{box-shadow:0 0 8px var(--foil);opacity:.95;}
+.bk.st-neon .ti{text-shadow:0 0 8px var(--foil);}
+.bk.st-neon::selection{background:none}
+/* the Daily Journal: thick, leather, with a gold plate; glows when today is written */
+.bk-daily{background:
+    linear-gradient(90deg,rgba(255,255,255,.22),rgba(255,255,255,0) 14%,rgba(0,0,0,0) 64%,rgba(0,0,0,.45)),
+    radial-gradient(circle at 30% 20%,rgba(255,255,255,.08) 0 1px,transparent 1.5px) 0 0/7px 7px,
+    linear-gradient(180deg,var(--c1),var(--c2));}
+.bk-daily .ct{background:linear-gradient(180deg,#f7dc8f,#c99a3c);color:#3b2608;box-shadow:0 1px 2px rgba(0,0,0,.4);}
+.bk-daily.lit::after{content:'';position:absolute;top:calc(7px*var(--s,1));right:calc(7px*var(--s,1));left:auto;bottom:auto;width:7px;height:7px;border:0;border-radius:50%;background:#ffd66b;box-shadow:0 0 10px 2px #ffc54a;opacity:1;animation:bkLit 2.4s ease-in-out infinite;}
+@keyframes bkLit{50%{opacity:.45}}
+/* “add a book” ghost slot */
+.bk-new{background:rgba(255,214,150,.05);color:rgba(255,226,180,.75);border:1.5px dashed rgba(255,214,150,.4);justify-content:flex-start;gap:10px;padding-top:14px;}
+.bk-new::before,.bk-new::after{display:none;}
+.bk-new .plus{font-size:calc(22px*var(--s,1));line-height:1;}
+.bk-new .ti{margin:0;font-weight:600;font-size:calc(12px*var(--s,1));}
+@media (hover:hover){.bk-new:hover{background:rgba(255,214,150,.14);box-shadow:0 0 18px -4px rgba(255,190,90,.6);}}
+
+/* “start your own book” hint + templates */
+.sh-hint{margin-top:14px;}
+.sh-hint-t{font-weight:700;font-size:15px;margin-bottom:4px;}
+.sh-hint p{margin:0 0 12px;font-size:13px;color:var(--ink-soft);line-height:1.6;}
+.sh-tpl{display:flex;flex-wrap:wrap;gap:8px;}
+.sh-tpl-b{--c1:#555;--c2:#222;--foil:#fff;display:inline-flex;align-items:center;gap:7px;border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:10px;color:var(--foil);
+  background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 6px 14px -8px rgba(0,0,0,.5);transition:transform .2s var(--ease),box-shadow .2s;}
+.sh-tpl-b:hover{transform:translateY(-2px);box-shadow:0 10px 18px -8px rgba(0,0,0,.55);}
+
+/* an open book */
+.ob{animation:obIn .5s var(--ease) both;}
+@keyframes obIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.ob-bar{margin:0 0 12px;}
+.ob-spread{display:grid;grid-template-columns:minmax(250px,330px) minmax(0,1fr);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-float);background:var(--paper-card);}
+.ob-cover{--foil:#f0cf7a;position:relative;padding:28px 24px;display:flex;flex-direction:column;gap:18px;color:var(--foil);isolation:isolate;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,0) 10%,rgba(0,0,0,0) 80%,rgba(0,0,0,.35)),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 2px,rgba(0,0,0,.05) 2px 4px),
+    linear-gradient(160deg,var(--c1),var(--c2));
+  box-shadow:inset -16px 0 26px -12px rgba(0,0,0,.6);}
+.ob-cover::before{content:'';position:absolute;inset:12px;border:1.5px solid var(--foil);border-radius:6px;opacity:.6;pointer-events:none;z-index:-1;}
+.ob-cover.st-neon::before{box-shadow:0 0 14px var(--foil),inset 0 0 14px color-mix(in srgb,var(--foil) 30%,transparent);opacity:.85;}
+.ob-cover.st-band .ob-ct{background:rgba(255,248,232,.93);color:#2b1a10;padding:14px 14px 12px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.35);}
+.ob-cover.st-band .ob-desc,.ob-cover.st-band .ob-stats{color:#4b3a2a;}
+.ob-emblem{font-size:clamp(46px,8vw,62px);line-height:1;text-align:center;margin-top:8px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));animation:obFloat 5s ease-in-out infinite;}
+@keyframes obFloat{50%{transform:translateY(-5px)}}
+.ob-ct{text-align:center;}
+.ob-title{margin:0;font-size:clamp(20px,3vw,27px);line-height:1.25;color:inherit;text-shadow:0 1px 0 rgba(0,0,0,.4);}
+.ob-cover.st-band .ob-title{text-shadow:none;}
+.ob-desc{margin:8px 0 0;font-size:13px;line-height:1.55;opacity:.85;}
+.ob-stats{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;margin-top:12px;font-size:12px;opacity:.9;}
+.ob-stats b{font-size:15px;}
+.ob-actions{margin-top:4px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.ob-write{background:var(--foil)!important;color:#241608!important;border:0!important;font-weight:700;}
+.ob-ghost{background:rgba(0,0,0,.22)!important;color:var(--foil)!important;border:1px solid color-mix(in srgb,var(--foil) 55%,transparent)!important;}
+.ob-pages{position:relative;padding:20px 22px 26px 30px;min-width:0;box-shadow:inset 22px 0 28px -20px rgba(0,0,0,.4);
+  background:repeating-linear-gradient(180deg,transparent 0 31px,color-mix(in srgb,var(--rule) 55%,transparent) 31px 32px),var(--paper-card);}
+.ob-pages::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:1.5px;background:color-mix(in srgb,#d9534f 45%,transparent);opacity:.55;pointer-events:none;}
+.ob-search input{width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;padding:9px 14px;border-radius:99px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);margin-bottom:8px;}
+.ob-search input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.pg-month{display:flex;align-items:center;gap:10px;margin:14px 0 4px;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink-soft);text-transform:uppercase;}
+.pg-month i{flex:1;height:1px;background:var(--rule);}
+.pg-month em{font-style:normal;color:var(--ink-faint);font-weight:600;}
+.pg{position:relative;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;width:100%;text-align:left;appearance:none;border:0;border-bottom:1px dashed var(--rule);background:transparent;color:inherit;font:inherit;padding:13px 6px 13px 2px;cursor:pointer;border-radius:8px;
+  animation:pgIn .45s var(--ease) both;animation-delay:calc(var(--i)*32ms);transition:background .2s ease,transform .25s var(--ease);}
+@keyframes pgIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.pg:hover{background:color-mix(in srgb,var(--accent-soft) 38%,transparent);transform:translateX(3px);}
+.pg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.pg-date{display:flex;flex-direction:column;align-items:center;line-height:1.05;padding-top:2px;}
+.pg-date b{font-size:24px;font-weight:700;font-feature-settings:'tnum';background:var(--grad-vivid);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.pg-date i{font-style:normal;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);font-weight:600;}
+.pg-body{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.pg-title{font-weight:650;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pg-prev{font-size:12.5px;line-height:1.5;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pg-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;}
+.pg-meta:empty{display:none;}
+.pg-no{font-size:10.5px;color:var(--ink-faint);font-weight:600;white-space:nowrap;padding-top:4px;font-feature-settings:'tnum';}
+.pg-mark{position:absolute;top:0;right:34px;width:11px;height:20px;background:linear-gradient(180deg,#e5484d,#b5262b);clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));}
+.pg-more{text-align:center;padding:14px 0 0;}
+.ob-empty{text-align:center;padding:42px 12px;color:var(--ink-soft);}
+.ob-empty>div{font-size:44px;margin-bottom:6px;}
+.ob-empty p{margin:0 0 14px;font-size:14px;}
+@media (max-width:760px){
+  .ob-spread{grid-template-columns:1fr;}
+  .ob-cover{padding:22px 18px 20px;gap:12px;box-shadow:inset 0 -16px 24px -14px rgba(0,0,0,.55);}
+  .ob-cover::before{inset:9px;}
+  .ob-emblem{font-size:44px;margin-top:2px;}
+  .ob-pages{padding:16px 14px 22px 22px;box-shadow:inset 0 16px 20px -16px rgba(0,0,0,.35);}
+  .ob-pages::before{left:9px;}
+  .pg{grid-template-columns:42px minmax(0,1fr);gap:10px;} .pg-no{display:none;} .pg-mark{right:8px;}
+}
+@media (max-width:520px){ .shelf-room{padding:16px 6px 22px;border-radius:18px;} .sh-top{padding:0 8px 4px;} .sh-row{padding:0 2px;} .sh-books{padding:0 6px;} }
+
+/* editor: "which book?" picker */
+.book-pick{--c1:#8a2434;--c2:#4a0f19;--foil:#f0cf7a;display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;padding:8px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--paper-dim);}
+.book-pick label{font-size:12px;font-weight:600;color:var(--ink-soft);}
+.bp-dot{width:12px;height:18px;border-radius:2px 2px 1px 1px;flex:none;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),0 0 0 1.5px var(--foil);}
+.book-sel{flex:1;min-width:150px;max-width:340px;font:inherit;font-size:13.5px;font-weight:600;padding:6px 10px;border-radius:9px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);cursor:pointer;}
+.book-sel:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.bk-chip{--c1:#8a2434;--c2:#4a0f19;--foil:#f0cf7a;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px 2px 6px;border-radius:99px;color:var(--ink-soft);border:1px solid var(--rule);background:var(--paper-card);max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.bk-chip i{flex:none;width:7px;height:12px;border-radius:1.5px;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 0 0 1px var(--foil);}
+
+/* create / edit a book */
+.bk-modal{max-width:520px!important;max-height:92vh;overflow-y:auto;}
+.bk-modal h3{margin-bottom:12px;}
+.bf-prev{display:flex;align-items:flex-end;justify-content:center;gap:18px;padding:18px 12px 14px;margin-bottom:12px;border-radius:14px;background:linear-gradient(180deg,#2b1d14,#1a110c);}
+.bf-prev .bk{animation:none;cursor:default;pointer-events:none;}
+.bf-cover{position:relative;width:118px;height:168px;border-radius:4px 8px 8px 4px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;color:var(--foil);
+  background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(255,255,255,.1) 6%,transparent 12%),linear-gradient(160deg,var(--c1),var(--c2));box-shadow:0 10px 18px -6px rgba(0,0,0,.7);}
+.bf-cover::before{content:'';position:absolute;inset:7px 7px 7px 11px;border:1px solid var(--foil);border-radius:3px;opacity:.55;}
+.bf-cover.st-neon::before{box-shadow:0 0 8px var(--foil);}
+.bf-cover.st-band b{background:rgba(255,248,232,.93);color:#2b1a10;padding:4px 6px;border-radius:2px;}
+.bf-em{font-size:26px;} .bf-cover b{font-size:12px;line-height:1.25;position:relative;overflow-wrap:anywhere;} .bf-cover small{font-size:9px;opacity:.8;position:relative;line-height:1.3;}
+.bf-l{font-size:12px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px;display:block;} .bf-l span{font-weight:400;color:var(--ink-faint);}
+.bf-in{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:9px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);}
+.bf-in:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.bf-sw,.bf-em-g,.bf-em{display:flex;flex-wrap:wrap;gap:8px;}
+.bf-c{--c1:#555;--c2:#222;--foil:#fff;width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:inset 0 0 0 2px var(--foil),0 2px 6px rgba(0,0,0,.3);transition:transform .15s var(--ease);}
+.bf-c:hover{transform:scale(1.1);} .bf-c.on{outline:3px solid var(--accent);outline-offset:2px;}
+.bf-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.bf-s{font:inherit;display:flex;flex-direction:column;gap:2px;align-items:center;padding:9px 6px;border-radius:10px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);cursor:pointer;}
+.bf-s b{font-size:13px;} .bf-s small{font-size:10.5px;color:var(--ink-faint);}
+.bf-s.on{border-color:var(--accent);background:var(--accent-soft);}
+.bf-e{width:38px;height:38px;font-size:20px;border-radius:10px;border:1px solid var(--rule);background:var(--paper-card);cursor:pointer;}
+.bf-e.on{border-color:var(--accent);background:var(--accent-soft);outline:2px solid var(--accent);outline-offset:1px;}
+.bf-row{margin-top:18px;}
+@media (max-width:520px){ .bf-cover{width:100px;height:150px;} .bf-prev{gap:12px;} }
+@media (prefers-reduced-motion:reduce){ .bk,.ob,.pg,.sh-dust i,.ob-emblem,.bk-daily.lit::after{animation:none!important;} .bk,.pg{transition:none!important;} }
+
+@media (prefers-reduced-motion:reduce){.dayd.pop,.wc-cell{animation:none!important;transition:none!important;}}
 
 /* ---------- Subscription bar + admin payments ---------- */
 .announce-bar.sub-bar.show{position:static;}
@@ -2169,6 +2334,9 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
   <div class="lb-cap" id="lightboxCap"></div>
 </div>
 
+<div class="modal-backdrop" id="bookModal" onclick="if(event.target===this) closeBookModal()">
+  <div class="modal bk-modal" role="dialog" aria-modal="true" aria-label="Book" id="bookModalBody"></div>
+</div>
 <div class="modal-backdrop" id="confirmModal" aria-labelledby="confirmTitle">
   <div class="modal">
     <h3 id="confirmTitle">আপনি কি নিশ্চিত?</h3>
@@ -2326,7 +2494,7 @@ const APP = Object.freeze({
 const FEATURES = Object.freeze({
   aiAnalysis: true, semanticSearch: true, askYourLife: true,
   voice: true, voiceTranscription: true, media: true,
-  advancedInsights: true, export: true
+  advancedInsights: true, export: true, books: true
 });
 // Free/Pro hook: a future billing layer fills `overrides` (e.g. {semanticSearch:false})
 // from the user's plan. The Admin Console (below) also writes into `overrides`,
@@ -2398,12 +2566,13 @@ const DEFAULT_APP_CONFIG = Object.freeze({
   signupsEnabled:true,
   maintenance:{enabled:false, message:'JournalOS is briefly down for maintenance. Your journals are safe — please check back shortly.'},
   announcement:{enabled:false, text:'', tone:'info'},
-  features:{aiAnalysis:true, semanticSearch:true, askYourLife:true, voice:true, voiceTranscription:true, media:true, advancedInsights:true, export:true},
+  features:{aiAnalysis:true, semanticSearch:true, askYourLife:true, voice:true, voiceTranscription:true, media:true, advancedInsights:true, export:true, books:true},
   defaults:{theme:'system', accent:'brand', dailyReminder:true, dailyReminderTime:'20:00', weeklySummary:true, aiExtraction:true},
   header:{showQuickAdd:true, showAddMood:true, showSearch:true, showThemeMenu:true, showStreak:true, showDownload:true, openOn:'hover', accents:['brand','indigo','rose','emerald']},
   moodLabels:{},   // moodId -> admin-chosen label, overriding the built-in one
   moodEmojis:{},   // moodId -> admin-chosen default emoji (a user's own choice still wins)
   entryLimitDefault:0,
+  maxBooks:0,            // 0 = unlimited custom books per person (the Daily Journal is always there)
   requirePro:true,       // false = the whole app is open to every signed-in user (no paywall)
   pendingMaxDays:14      // a pending (unverified) payment keeps Pro open for this many days
 });
@@ -2986,7 +3155,7 @@ async function deleteAllUserData(){
     await StorageSvc.removeAll(state.user.uid);
   }
   // 2. Every per-user collection (incl. `meta`, which holds the synced draft)
-  const colNames = ['entries', ...LIFE_COLLECTIONS, 'searchIndex', 'analytics', 'media', 'meta'];
+  const colNames = ['entries', 'books', ...LIFE_COLLECTIONS, 'searchIndex', 'analytics', 'media', 'meta'];
   for(const name of colNames) await deleteCollectionChunked(userDocRef().collection(name));
   // 3. The user document itself (settings, profile) and anything left on this device
   await userDocRef().delete();
@@ -3000,11 +3169,11 @@ async function deleteAllUserData(){
    ================================================================ */
 
 // ---------- data gating (loading / error states instead of false "empty" screens) ----------
-const VIEW_DATA = {dashboard:['entries'], timeline:['entries'], calendar:['entries'], pixels:['entries'], archive:['entries'], insights:['entries'],
+const VIEW_DATA = {dashboard:['entries'], timeline:['entries'], calendar:['entries'], shelf:['entries','books'], archive:['entries'], insights:['entries'],
   monthly:['entries'], yearly:['entries'], search:['entries'], life:['life'], privacy:['entries']};
 function dataGate(view){
   let need = VIEW_DATA[view] || [];
-  if(view === 'write' && state.editingId) need = ['entries'];
+  if(view === 'write') need = state.editingId ? ['entries','books'] : ['books'];
   for(const k of need){
     if(state.loadError[k]) return {status:'error', key:k};
     if(!state.loaded[k]) return {status:'loading', key:k};
@@ -3015,6 +3184,7 @@ function retryLoad(){
   if(!state.user) return;
   if(!state.loaded.entries){ state.loadError.entries = null; attachEntriesListener(); }
   if(!state.loaded.life){ state.loadError.life = null; attachLifeListeners(); }
+  if(!state.loaded.books) attachBooksListener();
   render();
 }
 // The search index holds one embedding per journal — big. Only listen to it
@@ -3761,7 +3931,7 @@ function syncUserStats(){
     const active = state.entries.filter(e=>!e.archived);
     const words = active.reduce((n,e)=>n + ((e.content||'').trim() ? (e.content||'').trim().split(/\s+/).length : 0), 0);
     const last = active.map(e=>e.date).sort().pop() || null;
-    userDirectoryRef().set({stats:{entries:active.length, archived:state.entries.length-active.length, words, lastEntryAt:last}, lastSeenAt:nowISO()}, {merge:true})
+    userDirectoryRef().set({stats:{books:(state.books||[]).length, entries:active.length, archived:state.entries.length-active.length, words, lastEntryAt:last}, lastSeenAt:nowISO()}, {merge:true})
       .catch(err=>console.warn('stats sync skipped', err && err.code));
   }, 2500);
 }
@@ -3992,7 +4162,7 @@ function attachEntriesListener(){
     const first = !state.loaded.entries;
     state.loaded.entries = true; state.loadError.entries = null; clearTimeout(window.__entriesLoadTimer);
     syncUserStats(); // keeps the backend's Users table accurate, without exposing anyone's text
-    if(['dashboard','timeline','calendar','pixels','search','insights','archive','monthly','yearly','privacy'].includes(state.view)) requestRender();
+    if(['dashboard','timeline','calendar','shelf','search','insights','archive','monthly','yearly','privacy'].includes(state.view)) requestRender();
     else updateStreak();
     if(first) maybeShowOnboarding();
   }, err=>{ reportError(err, 'entries listener'); state.loadError.entries = err; requestRender(); });
@@ -4837,8 +5007,8 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   adminOrders:[], adminOrdersLoaded:false, adminPayFilter:'pending', adminPaySearch:'', adminReviews:[], adminReviewsLoaded:false,
   adminTab:'overview', adminUsers:[], adminUsersLoaded:false, adminUserFilter:'', adminUserStatus:'all',
   adminSelectedUid:null, adminAudit:[], adminPeek:null, adminConfigDraft:null,
-  filters:{mood:'',tag:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'},
-  calMonth:new Date(), calendarShowArchived:false, calSel:null, pixYear:new Date().getFullYear(), pixSel:null, pixMood:'',
+  filters:{mood:'',tag:'',book:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'},
+  calMonth:new Date(), calendarShowArchived:false, calSel:null, books:[], shelfBook:null, shelfLimit:40, shelfQ:'', writeBookId:null,
   draftRecoveryResolved:false, appliedDraftData:null,
   // Module 06: Life Organization — derived, source-linked data built from journals via AI.
   life:{achievements:[],plans:[],quotes:[],ideas:[],lessons:[],challenges:[],moments:[],events:[],people:[],places:[]},
@@ -4859,7 +5029,7 @@ let state = { view:'dashboard', entries:[], user:null, settings:null, editingId:
   recording: null, // {stream, recorder, chunks, startedAt, timerHandle, elapsedSec, paused}
   notifPermission: (typeof Notification!=='undefined' ? Notification.permission : 'unsupported'),
   // Module 10
-  loaded: {entries:false, life:false}, loadError: {}, entriesVersion: 0, lifeVersion: 0,
+  loaded: {entries:false, life:false, books:false}, loadError: {}, entriesVersion: 0, lifeVersion: 0,
   profile: null, searchIndexLoaded: false, focusMode: false, onboardingShown: false,
   pendingMedia: {}, mediaFiles: {}, libLimit: 30, lifeLimit: {}, searchLimit: 30, lastHybrid: null
 };
@@ -4986,7 +5156,7 @@ function resetSessionState(){
   state.searchIndex = {}; state.searchIndexLoaded = false; state.askConversation = [];
   Object.values(state.mediaBlobs || {}).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
   state.media = []; state.mediaBlobs = {}; state.mediaUpload = {}; state.pendingMedia = {}; state.mediaFiles = {};
-  state.loaded = {entries:false, life:false}; state.loadError = {}; state.entriesVersion++; state.lifeVersion++;
+  state.loaded = {entries:false, life:false, books:false}; state.books = []; state.booksOk = false; state.shelfBook = null; state.writeBookId = null; state.writeBookIdOnce = null; state.loadError = {}; state.entriesVersion++; state.lifeVersion++;
   state.onboardingShown = false; state.focusMode = false; state.lastHybrid = null; state.__ana = null;
   window.__draft = null;
   document.body.classList.remove('focus-mode');
@@ -5004,14 +5174,12 @@ function boot(){
   initSidebarTooltips();
   renderAuthForm();
   // A redirect sign-in (used when popups are blocked) comes back to this page: pick up its result / error.
-  auth.getRedirectResult().catch(err=>{ console.error(err); authDiag(authErrorHelp(err)); });
-  // If Firebase never answers (stale cache, blocked storage, unauthorised domain…) say so instead of spinning forever.
-  clearTimeout(window.__authWatch);
-  window.__authWatch = setTimeout(()=>{ if(!window.__authResolved){ releaseSplash && releaseSplash(); authDiag('<b>লগইন চেক হতে বেশি সময় নিচ্ছে</b><p>ইন্টারনেট ঠিক থাকলে অ্যাপ ক্যাশ রিসেট করলে সাধারণত ঠিক হয়ে যায়।</p><div class="ad-acts"><button class="btn btn-sm btn-primary" onclick="resetAppCache()">অ্যাপ ক্যাশ রিসেট করো</button><button class="btn btn-sm" onclick="location.reload()">রিলোড</button></div>'); document.getElementById('auth').style.display = 'flex'; } }, 10000);
+  try{ auth.getRedirectResult().catch(err=>{ console.error(err); authDiag(authErrorHelp(err)); }); }catch(e){ console.warn('redirect result unavailable', e); }
 
   auth.onAuthStateChanged(function(user){
     window.__authResolved = true; authDiag('');
     if(unsubEntries){ unsubEntries(); unsubEntries=null; }
+    detachBooksListener();
     if(unsubUserDoc){ unsubUserDoc(); unsubUserDoc=null; }
     detachLifeListeners();
     detachSearchIndexListener();
@@ -5047,18 +5215,23 @@ function boot(){
         }
       }).catch(err=>console.error('user doc init failed', err));
 
-      touchUserDirectory();      // a brand-new user appears in the backend from their very first sign-in
-      attachAccessListener();    // restrictions the admin sets apply live, no reload
-      attachOrdersListener();    // Pro subscription (orders) — pending counts as Pro
+      // Safety net first: whatever happens below, the "checking your plan" lock can never hang past 8s.
       clearTimeout(window.__gateT); window.__gateT = setTimeout(()=>{ if(state.user && !subGateReady()){ state.gateTimedOut = true; applyGlobalGates(); } }, 8000);
-      attachAppConfigListener(); // global config (features, branding, maintenance)
-      attachUserDocListener();
-      attachEntriesListener();
-      attachLifeListeners();
-      attachMediaListener(); // (the search index listener is attached lazily — see ensureSearchIndexListener)
-      seedDraftFromRemoteIfNeeded();
-      scheduleReminderCheck();
-      showApp();
+      // Each step is isolated: one failing listener must never keep the person out of the app.
+      [
+        touchUserDirectory,        // a brand-new user appears in the backend from their very first sign-in
+        attachAccessListener,      // restrictions the admin sets apply live, no reload
+        attachOrdersListener,      // Pro subscription (orders) — pending counts as Pro
+        attachAppConfigListener,   // global config (features, branding, maintenance)
+        attachUserDocListener,
+        attachEntriesListener,
+        attachLifeListeners,
+        attachBooksListener,       // the bookshelf (custom books); the Daily Journal needs no document
+        attachMediaListener,       // (the search index listener is attached lazily — see ensureSearchIndexListener)
+        seedDraftFromRemoteIfNeeded,
+        scheduleReminderCheck
+      ].forEach(fn=>{ try{ fn(); }catch(e){ console.error('boot step failed:', fn.name, e); if(window.__bootErr) window.__bootErr.push(fn.name + ': ' + (e && e.message)); } });
+      try{ showApp(); }catch(e){ console.error(e); if(window.__bootErr) window.__bootErr.push('showApp: ' + (e && e.message)); document.getElementById('auth').style.display='none'; document.getElementById('app').classList.add('shown'); }
     } else {
       state.user = null;
       setAdminUnlocked(false);
@@ -5144,11 +5317,13 @@ function go(view, param){
   }
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
+  if(view==='shelf') state.shelfBook = param || null;
+  if(view==='write' && !param){ state.writeBookId = state.writeBookIdOnce || null; state.writeBookIdOnce = null; }
   if(view!=='write') state.focusMode = false;
   else if(enteringWrite) state.focusMode = false; // always open in normal mode; Focus only via the ⛶ Focus button
   if(['search','settings'].includes(view)) ensureSearchIndexListener();
   if(view==='write'){ state.draftRecoveryResolved = false; state.appliedDraftData = null; } // re-check for a recoverable draft on every fresh entry into the editor
-  document.querySelectorAll('.nav-item,.bn-item').forEach(b=>{ const on = b.dataset.view===view || (view==='pixels' && b.dataset.view==='timeline'); b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  document.querySelectorAll('.nav-item,.bn-item').forEach(b=>{ const on = b.dataset.view===view || (view==='shelf' && b.dataset.view==='timeline'); b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   render();
   document.getElementById('sidebar').classList.remove('open');
   document.querySelector('.overlay').classList.remove('show');
@@ -5329,7 +5504,7 @@ let __lastView = null;
 function render(){
   const main = document.getElementById('main');
   const views = {
-    dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar, pixels: renderPixels,
+    dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar, shelf: renderShelf,
     search: renderSearch, archive: renderArchive, insights: renderInsights, monthly: renderMonthly,
     yearly: renderYearly, life: renderLifeHub, settings: renderSettings, privacy: renderPrivacy,
     admin: renderAdmin
@@ -5678,10 +5853,10 @@ function renderWrite(){
   if(!entry && window.__draft && window.__draft.id === state.editingId && state.editingId){
     entry = window.__draft;
   }
-  const draft = entry ? {...entry, tags: entry.tags||[], notes: typeof entry.notes==='string' ? entry.notes : ''} : {
+  const draft = entry ? {...entry, tags: entry.tags||[], notes: typeof entry.notes==='string' ? entry.notes : '', bookId: entry.bookId || DAILY_BOOK_ID} : {
     // mood starts empty on purpose — nothing is pre-selected, so a mood only
     // ever gets recorded because the user actually chose one.
-    id: null, date: todayISO(), title:'', content:'', notes:'', mood:'', moodIntensity:5,
+    id: null, date: todayISO(), title:'', content:'', notes:'', mood:'', moodIntensity:5, bookId: state.writeBookId || DAILY_BOOK_ID,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
   if(!hasMood(draft.mood)) draft.mood = '';
@@ -5711,6 +5886,7 @@ function renderWrite(){
     draft.tags = a.tags || draft.tags;
     draft.favorite = !!a.favorite;
     draft.important = !!a.important;
+    if(a.bookId) draft.bookId = a.bookId;
   }
   window.__draft = draft;
   if(draft.notes) setTimeout(()=>{ const n = document.getElementById('notesInput'); if(n) autosizeNotes(n); }, 0);
@@ -5797,6 +5973,7 @@ function renderWrite(){
     </div>` : ''}
 
     <div class="card">
+      ${bookPickerHtml(draft)}
       <input class="title-input" id="titleInput" aria-label="Title" placeholder="Title" enterkeyhint="next" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();" onkeydown="onTitleKeydown(event)">
 
       <div class="content-input${(draft.content||'').trim() ? '' : ' is-empty'}" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="Start from here" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
@@ -6516,6 +6693,7 @@ async function saveDraft(){
     data.updatedAt = nowISO();                        // the user's modification time
     if(!data.createdAt) data.createdAt = data.updatedAt;
     if(data.archived===undefined) data.archived = false;
+    if(!data.bookId) data.bookId = DAILY_BOOK_ID;
     data.schemaVersion = APP.schemaVersion;
     await withTimeout(entriesColRef().doc(id).set(data, {merge:true}), 15000);
     d.id = id; delete d.__pendingId;
@@ -6624,6 +6802,7 @@ function buildFilterPredicates(f){
   if(f.mood === '__none') preds.push(e=>!hasMood(e.mood)); // entries you never logged a mood for
   else if(f.mood) preds.push(e=>e.mood===f.mood);
   if(f.tag) preds.push(e=>(e.tags||[]).includes(f.tag));
+  if(f.book) preds.push(e=>bookOf(e)===f.book);
   if(f.favOnly) preds.push(e=>!!e.favorite);
   if(f.importantOnly) preds.push(e=>!!e.important);
   if(f.notesOnly) preds.push(e=>entryHasNotes(e));
@@ -6638,10 +6817,10 @@ function applyFilters(entries, f){
   return entries.filter(e=>preds.every(p=>p(e)));
 }
 function isLibraryFiltered(f){
-  return !!(f.mood || f.tag || f.favOnly || f.importantOnly || f.notesOnly || f.dateFrom || f.dateTo || f.archived!=='active');
+  return !!(f.mood || f.tag || f.book || f.favOnly || f.importantOnly || f.notesOnly || f.dateFrom || f.dateTo || f.archived!=='active');
 }
 function clearLibraryFilters(){
-  state.filters = {mood:'',tag:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'};
+  state.filters = {mood:'',tag:'',book:'',favOnly:false, importantOnly:false, notesOnly:false, dateFrom:'', dateTo:'', archived:'active'};
   state.libLimit = PAGE_SIZE;
   render();
 }
@@ -6651,6 +6830,7 @@ function countLibraryFilters(f){
   let n = 0;
   if(f.mood) n++;
   if(f.tag) n++;
+  if(f.book) n++;
   if(f.favOnly) n++;
   if(f.importantOnly) n++;
   if(f.notesOnly) n++;
@@ -6711,6 +6891,7 @@ function renderLibraryGroups(list){
           <div class="entry-meta">
             ${moodChip(e, {intensity:true})}
             ${notesChip(e)}
+            ${bookChip(e)}
             ${(e.tags||[]).slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
             ${e.favorite?`<span class="entry-star">★</span>`:''}
           </div>
@@ -6761,6 +6942,10 @@ function renderTimeline(){
         <option value="">All tags</option>
         ${allTags.map(t=>`<option value="${escapeHtml(t)}" ${f.tag===t?'selected':''}>#${escapeHtml(t)}</option>`).join('')}
       </select>
+      ${(state.books||[]).length ? `<select id="fltBook" aria-label="Filter by book" onchange="libFilter('book',this.value)">
+        <option value="">All books</option>
+        ${allBooks().map(b=>`<option value="${escapeAttr(b.id)}" ${f.book===b.id?'selected':''}>${b.emblem} ${escapeHtml(b.title)}</option>`).join('')}
+      </select>` : ''}
       <label class="pill" style="cursor:pointer;">
         <input type="checkbox" id="fltFav" ${f.favOnly?'checked':''} onchange="libFilter('favOnly',this.checked)" style="margin:0;"> Favorites
       </label>
@@ -6790,11 +6975,11 @@ function renderTimeline(){
   `;
 }
 
-/* ---------------- LIBRARY VIEWS: List · Calendar · Pixels ----------------
+/* ---------------- LIBRARY VIEWS: List · Calendar · Bookshelf ----------------
    One segmented switcher on top of all three. Every view reads the same
    state.entries, so a journal written anywhere shows up in all of them. */
 function libTabs(active){
-  const t = [['timeline','📋','List'],['calendar','📅','Calendar'],['pixels','▦','Pixels']];
+  const t = [['timeline','📋','List'],['calendar','📅','Calendar'],['shelf','📚','Bookshelf']];
   return `<div class="lib-tabs" role="tablist" aria-label="Library view">${t.map(([v,i,l])=>
     `<button type="button" role="tab" aria-selected="${v===active}" class="lib-tab ${v===active?'on':''}" onclick="go('${v}')"><span aria-hidden="true">${i}</span><span>${l}</span></button>`).join('')}</div>`;
 }
@@ -6956,88 +7141,447 @@ function shiftMonth(n){
   render();
 }
 
-/* ---------------- PIXELS — "Year in Pixels" ----------------
-   One tiny square per day of the year, painted with that day's mood.
-   Twelve month-columns × up to 31 day-rows: a whole year's emotional
-   weather on a single screen (fits a phone width). */
-function renderPixels(){
-  const y = state.pixYear || new Date().getFullYear();
-  const today = todayISO();
-  const byDate = entriesByDateMap(false);
-  window.__pixEntriesByDate = byDate;
-  const mf = state.pixMood || '';
-  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* ================================================================
+   BOOKS & THE BOOKSHELF  (replaces the old "Year in Pixels" view)
+   ----------------------------------------------------------------
+   • Every journal belongs to exactly one book. Anything written without
+     choosing a book goes into the built-in "Daily Journal".
+   • Entries carry `bookId` ('daily' or the id of users/{uid}/books/{id}).
+     Older entries have no bookId — they are the Daily Journal.
+   • A book is only a label + look (title, emblem, cover, spine style).
+     Deleting a book never deletes writing: its entries return to the
+     Daily Journal.
+   ================================================================ */
+const DAILY_BOOK_ID = 'daily';
+const BOOK_COVERS = [
+  {id:'oxblood', name:'Oxblood', c1:'#8a2434', c2:'#4a0f19', foil:'#f0cf7a'},
+  {id:'forest',  name:'Forest',  c1:'#2a6a4f', c2:'#0f2c21', foil:'#e9d792'},
+  {id:'navy',    name:'Navy',    c1:'#27487c', c2:'#0e1b33', foil:'#e6d29a'},
+  {id:'ochre',   name:'Ochre',   c1:'#c8872f', c2:'#7a4a12', foil:'#fff3d6'},
+  {id:'plum',    name:'Plum',    c1:'#6d3585', c2:'#34143f', foil:'#f4dfa8'},
+  {id:'teal',    name:'Teal',    c1:'#23838c', c2:'#0c3f45', foil:'#f6e6b4'},
+  {id:'slate',   name:'Slate',   c1:'#4b5568', c2:'#1d222c', foil:'#a6ecff'},
+  {id:'neon',    name:'Neon',    c1:'#2b2050', c2:'#0e0a24', foil:'#7cf7ff'},
+  {id:'cream',   name:'Cream',   c1:'#efe4c8', c2:'#bfae82', foil:'#5a3a14'}
+];
+const BOOK_STYLES = [
+  {id:'classic', name:'Classic', hint:'সোনালি পাড়'},
+  {id:'band',    name:'Label',   hint:'লেবেল-স্পাইন'},
+  {id:'neon',    name:'Neon',    hint:'গ্লো-এজ'}
+];
+const BOOK_EMBLEMS = ['📖','✨','🌿','💼','💡','🎯','❤️','✈️','🧠','🎨','🙏','🌙','🔥','🎵','🏋️','☕','📷','🌧️'];
+const BOOK_TEMPLATES = [
+  {emblem:'✈️', title:'ভ্রমণের গল্প',      color:'navy',    style:'classic', desc:'যেখানে গিয়েছি, যা দেখেছি।'},
+  {emblem:'💡', title:'আইডিয়া নোটবুক',    color:'ochre',   style:'band',    desc:'মাথায় আসা সব আইডিয়া।'},
+  {emblem:'🌙', title:'স্বপ্নের ডায়েরি',   color:'plum',    style:'neon',    desc:'ঘুমের ভেতরের গল্প।'},
+  {emblem:'🏋️', title:'ফিটনেস লগ',         color:'forest',  style:'classic', desc:'শরীর, অভ্যাস, অগ্রগতি।'},
+  {emblem:'❤️', title:'কৃতজ্ঞতার বই',      color:'oxblood', style:'classic', desc:'যাদের কাছে ঋণী।'},
+  {emblem:'🎯', title:'লক্ষ্য ও পরিকল্পনা', color:'teal',    style:'band',    desc:'যা হতে চাই, যা করতে চাই।'}
+];
+const DAILY_BOOK = Object.freeze({id:DAILY_BOOK_ID, title:'Daily Journal', desc:'প্রতিদিনের ডায়েরি — আলাদা বই না বাছলে সব লেখা এখানেই জমা হয়।', emblem:'📔', color:'oxblood', style:'classic', builtin:true});
 
-  let logged = 0, totalEntries = 0, streak = 0, best = 0, run = 0; const counts = {};
-  for(let m=0;m<12;m++){
-    const dim = new Date(y, m+1, 0).getDate();
-    for(let d=1; d<=dim; d++){
-      const iso = y+'-'+pad2(m+1)+'-'+pad2(d);
-      const list = byDate[iso];
-      if(list){ logged++; totalEntries += list.length; run++; best = Math.max(best, run);
-        const me = dayMoodEntry(list); const k = me ? me.mood : '__none'; counts[k] = (counts[k]||0)+1; }
-      else run = 0;
-    }
-  }
-  const keys = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
-  const topKey = keys.find(k=>k!=='__none');
-  const top = topKey ? moodInfo(topKey) : null;
-  const colorOf = k => k==='__none' ? 'var(--ink-faint)' : moodDotColor(k);
+function coverById(id){ return BOOK_COVERS.find(c=>c.id===id) || BOOK_COVERS[0]; }
+function normBook(id, d){
+  d = d || {};
+  return {
+    id,
+    title: String(d.title || 'Untitled').slice(0, 60),
+    desc: String(d.desc || '').slice(0, 200),
+    emblem: d.emblem || '📖',
+    color: coverById(d.color).id,
+    style: BOOK_STYLES.some(s=>s.id===d.style) ? d.style : 'classic',
+    order: typeof d.order === 'number' ? d.order : 0,
+    createdAt: d.createdAt || '', updatedAt: d.updatedAt || ''
+  };
+}
+function booksColRef(){ return userDocRef().collection('books'); }
+let unsubBooks = null;
+function attachBooksListener(){
+  if(unsubBooks){ unsubBooks(); unsubBooks = null; }
+  state.loaded.books = false; state.booksOk = false;
+  clearTimeout(window.__booksTimer);
+  // a slow or blocked books query must never keep the shelf (or the editor) on a spinner
+  window.__booksTimer = setTimeout(()=>{ if(!state.loaded.books){ state.loaded.books = true; requestRender(); } }, 6000);
+  unsubBooks = booksColRef().onSnapshot(snap=>{
+    state.books = snap.docs.map(d=>normBook(d.id, d.data()))
+      .sort((a,b)=>(a.order-b.order) || (a.createdAt||'').localeCompare(b.createdAt||''));
+    state.loaded.books = true; state.booksOk = true; clearTimeout(window.__booksTimer);
+    syncUserStats();
+    if(state.view==='shelf' || state.view==='timeline') requestRender();
+    else if(state.view==='write') refreshBookSelect();
+  }, err=>{
+    console.warn('books listener unavailable', err && err.code);
+    state.loaded.books = true; state.booksOk = false; clearTimeout(window.__booksTimer);
+    if(state.view==='shelf') requestRender();
+  });
+}
+function detachBooksListener(){
+  if(unsubBooks){ unsubBooks(); unsubBooks = null; }
+  clearTimeout(window.__booksTimer);
+  state.books = []; state.booksOk = false; state.shelfBook = null;
+}
+function allBooks(){ return [DAILY_BOOK, ...(state.books||[])]; }
+function getBook(id){
+  if(!id || id === DAILY_BOOK_ID) return DAILY_BOOK;
+  return (state.books||[]).find(b=>b.id===id) || null;
+}
+// Which book an entry sits in. No bookId = Daily Journal. A bookId that points
+// at a book that no longer exists falls back to Daily — but only once the
+// books list has really loaded, so a slow load can never "move" anything.
+function bookOf(e){
+  const id = e && e.bookId;
+  if(!id || id === DAILY_BOOK_ID) return DAILY_BOOK_ID;
+  if((state.books||[]).some(b=>b.id===id)) return id;
+  return state.booksOk ? DAILY_BOOK_ID : id;
+}
+function bookBuckets(){
+  const m = {}; allBooks().forEach(b=>{ m[b.id] = []; });
+  state.entries.forEach(e=>{ if(e.archived) return; const id = bookOf(e); (m[id] || (m[id] = [])).push(e); });
+  return m;
+}
+function bookWords(list){ return list.reduce((n,e)=>n + ((e.content||'').trim() ? (e.content||'').trim().split(/\s+/).length : 0), 0); }
+function bookRand(id){ let h = 7; for(let i=0;i<id.length;i++) h = (h*31 + id.charCodeAt(i)) >>> 0; return (h % 1000) / 1000; }
+function bookVars(b){ const c = coverById(b.color); return `--c1:${c.c1};--c2:${c.c2};--foil:${c.foil}`; }
+function bookDims(b, n){
+  if(b.id === DAILY_BOOK_ID) return {w: Math.round(66 + Math.min(n/5, 24)), h: 210};
+  return {w: Math.round(44 + Math.min(Math.sqrt(n)*5.5, 30)), h: Math.round(166 + bookRand(b.id)*38)};
+}
+function booksEnabled(){ return canUseFeature('books'); }
+function bookLimitReached(){ const lim = appConfig().maxBooks || 0; return !!lim && (state.books||[]).length >= lim; }
 
-  let grid = '<div></div>' + MN.map(n=>`<div class="px-h"><span class="px-hf">${n}</span><span class="px-hs">${n[0]}</span></div>`).join('');
-  for(let d=1; d<=31; d++){
-    grid += `<div class="px-d">${d}</div>`;
-    for(let m=0; m<12; m++){
-      const dim = new Date(y, m+1, 0).getDate();
-      if(d>dim){ grid += '<span class="px off"></span>'; continue; }
-      const iso = y+'-'+pad2(m+1)+'-'+pad2(d);
-      const list = byDate[iso] || [];
-      const me = dayMoodEntry(list);
-      const dayKey = list.length ? (me ? me.mood : '__none') : '';
-      const op = me ? (0.5 + ((me.moodIntensity||5)/10)*0.5).toFixed(2) : '.55';
-      const label = fmtDate(iso,{weekday:'short',month:'short',day:'numeric'}) + (list.length ? ' — '+(me?moodInfo(me.mood).label:'No mood')+(list.length>1?' ('+list.length+' entries)':'') : (iso>today?'':' — no entry'));
-      grid += `<button type="button" class="px${list.length?' has':''}${iso>today?' future':''}${iso===today?' today':''}${list.length>1?' multi':''}${mf && list.length && dayKey!==mf?' dim':''}${mf && !list.length?' dim':''}${iso===state.pixSel?' sel':''}"
-        data-iso="${iso}" onclick="pixPick('${iso}')" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}"
-        ${list.length?`style="--pc:${colorOf(dayKey)};--po:${op}"`:''}></button>`;
-    }
-  }
-  const legend = keys.map(k=>{
-    const info = k==='__none' ? MOOD_NONE : moodInfo(k);
-    return `<button type="button" class="px-chip${mf===k?' on':''}" onclick="pixFilter('${k}')" style="--c:${colorOf(k)}"><i></i>${info.emoji} ${escapeHtml(info.label)} <b>${counts[k]}</b></button>`;
+/* ---------- spine / cover markup ---------- */
+function bookSpineHtml(b, list, i){
+  const n = list.length, d = bookDims(b, n), daily = b.id === DAILY_BOOK_ID;
+  const today = todayISO(), lit = daily && list.some(e=>e.date === today);
+  const label = `${b.title} — ${n} লেখা`;
+  return `<button type="button" class="bk st-${b.style}${daily?' bk-daily':''}${lit?' lit':''}" style="--w:${d.w}px;--h:${d.h}px;${bookVars(b)};--i:${i}"
+    onclick="openBook('${b.id}', this)" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">
+    <span class="em" aria-hidden="true">${b.emblem}</span>
+    <span class="ti">${escapeHtml(b.title)}</span>
+    <span class="ct">${daily ? String(new Date().getFullYear()).slice(2)+'′ · '+n : n}</span>
+  </button>`;
+}
+function bookNewSlotHtml(){
+  return `<button type="button" class="bk bk-new" style="--w:46px;--h:176px" onclick="openBookModal()" aria-label="নতুন বই বানাও" title="নতুন বই বানাও">
+    <span class="plus" aria-hidden="true">＋</span><span class="ti">নতুন বই</span></button>`;
+}
+function shelfItems(){
+  const buckets = bookBuckets(); const items = [];
+  allBooks().forEach((b,i)=>{
+    const list = buckets[b.id] || [];
+    items.push({w: bookDims(b, list.length).w, html: bookSpineHtml(b, list, i)});
+  });
+  if(booksEnabled()) items.push({w:46, html: bookNewSlotHtml()});
+  return items;
+}
+// Packs the spines into shelves for the width actually available, so the same
+// bookcase works on a phone and a wide desktop. Re-run on resize.
+function shelfLayout(){
+  const host = document.getElementById('shCase');
+  if(!host || state.view !== 'shelf' || state.shelfBook) return;
+  const W = host.clientWidth; if(!W) return;
+  const s = W < 430 ? .8 : W < 640 ? .9 : 1;
+  host.style.setProperty('--s', s);
+  const avail = W - 40, rows = [[]]; let used = 0;
+  shelfItems().forEach(it=>{
+    const iw = it.w * s + 3;
+    if(used + iw > avail && rows[rows.length-1].length){ rows.push([]); used = 0; }
+    rows[rows.length-1].push(it); used += iw;
+  });
+  host.dataset.w = String(W);
+  const DECOR = ['🪴','🕰️','🕯️','⏳','🔭'];
+  host.innerHTML = rows.map((r,ri)=>{
+    const free = avail - r.reduce((n,x)=>n + x.w*s + 3, 0);
+    // a little ornament fills the spare end of a shelf — purely decorative
+    const decor = free > 120 ? `<span class="sh-decor" aria-hidden="true">${DECOR[ri % DECOR.length]}</span>` : '';
+    return `<div class="sh-row"><div class="sh-books">${r.map(x=>x.html).join('')}${decor}</div><div class="sh-plank"></div></div>`;
   }).join('');
-  const bar = keys.map(k=>`<span style="flex:${counts[k]};background:${colorOf(k)}" title="${escapeAttr((k==='__none'?MOOD_NONE:moodInfo(k)).label)}: ${counts[k]}"></span>`).join('');
-  const yearsList = Object.keys(byDate).map(s=>+s.slice(0,4));
-  const minY = Math.min(y, ...(yearsList.length?yearsList:[y])), maxY = new Date().getFullYear();
+}
+let __shelfResizeT = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(__shelfResizeT);
+  __shelfResizeT = setTimeout(()=>{
+    const host = document.getElementById('shCase');
+    if(host && String(host.clientWidth) !== host.dataset.w) shelfLayout();
+  }, 120);
+});
 
-  return `
+/* ---------- the shelf view ---------- */
+function renderShelf(){
+  const head = `
     <div class="page-head">
       <h1>Journal Library</h1>
-      <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
-    </div>
-    ${libTabs('pixels')}
-    <div class="card px-card">
-      <div class="px-top">
-        <div>
-          <div class="px-year"><button class="wc-nb" onclick="pixShift(-1)" aria-label="Previous year" ${y<=minY?'disabled':''}>‹</button><span>${y}</span><button class="wc-nb" onclick="pixShift(1)" aria-label="Next year" ${y>=maxY?'disabled':''}>›</button></div>
-          <div class="px-sub">${logged ? `<b>${logged}</b> দিন লেখা হয়েছে · সবচেয়ে লম্বা ধারা <b>${best}</b> দিন${top?` · সবচেয়ে বেশি ${top.emoji} ${escapeHtml(top.label)}`:''}` : 'এই বছরে এখনো কোনো জার্নাল নেই।'}</div>
-        </div>
-        <div class="px-ring" style="--p:${Math.round(logged/ (y%4===0&&(y%100!==0||y%400===0)?366:365)*100)}"><span>${Math.round(logged/(y%4===0&&(y%100!==0||y%400===0)?366:365)*100)}%</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="go('archive')">🗄 Archive</button>
+        <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
       </div>
-      ${bar ? `<div class="px-bar" aria-hidden="true">${bar}</div>` : ''}
-      <div class="px-legend">${legend}${mf?`<button type="button" class="px-chip clr" onclick="pixFilter('')">✕ Clear</button>`:''}</div>
-      <div class="px-grid">${grid}</div>
-      <div class="dayd" id="pixDetail">${dayDetailHtml(state.pixSel, byDate[state.pixSel])}</div>
     </div>
-  `;
+    ${libTabs('shelf')}`;
+  if(state.shelfBook){
+    const b = getBook(state.shelfBook);
+    if(b) return head + renderOpenBook(b);
+    state.shelfBook = null;
+  }
+  const buckets = bookBuckets();
+  const custom = (state.books||[]).length;
+  const total = Object.values(buckets).reduce((n,a)=>n + a.length, 0);
+  const dust = Array.from({length:9}, (_,i)=>`<i style="--x:${(i*11+6)%96}%;--d:${6+(i*5)%7}s;--dl:${-(i*1.7)}s;--sz:${2+(i%3)}px"></i>`).join('');
+  const hint = (!custom && booksEnabled()) ? `
+    <div class="card sh-hint">
+      <div class="sh-hint-t">📕 আলাদা বই বানাতে চাও?</div>
+      <p>এখন সব লেখা <b>Daily Journal</b>-এ জমা হচ্ছে। কোনো বিষয়ের লেখা আলাদা রাখতে নতুন বই বানাও — তারপর লেখার সময় বইটা বেছে নিলেই হবে।</p>
+      <div class="sh-tpl">${BOOK_TEMPLATES.map((t,i)=>`<button type="button" class="sh-tpl-b" style="${bookVars(t)}" onclick="bookTemplate(${i})"><span>${t.emblem}</span>${escapeHtml(t.title)}</button>`).join('')}</div>
+    </div>` : '';
+  setTimeout(shelfLayout, 0);
+  return head + `
+    <section class="shelf-room" aria-label="Bookshelf">
+      <div class="sh-dust" aria-hidden="true">${dust}</div>
+      <div class="sh-top">
+        <div>
+          <div class="sh-kick">YOUR LIBRARY · তোমার বুকশেলফ</div>
+          <h2>${allBooks().length} বই · ${total} লেখা</h2>
+          <p>কোনো বইয়ের স্পাইনে ট্যাপ করলে বইটা খুলবে।</p>
+        </div>
+        ${booksEnabled() ? `<button type="button" class="btn btn-sm sh-new" onclick="openBookModal()">＋ নতুন বই</button>` : ''}
+      </div>
+      <div class="sh-case" id="shCase" aria-label="Books"></div>
+    </section>
+    ${hint}`;
 }
-function pixPick(iso){
-  state.pixSel = iso;
-  document.querySelectorAll('.px.sel').forEach(c=>c.classList.remove('sel'));
-  const c = document.querySelector('.px[data-iso="'+iso+'"]'); if(c) c.classList.add('sel');
-  __popPanel('pixDetail', dayDetailHtml(iso, (window.__pixEntriesByDate||{})[iso]));
+function openBook(id, el){
+  const go2 = ()=>{ state.shelfBook = id; state.shelfQ = ''; state.shelfLimit = 40; render(); window.scrollTo(0,0); };
+  if(el && !REDUCED_MOTION.matches){ el.classList.add('pulling'); setTimeout(go2, 300); } else go2();
 }
-function pixShift(n){ state.pixYear = (state.pixYear || new Date().getFullYear()) + n; state.pixSel = null; render(); }
-function pixFilter(k){ state.pixMood = (state.pixMood===k) ? '' : k; render(); }
+function closeBook(){ state.shelfBook = null; render(); window.scrollTo(0,0); }
+function bookTemplate(i){ const t = BOOK_TEMPLATES[i]; if(t) openBookModal(null, null, t); }
+
+/* ---------- an open book ---------- */
+function bookPagesFor(b){
+  const asc = (bookBuckets()[b.id] || []).slice().sort((x,y)=>(x.date||'').localeCompare(y.date||'') || (x.createdAt||'').localeCompare(y.createdAt||''));
+  const pageNo = {}; asc.forEach((e,i)=>{ pageNo[e.id] = i + 1; });
+  return {asc, pageNo};
+}
+function renderOpenBook(b){
+  const {asc} = bookPagesFor(b);
+  const n = asc.length, words = bookWords(asc);
+  const first = n ? asc[0].date : '', last = n ? asc[n-1].date : '';
+  const daily = b.id === DAILY_BOOK_ID;
+  const range = n ? (first === last ? fmtDate(first,{day:'numeric',month:'short',year:'numeric'}) : fmtDate(first,{month:'short',year:'numeric'}) + ' → ' + fmtDate(last,{month:'short',year:'numeric'})) : '';
+  return `
+    <div class="ob" style="${bookVars(b)}">
+      <div class="ob-bar"><button type="button" class="btn btn-sm btn-ghost" onclick="closeBook()">← বুকশেলফ</button></div>
+      <div class="ob-spread">
+        <aside class="ob-cover st-${b.style}">
+          <div class="ob-emblem" aria-hidden="true">${b.emblem}</div>
+          <div class="ob-ct">
+            <h2 class="ob-title">${escapeHtml(b.title)}</h2>
+            ${b.desc ? `<p class="ob-desc">${escapeHtml(b.desc)}</p>` : ''}
+            <div class="ob-stats"><span><b>${n}</b> লেখা</span><span><b>${words}</b> শব্দ</span>${range?`<span>${escapeHtml(range)}</span>`:''}</div>
+          </div>
+          <div class="ob-actions">
+            <button type="button" class="btn btn-sm ob-write" onclick="writeInBook('${b.id}')">✍️ এই বইয়ে লেখো</button>
+            ${daily ? '' : `<button type="button" class="btn btn-sm ob-ghost" onclick="openBookModal('${b.id}')">✏️ এডিট</button>
+            <button type="button" class="btn btn-sm ob-ghost" onclick="deleteBook('${b.id}')">🗑 মুছো</button>`}
+          </div>
+        </aside>
+        <div class="ob-pages">
+          <div class="ob-search"><input type="search" id="obSearch" placeholder="এই বইয়ের ভেতরে খোঁজো…" aria-label="Search inside this book" value="${escapeAttr(state.shelfQ||'')}" oninput="shelfSearch(this.value)"></div>
+          <div id="obList">${obListHtml(b)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+function obListHtml(b){
+  const {asc, pageNo} = bookPagesFor(b);
+  const q = (state.shelfQ||'').trim().toLowerCase();
+  let list = asc.slice().reverse();
+  if(q) list = list.filter(e=>((e.title||'') + ' ' + (e.content||'') + ' ' + (e.notes||'') + ' ' + (e.tags||[]).join(' ')).toLowerCase().includes(q));
+  if(!list.length){
+    return q ? `<div class="ob-empty"><div>🔎</div><p>“${escapeHtml(state.shelfQ)}” খুঁজে পাওয়া যায়নি।</p></div>`
+             : `<div class="ob-empty"><div>${b.emblem}</div><p>${b.id===DAILY_BOOK_ID?'আজকের প্রথম পাতাটা লেখো।':'এই বইয়ের প্রথম পাতা এখনো ফাঁকা।'}</p><button class="btn btn-primary btn-sm" onclick="writeInBook('${b.id}')">✍️ লেখা শুরু করো</button></div>`;
+  }
+  const shown = list.slice(0, state.shelfLimit || 40);
+  let out = '', cur = '';
+  shown.forEach((e,i)=>{
+    const key = (e.date||'').slice(0,7);
+    if(key !== cur){
+      cur = key;
+      const c = list.filter(x=>(x.date||'').slice(0,7) === key).length;
+      out += `<div class="pg-month"><span>${escapeHtml(fmtDate(key+'-01',{month:'long',year:'numeric'}))}</span><i></i><em>${c}</em></div>`;
+    }
+    out += `
+      <button type="button" class="pg" style="--i:${Math.min(i,14)}" onclick="go('write','${e.id}')">
+        <span class="pg-date"><b>${new Date(e.date+'T00:00:00').getDate()}</b><i>${escapeHtml(fmtDate(e.date,{month:'short'}))}</i></span>
+        <span class="pg-body">
+          <span class="pg-title">${escapeHtml(e.title || 'Untitled')}${e.important?' 📌':''}</span>
+          <span class="pg-prev">${escapeHtml(entryPreview(e,170))}</span>
+          <span class="pg-meta">${moodChip(e,{intensity:true})}${notesChip(e)}${(e.tags||[]).slice(0,2).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</span>
+        </span>
+        <span class="pg-no" aria-label="Page ${pageNo[e.id]}">পৃ. ${pageNo[e.id]}</span>
+        ${e.favorite?'<span class="pg-mark" title="Favorite" aria-hidden="true"></span>':''}
+      </button>`;
+  });
+  if(list.length > shown.length) out += `<div class="pg-more"><button type="button" class="btn btn-sm" onclick="shelfMore()">আরও ${list.length - shown.length}টি পাতা</button></div>`;
+  return out;
+}
+function shelfSearch(v){
+  state.shelfQ = v; state.shelfLimit = 40;
+  const b = getBook(state.shelfBook), el = document.getElementById('obList');
+  if(b && el) el.innerHTML = obListHtml(b);
+}
+function shelfMore(){
+  state.shelfLimit = (state.shelfLimit || 40) + 40;
+  const b = getBook(state.shelfBook), el = document.getElementById('obList');
+  if(b && el) el.innerHTML = obListHtml(b);
+}
+function writeInBook(id){
+  if(!assertCanWrite('লেখা')) return;
+  state.writeBookIdOnce = (!id || id === DAILY_BOOK_ID) ? null : id;
+  go('write');
+}
+
+/* ---------- create / edit / delete a book ---------- */
+function bookFormPreviewHtml(f){
+  const b = {id:f.id||'preview', title:(f.title||'').trim() || 'নতুন বই', desc:f.desc||'', emblem:f.emblem, color:f.color, style:f.style};
+  const c = coverById(b.color);
+  return `
+    <div class="bf-spine"><div class="bk st-${b.style}" style="--w:56px;--h:168px;${bookVars(b)}"><span class="em">${b.emblem}</span><span class="ti">${escapeHtml(b.title)}</span><span class="ct">0</span></div></div>
+    <div class="bf-cover st-${b.style}" style="${bookVars(b)}"><span class="bf-em">${b.emblem}</span><b>${escapeHtml(b.title)}</b>${b.desc?`<small>${escapeHtml(b.desc)}</small>`:''}</div>`;
+}
+function openBookModal(id, onDone, preset){
+  if(!assertCanWrite('বই তৈরি')) return;
+  if(!booksEnabled()){ toast('বই বানানোর ফিচারটা এখন বন্ধ আছে।'); return; }
+  const ex = id ? getBook(id) : null;
+  if(id && (!ex || ex.builtin)) return;
+  if(!ex && bookLimitReached()){ toast('বই বানানোর সর্বোচ্চ সীমায় পৌঁছে গেছ — অ্যাডমিনের সাথে যোগাযোগ করো।', {type:'error'}); return; }
+  const p = preset || {};
+  state.bookForm = {id: ex ? ex.id : null, title: ex ? ex.title : (p.title||''), desc: ex ? ex.desc : (p.desc||''),
+    emblem: ex ? ex.emblem : (p.emblem||'📖'), color: ex ? ex.color : (p.color||'oxblood'), style: ex ? ex.style : (p.style||'classic'), onDone: onDone||null};
+  const f = state.bookForm;
+  document.getElementById('bookModalBody').innerHTML = `
+    <h3>${f.id ? 'বই এডিট করো' : 'নতুন বই বানাও'}</h3>
+    <div class="bf-prev" id="bfPrev">${bookFormPreviewHtml(f)}</div>
+    <label class="bf-l" for="bfTitle">বইয়ের নাম</label>
+    <input id="bfTitle" class="bf-in" maxlength="60" placeholder="যেমন: ভ্রমণের গল্প" value="${escapeAttr(f.title)}" oninput="bookFormSet('title',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveBookForm();}">
+    <label class="bf-l" for="bfDesc">ছোট বর্ণনা <span>(ঐচ্ছিক)</span></label>
+    <input id="bfDesc" class="bf-in" maxlength="140" placeholder="এই বইয়ে কী লিখবে?" value="${escapeAttr(f.desc)}" oninput="bookFormSet('desc',this.value)">
+    <div class="bf-l">কভারের রং</div>
+    <div class="bf-sw" id="bfColors">${BOOK_COVERS.map(c=>`<button type="button" class="bf-c${f.color===c.id?' on':''}" data-v="${c.id}" style="--c1:${c.c1};--c2:${c.c2};--foil:${c.foil}" aria-label="${c.name}" aria-pressed="${f.color===c.id}" onclick="bookFormSet('color','${c.id}')"></button>`).join('')}</div>
+    <div class="bf-l">স্পাইনের ধরন</div>
+    <div class="bf-st" id="bfStyles">${BOOK_STYLES.map(s=>`<button type="button" class="bf-s${f.style===s.id?' on':''}" data-v="${s.id}" aria-pressed="${f.style===s.id}" onclick="bookFormSet('style','${s.id}')"><b>${s.name}</b><small>${s.hint}</small></button>`).join('')}</div>
+    <div class="bf-l">প্রতীক</div>
+    <div class="bf-em" id="bfEmblems">${BOOK_EMBLEMS.map(e=>`<button type="button" class="bf-e${f.emblem===e?' on':''}" data-v="${e}" aria-pressed="${f.emblem===e}" onclick="bookFormSet('emblem','${e}')">${e}</button>`).join('')}</div>
+    <div class="row bf-row">
+      <button type="button" class="btn" onclick="closeBookModal()">বাতিল</button>
+      <button type="button" class="btn btn-primary" id="bfSave" onclick="saveBookForm()">${f.id ? 'সংরক্ষণ' : 'বই বানাও'}</button>
+    </div>`;
+  document.getElementById('bookModal').classList.add('show');
+  setTimeout(()=>{ const t = document.getElementById('bfTitle'); if(t){ t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }, 60);
+}
+function bookFormSet(k, v){
+  const f = state.bookForm; if(!f) return;
+  f[k] = v;
+  const prev = document.getElementById('bfPrev'); if(prev) prev.innerHTML = bookFormPreviewHtml(f);
+  const map = {color:'bfColors', style:'bfStyles', emblem:'bfEmblems'};
+  if(map[k]) document.querySelectorAll('#'+map[k]+' button').forEach(b=>{ const on = b.dataset.v === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+}
+function closeBookModal(){
+  document.getElementById('bookModal').classList.remove('show');
+  state.bookForm = null;
+  refreshBookSelect(); // a cancelled "＋ নতুন বই…" must put the editor's picker back
+}
+let __bookSaving = false;
+async function saveBookForm(){
+  const f = state.bookForm; if(!f || __bookSaving) return;
+  const title = (f.title||'').trim();
+  if(!title){ toast('বইয়ের একটা নাম দাও।'); const t = document.getElementById('bfTitle'); if(t) t.focus(); return; }
+  if(!f.id && bookLimitReached()){ toast('বই বানানোর সর্বোচ্চ সীমায় পৌঁছে গেছ।', {type:'error'}); return; }
+  if(!NET.online){ toast("You're offline — বইটা সেভ হয়নি।", {type:'error'}); return; }
+  __bookSaving = true; const btn = document.getElementById('bfSave'); if(btn) btn.disabled = true;
+  try{
+    const id = f.id || booksColRef().doc().id;
+    const now = nowISO();
+    const data = {title, desc:(f.desc||'').trim(), emblem:f.emblem, color:f.color, style:f.style, updatedAt:now, schemaVersion:APP.schemaVersion};
+    if(!f.id){ data.createdAt = now; data.order = Date.now(); }
+    await withTimeout(booksColRef().doc(id).set(data, {merge:true}), 15000);
+    const done = f.onDone;
+    document.getElementById('bookModal').classList.remove('show'); state.bookForm = null;
+    toast(f.id ? 'বই আপডেট হয়েছে।' : '“'+title+'” বইটা তাকে উঠেছে।', {type:'success'});
+    if(done) done(id);
+    else if(!f.id && state.view !== 'write'){ state.shelfBook = null; if(state.view !== 'shelf') go('shelf'); }
+    refreshBookSelect();
+  }catch(err){ toastError(err, "We couldn't save this book."); }
+  finally{ __bookSaving = false; const b2 = document.getElementById('bfSave'); if(b2) b2.disabled = false; }
+}
+function deleteBook(id){
+  const b = getBook(id); if(!b || b.builtin) return;
+  if(!assertCanWrite('বই মুছতে')) return;
+  const inside = state.entries.filter(e=>e.bookId === id);
+  confirmAction('“'+b.title+'” বইটা মুছবে?',
+    inside.length ? `বইয়ের ${inside.length}টি লেখা মুছবে না — সেগুলো Daily Journal-এ ফিরে যাবে।` : 'বইটা তাক থেকে সরে যাবে।',
+    async ()=>{
+      try{
+        for(let i=0; i<inside.length; i+=400){
+          const batch = db.batch();
+          inside.slice(i, i+400).forEach(e=>batch.set(entriesColRef().doc(e.id), {bookId:DAILY_BOOK_ID, updatedAt:nowISO()}, {merge:true}));
+          await batch.commit();
+        }
+        await booksColRef().doc(id).delete();
+        state.shelfBook = null;
+        toast('বইটা মুছে ফেলা হয়েছে।', {type:'success'});
+        render();
+      }catch(err){ toastError(err, "We couldn't delete that book."); }
+    }, 'বই মুছো');
+}
+
+/* ---------- the editor's "which book?" picker ---------- */
+function bookOptionsHtml(cur){
+  const opts = [`<option value="daily"${cur==='daily'?' selected':''}>📔 Daily Journal (ডিফল্ট)</option>`];
+  (state.books||[]).forEach(b=>opts.push(`<option value="${escapeAttr(b.id)}"${cur===b.id?' selected':''}>${b.emblem} ${escapeHtml(b.title)}</option>`));
+  if(cur !== 'daily' && !(state.books||[]).some(b=>b.id===cur)) opts.push(`<option value="${escapeAttr(cur)}" selected>📕 (অন্য বই)</option>`);
+  if(booksEnabled()) opts.push('<option value="__new">＋ নতুন বই বানাও…</option>');
+  return opts.join('');
+}
+function bookPickerHtml(draft){
+  const cur = draft.bookId || DAILY_BOOK_ID;
+  if(!booksEnabled() && cur === DAILY_BOOK_ID) return '';
+  const b = getBook(cur);
+  return `<div class="book-pick" id="bookPick" style="${b?bookVars(b):''}">
+    <span class="bp-dot" aria-hidden="true"></span>
+    <label for="bookSel">কোন বইয়ে লিখছো</label>
+    <select id="bookSel" class="book-sel" onchange="onBookSel(this)">${bookOptionsHtml(cur)}</select>
+  </div>`;
+}
+function refreshBookSelect(){
+  const sel = document.getElementById('bookSel'); if(!sel || !window.__draft) return;
+  const cur = window.__draft.bookId || DAILY_BOOK_ID;
+  sel.innerHTML = bookOptionsHtml(cur);
+  sel.value = cur;
+  const wrap = document.getElementById('bookPick'), b = getBook(cur);
+  if(wrap && b) wrap.setAttribute('style', bookVars(b));
+}
+function setDraftBook(v){
+  if(!window.__draft) return;
+  window.__draft.bookId = v || DAILY_BOOK_ID;
+  if(!window.__draft.id) state.writeBookId = window.__draft.bookId === DAILY_BOOK_ID ? null : window.__draft.bookId;
+  scheduleAutosave();
+  refreshBookSelect();
+}
+function onBookSel(sel){
+  if(sel.value === '__new'){
+    sel.value = (window.__draft && window.__draft.bookId) || DAILY_BOOK_ID;
+    openBookModal(null, id=>setDraftBook(id));
+    return;
+  }
+  setDraftBook(sel.value);
+}
+function bookChip(e){
+  if(!(state.books||[]).length) return '';
+  const id = bookOf(e); if(id === DAILY_BOOK_ID) return '';
+  const b = getBook(id); if(!b) return '';
+  return `<span class="bk-chip" style="${bookVars(b)}" title="Book: ${escapeAttr(b.title)}"><i></i>${escapeHtml(b.title)}</span>`;
+}
+
 
 /* ---- Day popover: a date with 2+ entries opens a small list instead of
    silently jumping into (or hiding) just one of them. ---- */
@@ -8402,6 +8946,7 @@ function buildExportData(){
     mood: e.mood, moodIntensity: e.moodIntensity, tags: e.tags||[],
     favorite: !!e.favorite, important: !!e.important, archived: !!e.archived,
     createdAt: e.createdAt, updatedAt: e.updatedAt,
+    bookId: bookOf(e), book: (getBook(bookOf(e))||DAILY_BOOK).title,
     media: mediaForEntry(e.id).map(m=>({
       id:m.id, kind:m.kind, storagePath:m.storagePath, url:m.url||null, caption:m.caption||'',
       duration:m.duration, mimeType:m.mimeType, transcript:m.transcript||'',
@@ -8415,6 +8960,7 @@ function buildExportData(){
     exportedAt: new Date().toISOString(),
     app: 'JournalOS', formatVersion: 1, appVersion: APP.version, schemaVersion: APP.schemaVersion,
     account: {name: state.user?.name||'', email: state.user?.email||''},
+    books: [DAILY_BOOK, ...(state.books||[])].map(b=>({id:b.id, title:b.title, description:b.desc||'', emblem:b.emblem, cover:b.color, style:b.style})),
     journals: entries,
     lifeOrganization: life,
     // Module 07: only stored, human-readable analytics — never regenerated here.
@@ -9273,7 +9819,8 @@ const FEATURE_LABELS = {
   voiceTranscription:['Voice transcription','অডিও থেকে লেখা তৈরি।'],
   media:['Media attachments','ছবি, অডিও, ভিডিও যুক্ত করা।'],
   advancedInsights:['Advanced insights','Monthly/Yearly গভীর বিশ্লেষণ।'],
-  export:['Data export','ব্যাকআপ ডাউনলোড।']
+  export:['Data export','ব্যাকআপ ডাউনলোড।'],
+  books:['Custom books','নিজের আলাদা বই বানিয়ে লেখা সাজানো (Daily Journal সবসময় থাকবে)।']
 };
 function renderAdminConfig(){
   const d = cfgDraft();
@@ -9602,15 +10149,15 @@ const root = document.documentElement;
 /* ---------------- boot splash release ---------------- */
 function releaseSplash(){ root.classList.remove('booting'); }
 const _showAuth = window.showAuth, _showApp = window.showApp;
-window.showAuth = function(){ releaseSplash(); return _showAuth.apply(this, arguments); };
+window.showAuth = function(){ window.__ready = true; releaseSplash(); return _showAuth.apply(this, arguments); };
 window.showApp = function(){
-  releaseSplash();
+  window.__ready = true; releaseSplash();
   const r = _showApp.apply(this, arguments);
   try{ handleLaunchAction(); }catch(e){}
   return r;
 };
 setTimeout(releaseSplash, 8000);          // never trap the user behind the splash (offline, blocked CDN…)
-if(window.__FB_FAILED__) releaseSplash();
+if(window.__FB_FAILED__){ window.__ready = true; releaseSplash(); }
 
 /* ---------------- launch actions (manifest shortcuts: ?action=write …) ---------------- */
 function handleLaunchAction(){
@@ -10182,7 +10729,8 @@ function cmdAll(q){
     nav('🏠','Dashboard','', ()=>go('dashboard'), 'home'),
     nav('📚','Journal Library','', ()=>go('timeline'), 'entries timeline'),
     nav('📅','Calendar','', ()=>go('calendar'), ''),
-    nav('▦','Year in Pixels','', ()=>go('pixels'), 'pixels year mood'),
+    nav('📚','Bookshelf','বইয়ের তাক', ()=>go('shelf'), 'books shelf library বই তাক diary'),
+    act('📕','New book','', ()=>{ go('shelf'); setTimeout(()=>openBookModal(), 60); }, 'create book নতুন বই'),
     nav('📈','Insights','Mood & Writing', ()=>go('insights'), 'analytics mood'),
     nav('🧠','Life','Achievements, Plans, Memories', ()=>go('life'), 'achievements plans quotes ideas people places'),
     nav('🔎','Search','', ()=>openAdvancedSearch(), 'find ask'),
