@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-06.1">
+<meta name="app-build" content="2026-11-06.2">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -1923,22 +1923,45 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
     linear-gradient(180deg,var(--c1),var(--c2));
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset -1px 0 0 rgba(255,255,255,.07),3px 0 4px -1px rgba(0,0,0,.45);
   transform-origin:50% 100%;transition:transform .38s var(--ease),box-shadow .38s var(--ease),filter .3s ease;
-  animation:bkIn .55s var(--ease) both;animation-delay:calc(var(--i,0)*45ms);-webkit-tap-highlight-color:transparent;}
+  -webkit-tap-highlight-color:transparent;}
+/* the shelf's "books slide in" intro plays once per visit, not on every refresh of the data */
+.sh-case.intro .bk{animation:bkIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*45ms - var(--el,0ms));}
 @keyframes bkIn{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
 .bk::before,.bk::after{content:'';position:absolute;left:0;right:0;height:5px;border-block:1px solid var(--foil);opacity:.75;pointer-events:none;}
 .bk::before{top:calc(40px*var(--s,1));}
 .bk::after{bottom:calc(36px*var(--s,1));}
 .bk .em{font-size:calc(18px*var(--s,1));line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45));}
-.bk .ti{flex:1;min-height:0;margin:calc(14px*var(--s,1)) 0 calc(10px*var(--s,1));display:flex;align-items:center;justify-content:center;max-width:100%;
-  writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  font-weight:700;letter-spacing:.05em;font-size:calc(13.5px*var(--s,1));color:var(--foil);text-shadow:0 1px 0 rgba(0,0,0,.5);}
+.bk .ti{flex:1;min-height:0;margin:calc(12px*var(--s,1)) 0 calc(8px*var(--s,1));display:flex;align-items:center;justify-content:center;max-width:100%;
+  writing-mode:vertical-rl;text-orientation:mixed;overflow:hidden;
+  font-weight:700;letter-spacing:.03em;font-size:calc(13.5px*var(--s,1));line-height:1.2;color:var(--foil);text-shadow:0 1px 0 rgba(0,0,0,.5);}
+.bk .tt{flex:none;display:block;text-align:center;overflow-wrap:anywhere;word-break:break-word;}
 .bk .ct{font-size:calc(10px*var(--s,1));font-weight:700;padding:1px 6px;border-radius:99px;background:rgba(0,0,0,.32);color:var(--foil);white-space:nowrap;}
+/* hover: the book is hooked by its top edge and tilted out of the shelf towards you */
+.sh-books{perspective:900px;perspective-origin:50% 35%;}
+.bk{transform-style:preserve-3d;}
+.bk.bk-gone{visibility:hidden;}
 @media (hover:hover){
-  .bk:hover{transform:translateY(-14px) rotate(-1.4deg);z-index:3;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),3px 0 4px -1px rgba(0,0,0,.45),0 18px 24px -10px rgba(0,0,0,.7),0 0 22px -4px var(--foil);}
+  .bk{transition:transform .5s cubic-bezier(.2,.9,.25,1.12),box-shadow .5s var(--ease),filter .35s ease;}
+  .bk:hover{transform:translateY(-5px) translateZ(52px) rotateX(-19deg) rotateZ(-.7deg);z-index:5;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset -1px 0 0 rgba(255,255,255,.1),0 26px 22px -12px rgba(0,0,0,.8),0 0 26px -6px var(--foil);filter:brightness(1.1) saturate(1.1);}
+  .sh-books:has(.bk:hover) .bk:not(:hover){filter:brightness(.8);}
+  .bk-new:hover{transform:translateY(-6px);}
 }
-.bk:focus-visible{outline:2px solid var(--foil);outline-offset:3px;transform:translateY(-10px);z-index:3;}
-.bk:active{transform:translateY(-6px) scale(.98);}
-.bk.pulling{animation:none;transform:translateY(-34px) scale(1.12) rotate(-3deg);opacity:.0;transition:transform .3s var(--ease),opacity .3s ease .05s;z-index:4;}
+.bk:focus-visible{outline:2px solid var(--foil);outline-offset:3px;transform:translateY(-5px) translateZ(40px) rotateX(-15deg);z-index:5;}
+.bk:active{transform:translateY(-2px) translateZ(60px) rotateX(-8deg) scale(.985);}
+/* the book that flies out of the shelf and opens on screen */
+.bk-fly{position:fixed;inset:0;z-index:420;perspective:1400px;overflow:hidden;}
+.bk-fly-dim{position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 50%,rgba(40,24,12,.55),rgba(8,5,3,.82));opacity:0;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+.bk-fly-book{position:absolute;transform-style:preserve-3d;will-change:transform,left,top,width,height;}  /* no filter here: it would flatten the 3D turn */
+.bk-fly-book .bk{position:absolute;inset:0;box-shadow:0 26px 40px -10px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.4);width:100%!important;height:100%!important;margin:0;animation:none!important;transition:none!important;transform:none!important;filter:none!important;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
+.fly-cover{position:absolute;inset:0;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;container-type:size;border-radius:4px 8px 8px 4px;color:var(--foil);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;padding:9% 9%;text-align:center;overflow:hidden;
+  background:linear-gradient(90deg,rgba(0,0,0,.4),rgba(255,255,255,.12) 5%,transparent 11%),repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 2px,rgba(0,0,0,.05) 2px 4px),linear-gradient(160deg,var(--c1),var(--c2));box-shadow:0 26px 40px -10px rgba(0,0,0,.6);}
+.fly-cover::before{content:'';position:absolute;inset:3.5% 5% 3.5% 8%;border:1.5px solid var(--foil);border-radius:3px;opacity:.6;}
+.fly-cover.st-neon::before{box-shadow:0 0 12px var(--foil);}
+.fly-cover .fc-em{font-size:22cqw;line-height:1;position:relative;}
+.fly-cover b{position:relative;font-size:var(--fs,9cqw);line-height:1.22;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;}
+.fly-cover.st-band b{background:rgba(255,248,232,.93);color:#2b1a10;padding:2cqh 3cqw;border-radius:2px;}
 /* label spine */
 .bk.st-band::before,.bk.st-band::after{display:none;}
 .bk.st-band .ti{margin:calc(10px*var(--s,1)) 0;padding:calc(8px*var(--s,1)) 0;width:72%;background:rgba(255,248,232,.93);color:#2b1a10;text-shadow:none;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.4);flex:1;}
@@ -1989,9 +2012,9 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .ob-emblem{font-size:clamp(46px,8vw,62px);line-height:1;text-align:center;margin-top:8px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));animation:obFloat 5s ease-in-out infinite;}
 @keyframes obFloat{50%{transform:translateY(-5px)}}
 .ob-ct{text-align:center;}
-.ob-title{margin:0;font-size:clamp(20px,3vw,27px);line-height:1.25;color:inherit;text-shadow:0 1px 0 rgba(0,0,0,.4);}
+.ob-title{margin:0;overflow-wrap:anywhere;font-size:clamp(20px,3vw,27px);line-height:1.25;color:inherit;text-shadow:0 1px 0 rgba(0,0,0,.4);}
 .ob-cover.st-band .ob-title{text-shadow:none;}
-.ob-desc{margin:8px 0 0;font-size:13px;line-height:1.55;opacity:.85;}
+.ob-desc{margin:8px 0 0;overflow-wrap:anywhere;font-size:13px;line-height:1.55;opacity:.85;}
 .ob-stats{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;margin-top:12px;font-size:12px;opacity:.9;}
 .ob-stats b{font-size:15px;}
 .ob-actions{margin-top:4px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
@@ -2006,7 +2029,7 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .pg-month i{flex:1;height:1px;background:var(--rule);}
 .pg-month em{font-style:normal;color:var(--ink-faint);font-weight:600;}
 .pg{position:relative;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;width:100%;text-align:left;appearance:none;border:0;border-bottom:1px dashed var(--rule);background:transparent;color:inherit;font:inherit;padding:13px 6px 13px 2px;cursor:pointer;border-radius:8px;
-  animation:pgIn .45s var(--ease) both;animation-delay:calc(var(--i)*32ms);transition:background .2s ease,transform .25s var(--ease);}
+  animation:pgIn .45s var(--ease) backwards;animation-delay:calc(var(--i)*32ms);transition:background .2s ease,transform .25s var(--ease);}
 @keyframes pgIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
 .pg:hover{background:color-mix(in srgb,var(--accent-soft) 38%,transparent);transform:translateX(3px);}
 .pg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
@@ -2054,7 +2077,7 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .bf-cover::before{content:'';position:absolute;inset:7px 7px 7px 11px;border:1px solid var(--foil);border-radius:3px;opacity:.55;}
 .bf-cover.st-neon::before{box-shadow:0 0 8px var(--foil);}
 .bf-cover.st-band b{background:rgba(255,248,232,.93);color:#2b1a10;padding:4px 6px;border-radius:2px;}
-.bf-em{font-size:26px;} .bf-cover b{font-size:12px;line-height:1.25;position:relative;overflow-wrap:anywhere;} .bf-cover small{font-size:9px;opacity:.8;position:relative;line-height:1.3;}
+.bf-em{font-size:26px;flex:none;} .bf-cover b{font-size:12px;line-height:1.25;position:relative;overflow-wrap:anywhere;max-width:100%;} .bf-cover small{font-size:9px;opacity:.8;position:relative;line-height:1.3;overflow-wrap:anywhere;max-width:100%;}
 .bf-l{font-size:12px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px;display:block;} .bf-l span{font-weight:400;color:var(--ink-faint);}
 .bf-in{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:9px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);}
 .bf-in:focus{outline:2px solid var(--accent);outline-offset:1px;}
@@ -2069,7 +2092,7 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .bf-e.on{border-color:var(--accent);background:var(--accent-soft);outline:2px solid var(--accent);outline-offset:1px;}
 .bf-row{margin-top:18px;}
 @media (max-width:520px){ .bf-cover{width:100px;height:150px;} .bf-prev{gap:12px;} }
-@media (prefers-reduced-motion:reduce){ .bk,.ob,.pg,.sh-dust i,.ob-emblem,.bk-daily.lit::after{animation:none!important;} .bk,.pg{transition:none!important;} }
+@media (prefers-reduced-motion:reduce){ .bk,.ob,.pg,.sh-dust i,.ob-emblem,.bk-daily.lit::after{animation:none!important;} .bk,.pg{transition:none!important;} .bk:hover{transform:translateY(-6px)!important;} }
 
 @media (prefers-reduced-motion:reduce){.dayd.pop,.wc-cell{animation:none!important;transition:none!important;}}
 
@@ -7244,8 +7267,54 @@ function bookRand(id){ let h = 7; for(let i=0;i<id.length;i++) h = (h*31 + id.ch
 function bookVars(b){ const c = coverById(b.color); return `--c1:${c.c1};--c2:${c.c2};--foil:${c.foil}`; }
 function bookDims(b, n){
   if(b.id === DAILY_BOOK_ID) return {w: Math.round(66 + Math.min(n/5, 24)), h: 210};
-  return {w: Math.round(44 + Math.min(Math.sqrt(n)*5.5, 30)), h: Math.round(166 + bookRand(b.id)*38)};
+  // a long title earns a slightly wider, taller book, so it stays readable
+  const L = [...(b.title||'')].length;
+  return {w: Math.round(44 + Math.min(Math.sqrt(n)*5.5, 30) + Math.min(14, Math.max(0, L-9)*.8)),
+          h: Math.round(166 + bookRand(b.id)*38 + Math.min(34, Math.max(0, L-12)*2))};
 }
+
+/* ---------- text that always fits ----------
+   The font shrinks (never past `min`) until the whole text is visible inside
+   its box — long titles and descriptions compress instead of spilling out. */
+function fitText(el, o){
+  if(!el) return;
+  o = o || {};
+  const min = o.min || 7;
+  el.style.fontSize = '';
+  const max = parseFloat(getComputedStyle(el).fontSize) || 14;
+  const over = o.over || (e=>e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1);
+  if(!over(el)) return;
+  let lo = min, hi = max, best = min;
+  for(let i=0; i<9; i++){
+    const mid = (lo + hi) / 2;
+    el.style.fontSize = mid.toFixed(2) + 'px';
+    if(over(el)) hi = mid; else { best = mid; lo = mid; }
+  }
+  el.style.fontSize = best.toFixed(2) + 'px';
+}
+// the vertical title on a spine: wraps into columns, then shrinks to fit the box
+function fitSpineTitle(ti){
+  const tt = ti.firstElementChild; if(!tt) return;
+  const H = ti.clientHeight, W = ti.clientWidth; if(!H || !W) return;
+  tt.style.maxHeight = H + 'px';
+  fitText(ti, {min:6.5, over:()=> tt.scrollWidth > W + 1 || tt.scrollHeight > H + 1});
+}
+function fitShelfTitles(root){ (root || document).querySelectorAll('.bk:not(.bk-new) .ti').forEach(fitSpineTitle); }
+function fitOpenBook(){
+  const t = document.querySelector('.ob-title'), d = document.querySelector('.ob-desc');
+  const narrow = window.innerWidth <= 760;
+  if(t){ const mh = narrow ? 80 : 120; fitText(t, {min:14, over:e=>e.offsetHeight > mh}); }
+  if(d){ const mh = narrow ? 64 : 92; fitText(d, {min:10.5, over:e=>e.offsetHeight > mh}); }
+}
+function fitBookPreview(){
+  const root = document.getElementById('bfPrev'); if(!root) return;
+  fitShelfTitles(root);
+  const b = root.querySelector('.bf-cover b'), sm = root.querySelector('.bf-cover small');
+  if(b) fitText(b, {min:7, over:e=>e.offsetHeight > (sm ? 58 : 84)});
+  if(sm) fitText(sm, {min:6, over:e=>e.offsetHeight > 30});
+}
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ fitShelfTitles(); fitOpenBook(); fitBookPreview(); });
+
 function booksEnabled(){ return canUseFeature('books'); }
 function bookLimitReached(){ const lim = appConfig().maxBooks || 0; return !!lim && (state.books||[]).length >= lim; }
 
@@ -7257,13 +7326,13 @@ function bookSpineHtml(b, list, i){
   return `<button type="button" class="bk st-${b.style}${daily?' bk-daily':''}${lit?' lit':''}" style="--w:${d.w}px;--h:${d.h}px;${bookVars(b)};--i:${i}"
     onclick="openBook('${b.id}', this)" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">
     <span class="em" aria-hidden="true">${b.emblem}</span>
-    <span class="ti">${escapeHtml(b.title)}</span>
+    <span class="ti"><span class="tt">${escapeHtml(b.title)}</span></span>
     <span class="ct">${daily ? String(new Date().getFullYear()).slice(2)+'′ · '+n : n}</span>
   </button>`;
 }
 function bookNewSlotHtml(){
   return `<button type="button" class="bk bk-new" style="--w:46px;--h:176px" onclick="openBookModal()" aria-label="নতুন বই বানাও" title="নতুন বই বানাও">
-    <span class="plus" aria-hidden="true">＋</span><span class="ti">নতুন বই</span></button>`;
+    <span class="plus" aria-hidden="true">＋</span><span class="ti"><span class="tt">নতুন বই</span></span></button>`;
 }
 function shelfItems(){
   const buckets = bookBuckets(); const items = [];
@@ -7296,13 +7365,15 @@ function shelfLayout(){
     const decor = free > 120 ? `<span class="sh-decor" aria-hidden="true">${DECOR[ri % DECOR.length]}</span>` : '';
     return `<div class="sh-row"><div class="sh-books">${r.map(x=>x.html).join('')}${decor}</div><div class="sh-plank"></div></div>`;
   }).join('');
+  fitShelfTitles(host);
 }
-let __shelfResizeT = null;
+let __shelfResizeT = null, __shelfLast = 0, __shelfStart = 0;
 window.addEventListener('resize', ()=>{
   clearTimeout(__shelfResizeT);
   __shelfResizeT = setTimeout(()=>{
     const host = document.getElementById('shCase');
     if(host && String(host.clientWidth) !== host.dataset.w) shelfLayout();
+    fitOpenBook();
   }, 120);
 });
 
@@ -7319,7 +7390,7 @@ function renderShelf(){
     ${libTabs('shelf')}`;
   if(state.shelfBook){
     const b = getBook(state.shelfBook);
-    if(b) return head + renderOpenBook(b);
+    if(b){ setTimeout(fitOpenBook, 0); return head + renderOpenBook(b); }
     state.shelfBook = null;
   }
   const buckets = bookBuckets();
@@ -7333,6 +7404,10 @@ function renderShelf(){
       <div class="sh-tpl">${BOOK_TEMPLATES.map((t,i)=>`<button type="button" class="sh-tpl-b" style="${bookVars(t)}" onclick="bookTemplate(${i})"><span>${t.emblem}</span>${escapeHtml(t.title)}</button>`).join('')}</div>
     </div>` : '';
   setTimeout(shelfLayout, 0);
+  const now = Date.now();
+  if(now - __shelfLast > 3000) __shelfStart = now;
+  __shelfLast = now;
+  const elapsed = now - __shelfStart, intro = elapsed < 1500;
   return head + `
     <section class="shelf-room" aria-label="Bookshelf">
       <div class="sh-dust" aria-hidden="true">${dust}</div>
@@ -7344,13 +7419,55 @@ function renderShelf(){
         </div>
         ${booksEnabled() ? `<button type="button" class="btn btn-sm sh-new" onclick="openBookModal()">＋ নতুন বই</button>` : ''}
       </div>
-      <div class="sh-case" id="shCase" aria-label="Books"></div>
+      <div class="sh-case${intro ? ' intro' : ''}" id="shCase" style="--el:${Math.round(elapsed)}ms" aria-label="Books"></div>
     </section>
     ${hint}`;
 }
 function openBook(id, el){
-  const go2 = ()=>{ state.shelfBook = id; state.shelfQ = ''; state.shelfLimit = 40; render(); window.scrollTo(0,0); };
-  if(el && !REDUCED_MOTION.matches){ el.classList.add('pulling'); setTimeout(go2, 300); } else go2();
+  const commit = ()=>{ state.shelfBook = id; state.shelfQ = ''; state.shelfLimit = 40; render(); window.scrollTo(0,0); };
+  if(!el || REDUCED_MOTION.matches || !el.animate || window.__bkFlying){ commit(); return; }
+  // The spine is lifted out of its slot, turns to show its cover, flies to the
+  // middle of the screen and opens into the book.
+  window.__bkFlying = true;
+  const b = getBook(id) || DAILY_BOOK;
+  const r = el.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+  const cw = Math.round(Math.min(vw * .62, 250, vh * .5)), ch = Math.round(cw * 1.42);
+  const end = {left:(vw - cw) / 2, top: Math.max(14, (vh - ch) / 2), width:cw, height:ch};
+  const L = [...(b.title||'')].length, fs = L > 40 ? 6.2 : L > 24 ? 7.4 : L > 12 ? 8.6 : 10;
+  const ov = document.createElement('div'); ov.className = 'bk-fly'; ov.setAttribute('aria-hidden', 'true');
+  const box = document.createElement('div'); box.className = 'bk-fly-book'; box.setAttribute('style', bookVars(b));
+  Object.assign(box.style, {left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px'});
+  const face = el.cloneNode(true); face.removeAttribute('onclick'); face.className = el.className.replace('bk-gone','');
+  const cover = document.createElement('div'); cover.className = 'fly-cover st-' + b.style;
+  cover.innerHTML = `<span class="fc-em">${b.emblem}</span><b style="--fs:${fs}cqw">${escapeHtml(b.title)}</b>`;
+  const dim = document.createElement('div'); dim.className = 'bk-fly-dim';
+  box.append(face, cover); ov.append(dim, box); document.body.appendChild(ov);
+  el.classList.add('bk-gone');
+  let done = false;
+  const finish = ()=>{
+    if(done) return; done = true;
+    commit();
+    const out = ov.animate([{opacity:1},{opacity:0}], {duration:260, easing:'ease', fill:'forwards'});
+    out.onfinish = ()=>{ ov.remove(); window.__bkFlying = false; };
+    setTimeout(()=>{ ov.remove(); window.__bkFlying = false; }, 700);
+  };
+  dim.animate([{opacity:0},{opacity:1}], {duration:520, easing:'ease-out', fill:'forwards'});
+  const D = 860;
+  // the turn (rotation) finishes early; the growth to cover size comes after it,
+  // so the narrow spine is never seen stretched wide
+  const turn = box.animate([
+    {offset:0,   transform:'translateZ(0) rotateX(0deg) rotateY(0deg)', easing:'cubic-bezier(.3,.8,.3,1)'},
+    {offset:.22, transform:'translateZ(70px) rotateX(-17deg) rotateY(0deg)', easing:'cubic-bezier(.45,0,.3,1)'},
+    {offset:.58, transform:'translateZ(50px) rotateX(-4deg) rotateY(180deg)', easing:'cubic-bezier(.3,.6,.3,1)'},
+    {offset:1,   transform:'translateZ(0) rotateX(0deg) rotateY(180deg)'}
+  ], {duration:D, fill:'forwards'});
+  const move = box.animate([
+    {offset:0,    left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px', easing:'cubic-bezier(.3,.8,.3,1)'},
+    {offset:.22,  left:r.left+'px', top:(r.top-8)+'px', width:r.width+'px', height:r.height+'px', easing:'cubic-bezier(.5,0,.15,1)'},
+    {offset:1,    left:end.left+'px', top:end.top+'px', width:end.width+'px', height:end.height+'px'}
+  ], {duration:D, fill:'forwards'});
+  Promise.all([turn.finished, move.finished]).then(finish).catch(finish);
+  setTimeout(finish, 1500);   // never leave the person on a dimmed screen
 }
 function closeBook(){ state.shelfBook = null; render(); window.scrollTo(0,0); }
 function bookTemplate(i){ const t = BOOK_TEMPLATES[i]; if(t) openBookModal(null, null, t); }
@@ -7443,9 +7560,9 @@ function writeInBook(id){
 /* ---------- create / edit / delete a book ---------- */
 function bookFormPreviewHtml(f){
   const b = {id:f.id||'preview', title:(f.title||'').trim() || 'নতুন বই', desc:f.desc||'', emblem:f.emblem, color:f.color, style:f.style};
-  const c = coverById(b.color);
+  const dm = bookDims(b, 0);
   return `
-    <div class="bf-spine"><div class="bk st-${b.style}" style="--w:56px;--h:168px;${bookVars(b)}"><span class="em">${b.emblem}</span><span class="ti">${escapeHtml(b.title)}</span><span class="ct">0</span></div></div>
+    <div class="bf-spine"><div class="bk st-${b.style}" style="--w:${dm.w}px;--h:${dm.h}px;${bookVars(b)}"><span class="em">${b.emblem}</span><span class="ti"><span class="tt">${escapeHtml(b.title)}</span></span><span class="ct">0</span></div></div>
     <div class="bf-cover st-${b.style}" style="${bookVars(b)}"><span class="bf-em">${b.emblem}</span><b>${escapeHtml(b.title)}</b>${b.desc?`<small>${escapeHtml(b.desc)}</small>`:''}</div>`;
 }
 function openBookModal(id, onDone, preset){
@@ -7476,12 +7593,13 @@ function openBookModal(id, onDone, preset){
       <button type="button" class="btn btn-primary" id="bfSave" onclick="saveBookForm()">${f.id ? 'সংরক্ষণ' : 'বই বানাও'}</button>
     </div>`;
   document.getElementById('bookModal').classList.add('show');
+  fitBookPreview();
   setTimeout(()=>{ const t = document.getElementById('bfTitle'); if(t){ t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }, 60);
 }
 function bookFormSet(k, v){
   const f = state.bookForm; if(!f) return;
   f[k] = v;
-  const prev = document.getElementById('bfPrev'); if(prev) prev.innerHTML = bookFormPreviewHtml(f);
+  const prev = document.getElementById('bfPrev'); if(prev){ prev.innerHTML = bookFormPreviewHtml(f); fitBookPreview(); }
   const map = {color:'bfColors', style:'bfStyles', emblem:'bfEmblems'};
   if(map[k]) document.querySelectorAll('#'+map[k]+' button').forEach(b=>{ const on = b.dataset.v === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
 }
