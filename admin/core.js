@@ -9,7 +9,7 @@ const $ = id => document.getElementById(id);
 const A = window.A = { C, PAGES:{}, GROUPS:[], ADMIN_EMAILS, PASS };
 
 /* ---------- state ---------- */
-const S = A.S = { user:null, orders:[], users:[], reviews:[], audit:[], cfg:{}, site:{}, loaded:{}, errors:{}, page:'dashboard', sub:'' };
+const S = A.S = { user:null, orders:[], users:[], reviews:[], audit:[], admins:[], cfg:{}, site:{}, loaded:{}, errors:{}, page:'dashboard', sub:'' };
 A.DEF_CFG = {
   appName:'JournalOS', tagline:'Write First. Everything Else Second.', signupsEnabled:true,
   maintenance:{enabled:false,message:'JournalOS is briefly down for maintenance. Your journals are safe — please check back shortly.'},
@@ -17,7 +17,9 @@ A.DEF_CFG = {
   features:{aiAnalysis:true,semanticSearch:true,askYourLife:true,voice:true,voiceTranscription:true,media:true,advancedInsights:true,export:true,books:true},
   defaults:{theme:'system',accent:'brand',dailyReminder:true,dailyReminderTime:'20:00',weeklySummary:true,aiExtraction:true},
   header:{showQuickAdd:true,showAddMood:true,showSearch:true,showThemeMenu:true,showStreak:true,showDownload:true,openOn:'hover',accents:['brand','indigo','rose','emerald']},
-  moodLabels:{},moodEmojis:{},entryLimitDefault:0,maxBooks:0,requirePro:true,pendingMaxDays:14
+  moodLabels:{},moodEmojis:{},entryLimitDefault:0,maxBooks:0,requirePro:true,pendingMaxDays:14,
+  announcements:[],
+  notifications:{expiryDays:[7,3,1],nudges:true,memories:true,whatsNew:true,milestones:true}
 };
 A.DEF_RESTR = {suspended:false,readOnly:false,aiDisabled:false,mediaDisabled:false,exportDisabled:false,entryLimit:0};
 A.MOODS = [['happy','Happy','🙂'],['excited','Excited','🤩'],['grateful','Grateful','🥰'],['calm','Calm','😌'],['neutral','Neutral','😐'],['tired','Tired','😴'],['sad','Sad','😔'],['anxious','Anxious','😟'],['stressed','Stressed','😣'],['angry','Angry','😠']];
@@ -90,11 +92,18 @@ A.boot = function(){
   catch(e){ show('gDeny'); $('denyMsg').textContent = 'Firebase শুরু করা যায়নি: ' + e.message; return; }
   $('btnGoogle').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => { $('loginErr').textContent = e.message; });
   $('pinGo').onclick = tryPin; $('pinIn').onkeydown = e => { if(e.key === 'Enter') tryPin(); };
-  auth.onAuthStateChanged(u => {
+  auth.onAuthStateChanged(async u => {
     S.user = u;
     if(!u){ stopData(); show('gLogin'); return; }
     const em = (u.email || '').toLowerCase();
-    if(!ADMIN_EMAILS.includes(em)){ show('gDeny'); $('denyMsg').textContent = (u.email || 'এই অ্যাকাউন্ট') + ' ব্যাকএন্ড অ্যাডমিন তালিকায় নেই।'; return; }
+    // An administrator is an owner (ADMIN_EMAILS) or someone an owner selected on the Admins page.
+    S.isSuper = ADMIN_EMAILS.includes(em); let ok = S.isSuper;
+    if(!ok){
+      show('gLoad');
+      try{ const d = await db.collection('admins').doc(em).get(); ok = d.exists; }catch(e){ ok = false; }
+      if(!S.user || S.user.uid !== u.uid) return;
+    }
+    if(!ok){ show('gDeny'); $('denyMsg').textContent = (u.email || 'এই অ্যাকাউন্ট') + ' ব্যাকএন্ড অ্যাডমিন তালিকায় নেই।'; return; }
     if(sessionStorage.getItem(SKEY) === '1') enter(); else { show('gPin'); $('pinWho').textContent = u.email; setTimeout(() => $('pinIn').focus(), 100); }
   });
   window.addEventListener('hashchange', route);
@@ -131,10 +140,11 @@ function startData(){
   stopData();
   listen('orders', db.collection('orders'), s => { S.orders = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a, b) => A.ms(b.createdAt) - A.ms(a.createdAt)); });
   listen('users', db.collection('userDirectory'), s => { S.users = s.docs.map(d => ({uid:d.id, ...d.data()})); });
+  listen('admins', db.collection('admins'), s => { S.admins = s.docs.map(d => ({email:d.id, ...d.data()})); });
   listen('reviews', db.collection('reviews'), s => { S.reviews = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a, b) => A.ms(b.createdAt) - A.ms(a.createdAt)); });
   listen('audit', db.collection('adminAudit').orderBy('at', 'desc').limit(400), s => { S.audit = s.docs.map(d => ({id:d.id, ...d.data()})); });
-  unsubs.push(db.collection('appConfig').doc('global').onSnapshot(s => { S.loaded.cfg = true; S.cfgSaved = A.merge(A.DEF_CFG, s.exists ? s.data() : {}); if(!S.drafts.cfg || !isDirty('cfg')) S.drafts.cfg = A.clone(S.cfgSaved); refresh(); paintSavebars(); }, e => { S.loaded.cfg = true; S.errors.cfg = e.code; }));
-  unsubs.push(db.collection('siteConfig').doc('site').onSnapshot(s => { S.loaded.site = true; S.siteSaved = s.exists ? s.data() : {}; if(!S.drafts.site || !isDirty('site')) S.drafts.site = A.siteDefaults(A.clone(S.siteSaved)); refresh(); paintSavebars(); }, e => { S.loaded.site = true; S.errors.site = e.code; }));
+  unsubs.push(db.collection('appConfig').doc('global').onSnapshot(s => { S.loaded.cfg = true; const wasDirty = !!S.drafts.cfg && isDirty('cfg'); S.cfgSaved = A.merge(A.DEF_CFG, s.exists ? s.data() : {}); if(!S.drafts.cfg || !wasDirty) S.drafts.cfg = A.clone(S.cfgSaved); refresh(); paintSavebars(); }, e => { S.loaded.cfg = true; S.errors.cfg = e.code; }));
+  unsubs.push(db.collection('siteConfig').doc('site').onSnapshot(s => { S.loaded.site = true; const wasDirty = !!S.drafts.site && isDirty('site'); S.siteSaved = s.exists ? s.data() : {}; if(!S.drafts.site || !wasDirty) S.drafts.site = A.siteDefaults(A.clone(S.siteSaved)); refresh(); paintSavebars(); }, e => { S.loaded.site = true; S.errors.site = e.code; }));
 }
 S.drafts = {}; S.cfgSaved = A.clone(A.DEF_CFG); S.siteSaved = {};
 A.siteDefaults = function(d){
@@ -185,7 +195,7 @@ A.sub = function(uid){
 A.userStatus = function(u){
   const r = Object.assign({}, A.DEF_RESTR, u.restrictions || {});
   if(r.suspended) return 'suspended';
-  if(ADMIN_EMAILS.includes((u.email || '').toLowerCase())) return 'admin';
+  if(ADMIN_EMAILS.includes((u.email || '').toLowerCase()) || (S.admins || []).some(a => a.email === (u.email || '').toLowerCase())) return 'admin';
   if(u.complimentary && (!u.complimentaryUntil || Date.parse(u.complimentaryUntil + 'T23:59:59') > Date.now())) return 'comp';
   return A.sub(u.uid).status;
 };
