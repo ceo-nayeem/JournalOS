@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const A = window.A, S = A.S, esc = A.esc, ic = A.ic, $ = A.$;
-A.group('ov', 'Overview'); A.group('com', 'Commerce'); A.group('ppl', 'People'); A.group('web', 'Website'); A.group('app', 'App & Brand'); A.group('sys', 'Data & System');
+A.group('ov', 'Overview'); A.group('com', 'Commerce'); A.group('ppl', 'People'); A.group('eng', 'Engage'); A.group('web', 'Website'); A.group('app', 'App & Brand'); A.group('sys', 'Data & System');
 
 /* ================= DASHBOARD ================= */
 A.page('dashboard', {title:'Dashboard', group:'ov', icon:'home', needs:['orders','users'], render(){
