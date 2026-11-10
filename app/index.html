@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-06.2">
+<meta name="app-build" content="2026-11-10.1">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -660,6 +660,7 @@ input,textarea,select{font-family:var(--font-sans);}
 .lib-filter-btn .flt-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
   padding:0 5px;border-radius:99px;background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:600;}
 .lib-count{margin-left:auto;font-size:12px;color:var(--ink-faint);}
+[hidden]{display:none!important;}   /* a class like .pm-item{display:flex} must never un-hide a hidden element */
 .lib-filter-panel[hidden]{display:none;}
 
 /* ---------- Library: date dividers ---------- */
@@ -2112,6 +2113,182 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .write-fixed-bar{transition:transform .22s ease,opacity .18s ease,visibility 0s linear .22s;}
 .write-fixed-bar:not(.show){opacity:0;visibility:hidden;pointer-events:none;}
 .write-fixed-bar.show{opacity:1;visibility:visible;transition:transform .22s ease,opacity .18s ease,visibility 0s;}
+
+/* ================================================================
+   Round 12 — NOTIFICATION CENTRE (bell, badge, panel / phone sheet)
+   ================================================================ */
+.bell-wrap{position:relative;flex:none;}
+.bell-btn svg{width:19px;height:19px;transition:transform .3s var(--ease);}
+.bell-wrap.has .bell-btn{color:var(--accent);}
+.bell-btn[aria-expanded="true"]{background:var(--glass-bg-strong);box-shadow:var(--shadow-float),0 0 0 2px var(--accent-soft);}
+.bell-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;box-sizing:border-box;
+  background:var(--grad-vivid,var(--accent));color:#fff;font:700 10.5px/19px var(--font-display,inherit);text-align:center;letter-spacing:-.01em;
+  box-shadow:0 0 0 2px var(--paper,#fff),0 5px 12px -3px var(--accent-shadow,rgba(0,0,0,.35));pointer-events:none;z-index:2;}
+.bell-wrap.has .bell-badge::after{content:"";position:absolute;inset:-3px;border-radius:inherit;border:2px solid var(--accent);opacity:0;animation:bellPulse 2.6s ease-out infinite;}
+@keyframes bellPulse{0%{transform:scale(.8);opacity:.7}70%,100%{transform:scale(1.55);opacity:0}}
+.bell-wrap.ring .bell-btn svg{animation:bellRing .95s ease;transform-origin:50% 10%;}
+@keyframes bellRing{0%,100%{transform:rotate(0)}15%{transform:rotate(17deg)}30%{transform:rotate(-15deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}}
+
+.nf-scrim{position:fixed;inset:0;z-index:99;background:transparent;visibility:hidden;opacity:0;transition:opacity .3s,visibility 0s .3s;}
+.nf-scrim.show{visibility:visible;opacity:1;transition-delay:0s;}
+.nf-panel{position:fixed;top:64px;right:14px;width:min(412px,calc(100vw - 20px));max-height:min(80vh,720px);z-index:100;display:flex;flex-direction:column;
+  border-radius:26px;overflow:hidden;outline:none;
+  background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.8);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.8);
+  border:1px solid var(--glass-border);box-shadow:var(--shadow-float),0 34px 80px -26px var(--accent-shadow,rgba(0,0,0,.4));
+  opacity:0;visibility:hidden;transform:translateY(-12px) scale(.95);transform-origin:calc(100% - 96px) 0;pointer-events:none;
+  transition:opacity .22s,transform .5s cubic-bezier(.22,1.2,.36,1),visibility 0s .5s;}
+.nf-panel.show{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition-delay:0s;}
+.nf-panel::before{content:"";position:absolute;left:0;right:0;top:0;height:120px;pointer-events:none;opacity:.55;
+  background:radial-gradient(120% 100% at 85% -20%,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%);}
+.nf-grab{display:none;width:42px;height:5px;border-radius:9px;background:var(--ink-faint);opacity:.45;margin:9px auto 0;flex:none;}
+.nf-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 16px 10px 20px;flex:none;}
+.nf-head h2{margin:0;font:600 20px/1.15 var(--font-display,inherit);letter-spacing:-.01em;color:var(--ink);}
+.nf-head p{margin:3px 0 0;font-size:12px;color:var(--ink-soft);}
+.nf-head-act{display:flex;gap:4px;}
+.nf-ib{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;color:var(--ink-soft);background:transparent;border:0;cursor:pointer;transition:background .2s,color .2s,transform .15s;}
+.nf-ib svg{width:17px;height:17px;}
+.nf-ib:hover:not(:disabled){background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink);}
+.nf-ib:active{transform:scale(.9);}
+.nf-ib:disabled{opacity:.35;cursor:default;}
+.nf-ib[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent);}
+
+.tone-info{--tc:var(--accent);} .tone-success,.tone-ok{--tc:var(--sage);} .tone-warn{--tc:#D98B2B;} .tone-danger{--tc:var(--rust);} .tone-memory{--tc:var(--accent-2,var(--accent));}
+
+.nf-plan{position:relative;display:flex;align-items:center;gap:14px;margin:4px 14px 10px;padding:13px 15px;border-radius:21px;flex:none;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 19%,transparent),color-mix(in srgb,var(--tc) 5%,transparent));
+  border:1px solid color-mix(in srgb,var(--tc) 30%,transparent);}
+.nf-ring{position:relative;width:58px;height:58px;flex:none;display:grid;place-items:center;align-content:center;}
+.nf-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
+.nf-ring circle{fill:none;stroke-width:3.6;}
+.nf-ring .bg{stroke:color-mix(in srgb,var(--tc) 18%,transparent);}
+.nf-ring .fg{stroke:var(--tc);stroke-linecap:round;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tc) 55%,transparent));transition:stroke-dasharray 1.1s var(--ease);}
+.nf-ring b{position:relative;font:700 17px/1 var(--font-display,inherit);color:var(--ink);margin-top:-5px;}
+.nf-ring small{position:absolute;bottom:11px;font-size:8.5px;letter-spacing:.06em;color:var(--ink-soft);}
+.nf-ring i{font-style:normal;font-size:26px;}
+.nf-plan-t{flex:1;min-width:0;}
+.nf-plan-t b{display:block;font-size:14px;color:var(--ink);line-height:1.3;}
+.nf-plan-t span{display:block;font-size:12px;color:var(--ink-soft);margin-top:2px;}
+.nf-pill{flex:none;padding:9px 15px;border-radius:999px;border:0;cursor:pointer;background:var(--tc);color:#fff;font-weight:600;font-size:12px;
+  box-shadow:0 8px 18px -8px var(--tc);transition:transform .15s var(--ease),filter .2s;}
+.nf-pill:hover{filter:brightness(1.08);transform:translateY(-1px);} .nf-pill:active{transform:scale(.95);}
+.tone-warn .nf-pill{color:#2a1700;}
+
+.nf-tabs{display:flex;gap:3px;margin:0 14px 8px;padding:4px;border-radius:15px;background:color-mix(in srgb,var(--ink) 6%,transparent);flex:none;}
+.nf-tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:2px;padding:7px 4px;border-radius:11px;border:0;background:transparent;font-size:12.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s;}
+.nf-tabs button.on{background:var(--glass-bg-strong);color:var(--ink);box-shadow:0 2px 8px -2px rgba(0,0,0,.2),inset 0 0 0 1px var(--glass-border);}
+.nf-tabs em{font-style:normal;font-size:10px;font-weight:700;min-width:16px;height:16px;line-height:16px;padding:0 4px;border-radius:99px;background:var(--accent);color:#fff;margin-left:4px;}
+
+.nf-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 0 14px;scrollbar-width:thin;}
+.nf-sec{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:10px 22px 6px;font-weight:600;}
+.nf-item{position:relative;display:flex;gap:12px;padding:12px 38px 12px 16px;margin:0 8px 5px;border-radius:19px;cursor:pointer;border:1px solid transparent;transition:background .2s,border-color .2s,transform .25s var(--ease);outline:none;}
+.nf-item:hover,.nf-item:focus-visible{background:color-mix(in srgb,var(--ink) 5%,transparent);}
+.nf-item:focus-visible{box-shadow:0 0 0 2px var(--accent);}
+.nf-item.unread{background:color-mix(in srgb,var(--tc) 9%,transparent);border-color:color-mix(in srgb,var(--tc) 22%,transparent);}
+.nf-item.unread:hover{background:color-mix(in srgb,var(--tc) 14%,transparent);}
+.nf-item.unread::before{content:"";position:absolute;left:5px;top:19px;width:6px;height:6px;border-radius:50%;background:var(--tc);box-shadow:0 0 9px var(--tc);}
+.nf-ic{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;font-size:19px;flex:none;
+  background:color-mix(in srgb,var(--tc) 14%,var(--paper-card,#fff));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tc) 30%,transparent);}
+.nf-bd{flex:1;min-width:0;}
+.nf-tt{font-weight:600;font-size:13.5px;line-height:1.38;color:var(--ink);overflow-wrap:anywhere;}
+.nf-tt em{font-style:normal;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-left:7px;padding:2px 7px;border-radius:99px;background:var(--tc);color:#fff;vertical-align:1px;}
+.tone-warn .nf-tt em{color:#2a1700;}
+.nf-tx{font-size:12.5px;line-height:1.58;color:var(--ink-soft);margin-top:3px;overflow-wrap:anywhere;}
+.nf-mt{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:11px;color:var(--ink-faint);flex-wrap:wrap;}
+.nf-act{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);background:color-mix(in srgb,var(--tc) 10%,transparent);color:var(--tc);font-weight:600;font-size:11.5px;cursor:pointer;transition:background .2s,transform .15s;}
+.nf-act b{font-weight:700;transition:transform .2s;} .nf-act:hover{background:color-mix(in srgb,var(--tc) 20%,transparent);} .nf-act:hover b{transform:translateX(3px);}
+.tone-warn .nf-act{color:#9A5A0B;} :root[data-theme="dark"] .tone-warn .nf-act{color:#F0B36A;}
+.nf-x{position:absolute;top:9px;right:9px;width:26px;height:26px;border-radius:9px;border:0;background:transparent;color:var(--ink-faint);display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .2s,background .2s,color .2s;}
+.nf-x svg{width:13px;height:13px;}
+.nf-item:hover .nf-x,.nf-x:focus-visible,.nf-item:focus-within .nf-x{opacity:1;} .nf-x:hover{background:color-mix(in srgb,var(--rust) 14%,transparent);color:var(--rust);}
+@media (hover:none){ .nf-x{opacity:.55;} }
+
+.nf-empty{display:grid;justify-items:center;gap:5px;padding:34px 24px 30px;text-align:center;}
+.nf-empty b{font-size:15px;color:var(--ink);margin-top:10px;} .nf-empty span{font-size:12.5px;color:var(--ink-soft);max-width:230px;line-height:1.55;}
+.nf-empty-ic{position:relative;width:76px;height:76px;border-radius:28px;display:grid;place-items:center;color:var(--accent);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,transparent),color-mix(in srgb,var(--accent-2,var(--accent)) 10%,transparent));
+  border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);animation:nfFloat 4.5s ease-in-out infinite;}
+.nf-empty-ic svg{width:34px;height:34px;} .nf-empty-ic i{position:absolute;right:11px;top:9px;font-style:normal;font-size:13px;color:var(--accent-2,var(--accent));animation:nfTwinkle 2.4s ease-in-out infinite;}
+@keyframes nfFloat{50%{transform:translateY(-5px)}} @keyframes nfTwinkle{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
+
+.nf-prefs{display:none;margin:0 14px 10px;padding:6px 14px 10px;border-radius:19px;flex:none;background:color-mix(in srgb,var(--ink) 5%,transparent);border:1px solid var(--glass-border);}
+.nf-prefs.show{display:block;animation:nfIn .3s var(--ease);} @keyframes nfIn{from{opacity:0;transform:translateY(-6px)}}
+.nf-prefs-h{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:8px 0 2px;}
+.nf-pref{display:flex;align-items:center;gap:12px;padding:8px 0;} .nf-pref>div{flex:1;min-width:0;}
+.nf-pref b{display:block;font-size:13px;color:var(--ink);} .nf-pref span{display:block;font-size:11.5px;color:var(--ink-soft);line-height:1.45;margin-top:1px;}
+.nf-prefs-f{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:6px;padding-top:9px;border-top:1px solid var(--glass-border);}
+.nf-link{border:0;background:none;padding:0;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;text-align:left;} .nf-link:hover{text-decoration:underline;}
+
+@media (max-width:600px){
+  .nf-scrim{background:rgba(10,14,12,.46);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+  .nf-panel{top:auto;bottom:0;left:0;right:0;width:auto;max-height:88vh;max-height:88dvh;border-radius:30px 30px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);
+    transform:translateY(106%);transform-origin:50% 100%;opacity:1;transition:transform .5s cubic-bezier(.2,.9,.25,1),visibility 0s .5s;}
+  .nf-panel.show{transform:none;}
+  .nf-grab{display:block;}
+  .nf-head{padding-top:12px;}
+  .nf-x{opacity:.6;}
+}
+@media (prefers-reduced-motion:reduce){ .bell-wrap.has .bell-badge::after,.bell-wrap.ring .bell-btn svg,.nf-empty-ic,.nf-empty-ic i{animation:none!important;} .nf-panel,.nf-scrim{transition-duration:.01s!important;} }
+
+/* ================================================================
+   Round 12 — LUXE LAYER (premium polish; additive, nothing removed)
+   ================================================================ */
+/* notices (admin announcement + subscription) float under the top bar instead of hiding behind it */
+.announce-bar.show,.announce-bar.sub-bar.show{position:relative;top:auto;height:36px;padding:0;background:transparent!important;display:flex;justify-content:center;align-items:flex-start;pointer-events:none;z-index:var(--z-nav);}
+.announce-bar.show>span{pointer-events:auto;display:inline-flex;align-items:center;gap:9px;max-width:min(640px,calc(100vw - 24px));padding:7px 16px;border-radius:999px;font-size:12.5px;line-height:1.45;font-weight:500;color:var(--ink);transform:translateY(60px);
+  background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.7);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.7);
+  border:1px solid color-mix(in srgb,var(--tc,var(--accent)) 40%,var(--glass-border));box-shadow:var(--shadow-float),0 12px 28px -14px var(--tc,var(--accent));animation:pillIn .6s var(--ease) both;}
+.announce-bar.tone-info{--tc:var(--sky,var(--accent));} .announce-bar.tone-success{--tc:var(--sage);} .announce-bar.tone-warn{--tc:#D98B2B;} .announce-bar.tone-danger{--tc:var(--rust);}
+.announce-bar.show>span::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--tc,var(--accent));box-shadow:0 0 10px var(--tc,var(--accent));animation:pillDot 2.2s ease-in-out infinite;}
+.sub-bar a{color:var(--tc,var(--accent));text-decoration:none;font-weight:700;border-bottom:1.5px solid color-mix(in srgb,var(--tc,var(--accent)) 50%,transparent);}
+@keyframes pillIn{from{opacity:0;margin-top:-8px;}} @keyframes pillDot{50%{opacity:.35;transform:scale(.75);}}
+@media (max-width:600px){ .announce-bar.show>span{transform:translateY(54px);font-size:12px;padding:6px 13px;} }
+
+/* richer glass on the floating controls */
+.chip-btn,.topbar-streak,.hamburger{box-shadow:var(--shadow-float),inset 0 1px 0 rgba(255,255,255,.55);}
+:root[data-theme="dark"] .chip-btn,:root[data-theme="dark"] .topbar-streak,:root[data-theme="dark"] .hamburger{box-shadow:var(--shadow-float),inset 0 1px 0 rgba(255,255,255,.08);}
+.nav-item.active .ic{box-shadow:0 8px 18px -6px var(--accent-shadow),0 0 0 4px color-mix(in srgb,var(--accent) 12%,transparent);}
+
+/* cursor spotlight on cards */
+.card{position:relative;}
+@media (hover:hover){
+  .tile,.card{isolation:isolate;}
+  .tile::before,.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;opacity:0;transition:opacity .45s;
+    background:radial-gradient(300px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 15%,transparent),transparent 72%);}
+  .tile:hover::before,.card:hover::before{opacity:1;}
+}
+
+/* buttons: a soft light sweep on hover */
+:root[data-theme] .btn-primary,:root[data-theme] .btn-accent{position:relative;overflow:hidden;box-shadow:0 10px 24px -10px var(--accent-shadow),inset 0 1px 0 rgba(255,255,255,.28);}
+:root[data-theme] .btn-primary::after,:root[data-theme] .btn-accent::after{content:"";position:absolute;top:-12%;bottom:-12%;left:-70%;width:42%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);transform:skewX(-20deg);transition:left .8s var(--ease);}
+@media (hover:hover){ :root[data-theme] .btn-primary:hover::after,:root[data-theme] .btn-accent:hover::after{left:140%;} }
+
+/* views arrive with a staggered rise (only on navigation, never on a data refresh) */
+@keyframes luxeUp{from{opacity:0;transform:translateY(14px) scale(.985);}}
+#main.luxe-in :is(.page-head,.dash-hero,.tile,.card,.quick-btn,.entry-row){animation:luxeUp .6s var(--ease) backwards;}
+#main.luxe-in :is(.dash-hero,.tile,.card):nth-child(2){animation-delay:.05s;} #main.luxe-in :is(.dash-hero,.tile,.card):nth-child(3){animation-delay:.1s;}
+#main.luxe-in :is(.dash-hero,.tile,.card):nth-child(4){animation-delay:.15s;} #main.luxe-in :is(.dash-hero,.tile,.card):nth-child(5){animation-delay:.2s;}
+#main.luxe-in :is(.dash-hero,.tile,.card):nth-child(6){animation-delay:.25s;} #main.luxe-in :is(.dash-hero,.tile,.card):nth-child(7){animation-delay:.3s;}
+#main.luxe-in :is(.dash-hero,.tile,.card):nth-child(n+8){animation-delay:.35s;}
+
+/* dashboard: On This Day + Plan status */
+.mem-tile .mem-row{display:flex;gap:13px;align-items:center;padding:10px 8px;margin:0 -8px;border-radius:14px;cursor:pointer;transition:background .2s,transform .25s var(--ease);}
+.mem-tile .mem-row+.mem-row{border-top:1px solid color-mix(in srgb,var(--rule) 70%,transparent);border-top-left-radius:0;border-top-right-radius:0;}
+.mem-tile .mem-row:hover{background:color-mix(in srgb,var(--accent) 7%,transparent);transform:translateX(3px);}
+.mem-yr{flex:none;min-width:62px;text-align:center;padding:8px 6px 7px;border-radius:14px;color:color-mix(in srgb,var(--accent) 72%,var(--ink));font:700 20px/1 var(--font-display);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,transparent),color-mix(in srgb,var(--accent-2,var(--accent)) 8%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 24%,transparent);}
+.mem-yr small{display:block;font:600 9.5px/1.2 var(--font-display);letter-spacing:.04em;margin-top:4px;opacity:.85;}
+.mem-bd{min-width:0;} .mem-bd b{display:block;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mem-bd span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.55;color:var(--ink-soft);margin-top:2px;}
+.plan-tile .nf-plan.in-tile{margin:2px 0 0;flex-wrap:wrap;}
+.plan-tile a.nf-pill{text-decoration:none;display:inline-block;}
+.pt-note{margin:12px 2px 0;font-size:12px;line-height:1.55;color:var(--ink-soft);} .pt-note b{color:var(--ink);}
+.pt-bell{display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;padding:10px 14px;border-radius:15px;border:1px solid var(--rule);background:color-mix(in srgb,var(--ink) 3%,transparent);cursor:pointer;font:inherit;color:var(--ink);text-align:left;transition:background .2s,border-color .2s,transform .2s var(--ease);}
+.pt-bell b{flex:1;font-size:12.5px;font-weight:600;} .pt-bell i{font-style:normal;color:var(--accent);transition:transform .2s;}
+.pt-bell:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);border-color:color-mix(in srgb,var(--accent) 35%,var(--rule));} .pt-bell:hover i{transform:translateX(3px);}
+@media (max-width:960px){ .plan-tile .nf-plan.in-tile{flex-wrap:nowrap;} }
+
+@media (prefers-reduced-motion:reduce){ .announce-bar.show>span,.announce-bar.show>span::before{animation:none!important;} #main.luxe-in *{animation:none!important;} }
 </style>
 </head>
 <body>
@@ -2185,10 +2362,34 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
         <div class="tp-swatches" id="tpSwatches"></div>
       </div>
     </div>
+    <div class="bell-wrap" id="bellWrap">
+      <button class="chip-btn bell-btn" id="bellBtn" onclick="window.Notifs&&Notifs.toggle()" title="Notifications (B)" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false" aria-controls="nfPanel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg>
+      </button>
+      <span class="bell-badge" id="bellBadge" hidden aria-hidden="true">0</span>
+    </div>
     <button class="chip-btn avatar-fallback" id="profileBtn" onclick="toggleProfileMenu()" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">?</button>
   </div>
 </div>
 <div class="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ============ NOTIFICATION CENTRE ============ -->
+<div class="nf-scrim" id="nfScrim"></div>
+<section class="nf-panel" id="nfPanel" role="dialog" aria-label="Notifications" tabindex="-1">
+  <div class="nf-grab" aria-hidden="true"></div>
+  <header class="nf-head">
+    <div><h2>Notifications</h2><p id="nfSub">সব দেখা হয়েছে</p></div>
+    <div class="nf-head-act">
+      <button type="button" class="nf-ib" id="nfReadAll" title="সব পড়া হয়েছে" aria-label="Mark all as read"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12.5l4.5 4.5L15 8.5"/><path d="M11 16.5l.5.5L21 7.5"/></svg></button>
+      <button type="button" class="nf-ib" id="nfPrefsBtn" title="পছন্দ" aria-label="Notification preferences" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+      <button type="button" class="nf-ib nf-close" id="nfClose" title="বন্ধ করো" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </header>
+  <div class="nf-prefs" id="nfPrefs"></div>
+  <div id="nfPlan"></div>
+  <div class="nf-tabs" id="nfTabs" role="tablist" aria-label="Notification type"></div>
+  <div class="nf-list" id="nfList" role="list" aria-live="polite"></div>
+</section>
 
 <!-- ============ PROFILE POPOVER ============ -->
 <div class="profile-menu" id="profileMenu">
@@ -2199,11 +2400,7 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
       <div class="pm-email" id="pmEmail"></div>
     </div>
   </div>
-  <button class="pm-item pm-admin" id="pmBackend" hidden onclick="closeProfileMenu();openBackend()">
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>
-    Go to Backend
-  </button>
-  <div class="pm-sep" id="pmBackendSep" hidden></div>
+  <div id="pmAdminSlot"></div>   <!-- filled only for a signed-in administrator (see syncProfileUI) -->
   <button class="pm-item" onclick="closeProfileMenu();go('settings')">
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.5 1 .51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     Customization &amp; Settings
@@ -2504,7 +2701,7 @@ if(!window.__FB_FAILED__){
 // ---------- 0. Product configuration ----------
 const APP = Object.freeze({
   name: 'JournalOS',
-  version:'1.2.1',
+  version:'1.7.0',
   tagline: 'Write First. Everything Else Second.',
   promise: 'You write. JournalOS remembers, understands, organizes, and reflects.',
   schemaVersion: 1,      // stamped on newly written docs; lets future migrations find old ones
@@ -2551,9 +2748,23 @@ const ADMIN_EMAILS = Object.freeze([
 const ADMIN_PASSCODE = '12340';           // change here (and in firestore.rules deploys, nothing else)
 const ADMIN_SESSION_KEY = 'journalos.adminUnlocked';
 
-function isAdminUser(){
+function isSuperAdmin(){
   const em = (state.user && state.user.email || '').trim().toLowerCase();
   return !!em && ADMIN_EMAILS.includes(em);
+}
+// An administrator is an owner (ADMIN_EMAILS) or someone an owner selected in the
+// Control Center → Admins page (a document admins/{email}, checked on the server).
+function isAdminUser(){ return isSuperAdmin() || !!state.isDelegatedAdmin; }
+function attachAdminRoleCheck(){
+  state.isDelegatedAdmin = false;
+  const em = (state.user && state.user.email || '').trim().toLowerCase(), uid = state.user && state.user.uid;
+  if(!em || isSuperAdmin()){ syncProfileUI(); return; }
+  db.collection('admins').doc(em).get().then(snap=>{
+    if(!state.user || state.user.uid !== uid) return;
+    state.isDelegatedAdmin = !!snap.exists;
+    syncProfileUI();
+    if(state.isDelegatedAdmin && typeof attachAdminListeners === 'function'){ try{ attachAdminListeners(); }catch(e){} }
+  }).catch(err=>{ state.isDelegatedAdmin = false; console.warn('admin role check unavailable', err && err.code); });
 }
 function adminUnlocked(){
   try{ return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }catch(e){ return false; }
@@ -2597,6 +2808,8 @@ const DEFAULT_APP_CONFIG = Object.freeze({
   entryLimitDefault:0,
   maxBooks:0,            // 0 = unlimited custom books per person (the Daily Journal is always there)
   requirePro:true,       // false = the whole app is open to every signed-in user (no paywall)
+  announcements:[],      // broadcasts the admin writes for the 🔔 notification centre
+  notifications:{expiryDays:[7,3,1], nudges:true, memories:true, milestones:true, whatsNew:true},
   pendingMaxDays:14      // a pending (unverified) payment keeps Pro open for this many days
 });
 
@@ -3395,6 +3608,8 @@ function renderSettings(){
       <h4 style="margin:18px 0 0;font-size:13px;color:var(--text-muted);">Dashboard sections</h4>
       ${dashToggle('todayJournal','Today\'s Journal','Today\'s entry, mood chip and Continue writing.')}
       ${dashToggle('streakStats','Stat Tiles','Words today, day streak, total entries, today\'s mood.')}
+      ${dashToggle('memories','On This Day','Entries you wrote on this date in earlier years.')}
+      ${dashToggle('planTile','Plan Status','Days left on your Pro plan, with a renew shortcut.')}
       ${dashToggle('dailyOverview','Activity Chart &amp; Mood','7-day writing activity chart and mood breakdown.')}
       ${dashToggle('aiSummary','AI Daily Summary','Today\'s summary — Gemini if a key is set, otherwise a local one.')}
       ${dashToggle('lifeHighlights','Life Highlights','Latest Achievement, Idea, Experiment and Lesson.')}
@@ -5179,6 +5394,7 @@ function resetSessionState(){
   state.searchIndex = {}; state.searchIndexLoaded = false; state.askConversation = [];
   Object.values(state.mediaBlobs || {}).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
   state.media = []; state.mediaBlobs = {}; state.mediaUpload = {}; state.pendingMedia = {}; state.mediaFiles = {};
+  state.isDelegatedAdmin = false;
   state.loaded = {entries:false, life:false, books:false}; state.books = []; state.booksOk = false; state.shelfBook = null; state.writeBookId = null; state.writeBookIdOnce = null; state.loadError = {}; state.entriesVersion++; state.lifeVersion++;
   state.onboardingShown = false; state.focusMode = false; state.lastHybrid = null; state.__ana = null;
   window.__draft = null;
@@ -5249,6 +5465,7 @@ function boot(){
         attachUserDocListener,
         attachEntriesListener,
         attachLifeListeners,
+        attachAdminRoleCheck,      // is this person an administrator? (decides if the Backend entry exists)
         attachBooksListener,       // the bookshelf (custom books); the Daily Journal needs no document
         attachMediaListener,       // (the search index listener is attached lazily — see ensureSearchIndexListener)
         seedDraftFromRemoteIfNeeded,
@@ -5447,12 +5664,17 @@ function syncProfileUI(){
   if(pmName) pmName.textContent = name;
   const pmEmail = document.getElementById('pmEmail');
   if(pmEmail) pmEmail.textContent = (state.user && state.user.email) || '';
-  // "Go to Backend" exists in the DOM for everyone but is only revealed to an
-  // admin account — and it still asks for the passcode before opening.
-  const admin = isAdminUser();
-  const pmB = document.getElementById('pmBackend'), pmS = document.getElementById('pmBackendSep');
-  if(pmB) pmB.hidden = !admin;
-  if(pmS) pmS.hidden = !admin;
+  // The backend entry is created only for an administrator; for everyone else it
+  // does not exist in the page at all (nothing to un-hide or inspect).
+  const slot = document.getElementById('pmAdminSlot');
+  if(slot){
+    slot.innerHTML = isAdminUser() ? `
+      <button class="pm-item pm-admin" onclick="closeProfileMenu();openBackend()">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>
+        Go to Backend
+      </button>
+      <div class="pm-sep"></div>` : '';
+  }
 }
 function toggleProfileMenu(){
   const open = document.getElementById('profileMenu').classList.toggle('show');
@@ -5549,6 +5771,7 @@ function render(){
   enhanceA11y(main);
   restoreFocus(main, fk);
   updateStreak();
+  if(window.Notifs) Notifs.soon();
   if(gate.status === 'ready'){
     if(state.view==='write') refreshAIPreview('load');
     if(state.view==='dashboard') refreshDashboardAISummary();
@@ -5750,6 +5973,9 @@ function renderDashboard(){
         ${todayEntry && hasMood(todayEntry.mood) ? `<div class="delta flat">Intensity ${todayEntry.moodIntensity||5}/10</div>` : `<div class="delta down" style="cursor:pointer;" onclick="openMoodSheet()">tap to log →</div>`}</div>
       </div>
     ` : ''}
+
+    ${dashSectionOn('memories') && typeof dashMemoryTile === 'function' ? dashMemoryTile() : ''}
+    ${dashSectionOn('planTile') && typeof dashPlanTile === 'function' ? dashPlanTile() : ''}
 
     ${dashSectionOn('dailyOverview') ? `
       <div class="tile dash-wide">
@@ -10959,6 +11185,473 @@ document.addEventListener('keydown', e=>{
 })();
 PWA.init();
 applyAccent();
+})();
+</script>
+<script>
+/* ================================================================
+   NOTIFICATION CENTRE  (Round 12)
+   A real inbox for the top-right 🔔. Nothing here costs money: it is built
+   from the data the app already has (orders, access, config, entries) plus
+   messages the admin writes into Firestore. Read/dismissed state and the
+   "what changed since last time" baselines live in localStorage.
+   ================================================================ */
+const Notifs = (function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => escapeHtml(String(s == null ? '' : s));
+const bn = n => (typeof bnDigits === 'function' ? bnDigits(n) : String(n));
+const DAY = 86400000;
+const WHATS_NEW = [
+  {id:'v1.7.0', at:'2026-11-09', icon:'✨', title:'JournalOS আরও প্রিমিয়াম হলো', body:'নতুন নোটিফিকেশন সেন্টার, গ্লাস-লাক্সারি ডিজাইন, দ্রুত অ্যাকশন বার আর অনেক ছোট ছোট উন্নতি।', action:{label:'ড্যাশবোর্ড', go:'dashboard'}}
+];
+const MS_STREAK = [3, 7, 14, 30, 50, 100, 200, 365, 500, 1000];
+const MS_ENTRIES = [1, 10, 25, 50, 100, 250, 500, 1000, 2500];
+const MS_WORDS = [1000, 5000, 10000, 25000, 50000, 100000, 250000];
+const TABS = [['all', 'সব'], ['plan', 'প্ল্যান'], ['journal', 'জার্নাল'], ['update', 'আপডেট']];
+let S = null, uid = null, tab = 'all', isOpen = false, prefsOpen = false, primed = false, soonT = null, ticker = null,
+    seen = new Set(), list = [], entriesSeenAt = 0, lastFocus = null, toastedStart = false;
+
+/* ---------- storage ---------- */
+function skey(){ return 'journalos.nf.' + (state.user ? state.user.uid : 'anon'); }
+function load(){
+  const u = state.user ? state.user.uid : null;
+  if(S && uid === u) return S;
+  uid = u; let o = null;
+  try{ o = JSON.parse(localStorage.getItem(skey()) || 'null'); }catch(e){}
+  S = Object.assign({read:{}, gone:{}, events:[], base:null, ms:null, alerted:{}, backupAt:0, born:Date.now()}, o || {});
+  S.prefs = Object.assign({browser:false, nudges:true, memories:true}, S.prefs || {});
+  return S;
+}
+function prune(o, max){ const k = Object.keys(o); if(k.length > max) k.sort((a, b) => o[a] - o[b]).slice(0, k.length - max).forEach(x => delete o[x]); }
+function save(){
+  if(!S) return;
+  prune(S.read, 500); prune(S.gone, 500); prune(S.alerted, 300);
+  const cut = Date.now() - 60 * DAY; S.events = (S.events || []).filter(e => e.at > cut).slice(-40);
+  try{ localStorage.setItem(skey(), JSON.stringify(S)); }catch(e){}
+}
+
+/* ---------- small helpers ---------- */
+function ago(ms){
+  const s = Math.max(0, (Date.now() - ms) / 1000);
+  if(s < 60) return 'এইমাত্র';
+  if(s < 3600) return bn(Math.floor(s / 60)) + ' মিনিট আগে';
+  if(s < 86400) return bn(Math.floor(s / 3600)) + ' ঘণ্টা আগে';
+  if(s < 172800) return 'গতকাল';
+  if(s < 86400 * 30) return bn(Math.floor(s / 86400)) + ' দিন আগে';
+  return new Date(ms).toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+}
+const dfmt = ms => new Date(ms).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+function cfg(){ return Object.assign({expiryDays:[7, 3, 1], nudges:true, memories:true, milestones:true, whatsNew:true}, (appConfig().notifications) || {}); }
+function snippet(e){
+  const t = (e.title || '').trim(); if(t) return t;
+  return String(e.content || '').replace(/<[^>]*>/g, ' ').replace(/[#*_>`~\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110) || 'একটা পুরোনো লেখা';
+}
+function safeLink(l){ l = String(l || '').trim(); return /^\/(?!\/)/.test(l) || /^https:\/\//i.test(l) ? l : ''; }
+function compOn(){ const a = state.access || {}; return !!a.complimentary && (!a.complimentaryUntil || Date.parse(a.complimentaryUntil + 'T23:59:59') > Date.now()); }
+function proNow(){ const s = state.sub; return isAdminUser() || compOn() || !!(s && (s.status === 'active' || s.status === 'pending')); }
+function ready(){ return !!(state.user && state.appConfigLoaded && state.accessLoaded && (state.ordersLoaded || state.gateTimedOut)); }
+function todayStart(){ const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+
+/* ---------- persistent "something changed" events ---------- */
+function addEvent(e){
+  const s = load();
+  if((s.events || []).some(x => x.id === e.id)) return;
+  s.events.push(Object.assign({at:Date.now()}, e));
+}
+function detectChanges(){
+  if(!state.sub || state.ordersError || !state.ordersLoaded || !state.accessLoaded) return;
+  const s = load(), sub = state.sub, a = state.access || {}, r = currentRestrictions();
+  const now = {st:sub.status, exp:sub.expiresAt || 0, label:sub.order ? (sub.order.planLabel || '') : '', comp:!!a.complimentary, susp:!!r.suspended, ro:!!r.readOnly};
+  const b = s.base;
+  if(!b){
+    s.base = now;
+    addEvent({id:'welcome', kind:'update', tone:'info', icon:'🔔', title:'নোটিফিকেশন সেন্টার চালু', body:'সাবস্ক্রিপশনের মেয়াদ, পেমেন্ট, লেখার রিমাইন্ডার, মাইলস্টোন আর অ্যাডমিনের খবর — সব এখানে পাবে।'});
+    save(); return;
+  }
+  const wasPro = b.st === 'active' || b.st === 'pending', isPro = now.st === 'active' || now.st === 'pending', T = Date.now();
+  if(b.st === 'pending' && now.st === 'active')
+    addEvent({id:'ev-ver-' + T, kind:'plan', tone:'success', icon:'✅', title:'পেমেন্ট ভেরিফাই হয়েছে', body:'তোমার Pro এখন পুরোপুরি অ্যাক্টিভ — ' + dfmt(now.exp) + ' পর্যন্ত।', action:{label:'প্ল্যান দেখো', go:'settings'}});
+  else if(!wasPro && isPro)
+    addEvent({id:'ev-start-' + T, kind:'plan', tone:'success', icon:'🎉', title:'Pro চালু হয়েছে', body:(now.st === 'pending' ? 'ভেরিফিকেশন চলছে, তবে এখনই সব ফিচার ব্যবহার করতে পারবে। ' : '') + dfmt(now.exp) + ' পর্যন্ত মেয়াদ।', action:{label:'প্ল্যান দেখো', go:'settings'}});
+  else if(wasPro && isPro){
+    if(b.label && now.label && b.label !== now.label)
+      addEvent({id:'ev-plan-' + T, kind:'plan', tone:'info', icon:'🔁', title:'প্ল্যান বদলেছে', body:b.label + ' → ' + now.label + ' · মেয়াদ ' + dfmt(now.exp) + ' পর্যন্ত।', action:{label:'প্ল্যান দেখো', go:'settings'}});
+    else if(now.exp > b.exp + DAY / 2)
+      addEvent({id:'ev-ext-' + T, kind:'plan', tone:'success', icon:'➕', title:'সাবস্ক্রিপশন বেড়েছে', body:'এখন ' + dfmt(now.exp) + ' পর্যন্ত (' + bn(sub.daysLeft) + ' দিন বাকি)।', action:{label:'প্ল্যান দেখো', go:'settings'}});
+    else if(now.exp < b.exp - DAY / 2)
+      addEvent({id:'ev-cut-' + T, kind:'plan', tone:'warn', icon:'📅', title:'মেয়াদের তারিখ বদলেছে', body:'নতুন মেয়াদ ' + dfmt(now.exp) + ' পর্যন্ত।', action:{label:'প্ল্যান দেখো', go:'settings'}});
+  }
+  if(!b.comp && now.comp) addEvent({id:'ev-comp-on-' + T, kind:'plan', tone:'success', icon:'🎁', title:'Complimentary Pro পেয়েছ', body:'অ্যাডমিন তোমাকে বিনামূল্যে Pro অ্যাক্সেস দিয়েছে।'});
+  if(b.comp && !now.comp) addEvent({id:'ev-comp-off-' + T, kind:'plan', tone:'info', icon:'🎁', title:'Complimentary অ্যাক্সেস শেষ', body:'বিনামূল্যের Pro অ্যাক্সেস আর চালু নেই। চাইলে প্ল্যান নিতে পারো।', action:{label:'প্ল্যান নাও', href:SUBSCRIPTION.checkoutUrl}});
+  if(b.susp && !now.susp) addEvent({id:'ev-susp-' + T, kind:'plan', tone:'success', icon:'🟢', title:'অ্যাকাউন্ট আবার চালু', body:'তোমার অ্যাকাউন্টের সাসপেনশন তুলে নেওয়া হয়েছে।'});
+  if(b.ro && !now.ro) addEvent({id:'ev-ro-' + T, kind:'plan', tone:'success', icon:'✍️', title:'আবার লেখা যাবে', body:'Read-only মোড বন্ধ হয়েছে — নতুন এন্ট্রি লিখতে ও সেভ করতে পারবে।'});
+  s.base = now; save();
+}
+function detectMilestones(){
+  if(!state.loaded || !state.loaded.entries || (state.loadError && state.loadError.entries)) return;
+  if(!entriesSeenAt){ entriesSeenAt = Date.now(); setTimeout(refresh, 4300); return; }
+  if(Date.now() - entriesSeenAt < 4000) return;          // let the server snapshot settle before comparing
+  const s = load(), dv = derived();
+  const top = (arr, v) => arr.filter(x => x <= v).pop() || 0;
+  const hi = {streak:top(MS_STREAK, getStreak()), entries:top(MS_ENTRIES, dv.active.length), words:top(MS_WORDS, dv.totalWords)};
+  if(!s.ms){ s.ms = hi; save(); return; }
+  const on = cfg().milestones !== false, T = Date.now();
+  if(on){
+    if(hi.streak > s.ms.streak) addEvent({id:'ms-streak-' + hi.streak + '-' + T, kind:'journal', tone:'success', icon:'🔥', title:bn(hi.streak) + ' দিনের স্ট্রিক!', body:'টানা ' + bn(hi.streak) + ' দিন লিখেছ — দারুণ ধারাবাহিকতা। এভাবেই চালিয়ে যাও।', action:{label:'ড্যাশবোর্ড', go:'dashboard'}});
+    if(hi.entries > s.ms.entries) addEvent({id:'ms-ent-' + hi.entries + '-' + T, kind:'journal', tone:'success', icon:hi.entries === 1 ? '🌱' : '🏅', title:hi.entries === 1 ? 'প্রথম জার্নালটা লেখা হলো' : bn(hi.entries) + 'টি এন্ট্রি পূর্ণ', body:hi.entries === 1 ? 'যাত্রা শুরু! প্রতিদিন একটু একটু করে লেখো।' : 'এখন পর্যন্ত মোট ' + bn(dv.active.length) + 'টি এন্ট্রি জমেছে।', action:{label:'টাইমলাইন', go:'timeline'}});
+    if(hi.words > s.ms.words) addEvent({id:'ms-w-' + hi.words + '-' + T, kind:'journal', tone:'success', icon:'📚', title:bn(hi.words.toLocaleString('en-US')) + ' শব্দ লেখা হলো', body:'তোমার জীবনের গল্প এখন ' + bn(dv.totalWords.toLocaleString('en-US')) + ' শব্দের।', action:{label:'Insights', go:'insights'}});
+  }
+  s.ms = {streak:Math.max(s.ms.streak, hi.streak), entries:Math.max(s.ms.entries, hi.entries), words:Math.max(s.ms.words, hi.words)};
+  save();
+}
+
+/* ---------- what the person sees ---------- */
+function plan(){
+  const s = state.sub, a = state.access || {}, c = appConfig();
+  if(isAdminUser()) return {k:'admin', icon:'🛡️', title:'Admin', sub:'সব অ্যাক্সেস খোলা', tone:'ok'};
+  if(compOn()){
+    const until = a.complimentaryUntil ? Date.parse(a.complimentaryUntil + 'T23:59:59') : 0;
+    return {k:'comp', icon:'🎁', title:'Complimentary Pro', sub:until ? dfmt(until) + ' পর্যন্ত' : 'কোনো মেয়াদ নেই', days:until ? Math.max(0, Math.ceil((until - Date.now()) / DAY)) : null, total:null, tone:'ok'};
+  }
+  if(c.requirePro === false) return {k:'open', icon:'🌿', title:'সবার জন্য খোলা', sub:'এখন কোনো প্ল্যান লাগছে না', tone:'ok'};
+  if(!s) return {k:'load', icon:'⏳', title:'প্ল্যান চেক হচ্ছে…', sub:'', tone:'info'};
+  if(s.status === 'active' || s.status === 'pending'){
+    const total = Math.max(s.daysLeft, Math.round(((s.expiresAt || 0) - ((s.order && s.order.start) || Date.now())) / DAY)) || 30;
+    const tone = s.status === 'pending' ? 'info' : s.daysLeft <= 1 ? 'danger' : s.daysLeft <= 5 ? 'warn' : 'ok';
+    return {k:s.status, icon:s.status === 'pending' ? '⏳' : '👑', title:s.status === 'pending' ? 'Pro · ভেরিফিকেশন চলছে' : 'Pro · অ্যাক্টিভ', sub:dfmt(s.expiresAt) + ' পর্যন্ত', days:s.daysLeft, total, tone, cta:'রিনিউ'};
+  }
+  if(s.status === 'expired') return {k:'expired', icon:'🔒', title:'Pro-র মেয়াদ শেষ', sub:s.expiresAt ? dfmt(s.expiresAt) + '-এ শেষ হয়েছে' : '', tone:'danger', cta:'প্ল্যান নাও'};
+  if(s.status === 'rejected') return {k:'rejected', icon:'⚠️', title:'পেমেন্ট ভেরিফাই হয়নি', sub:'ট্রানজেকশন ID মেলেনি', tone:'danger', cta:'আবার পেমেন্ট'};
+  return {k:'none', icon:'✨', title:'Free', sub:'Pro নিলে সব ফিচার খুলে যাবে', tone:'info', cta:'প্ল্যান নাও'};
+}
+function build(){
+  const s = load(), out = [], now = Date.now(), c = cfg(), cf = appConfig(), a = state.access || {}, r = currentRestrictions();
+  const sub = state.sub, adminU = isAdminUser(), cOn = compOn(), push = n => out.push(n);
+  const days = (Array.isArray(c.expiryDays) ? c.expiryDays : [7, 3, 1]).map(Number).filter(n => n > 0).sort((x, y) => x - y);
+
+  /* plan & account */
+  if(!adminU && cf.requirePro !== false && !cOn && !state.ordersError && sub){
+    if(sub.status === 'active'){
+      const dl = sub.daysLeft, th = days.find(d => dl <= d);
+      if(th != null) push({id:'exp-' + th + '-' + Math.floor(sub.expiresAt / DAY), kind:'plan', tone:dl <= 1 ? 'danger' : dl <= 3 ? 'warn' : 'info', icon:dl <= 1 ? '⏰' : '⏳',
+        title:dl <= 0 ? 'আজই Pro-র মেয়াদ শেষ' : dl === 1 ? 'আগামীকাল Pro-র মেয়াদ শেষ' : 'Pro-র মেয়াদ আর ' + bn(dl) + ' দিন',
+        body:dfmt(sub.expiresAt) + '-এ মেয়াদ শেষ হবে। এখন রিনিউ করলে বাকি দিনগুলো নষ্ট হয় না — নতুন মেয়াদ তার পর থেকেই যোগ হয়।',
+        at:Math.min(now, sub.expiresAt - th * DAY), action:{label:'রিনিউ করো', href:SUBSCRIPTION.checkoutUrl}});
+    } else if(sub.status === 'pending'){
+      push({id:'pend-' + ((sub.order && sub.order.id) || ''), kind:'plan', tone:'info', icon:'⏳', title:'পেমেন্ট ভেরিফিকেশন চলছে', body:'তুমি এখনই Pro ব্যবহার করতে পারছ। ভেরিফাই হলে এখানেই জানিয়ে দেওয়া হবে।', at:tsMs(sub.order && sub.order.createdAt)});
+    } else if(sub.status === 'expired'){
+      push({id:'expired-' + (sub.expiresAt || 0), kind:'plan', tone:'danger', icon:'🔒', sticky:true, title:'Pro-র মেয়াদ শেষ', body:'তোমার সব জার্নাল নিরাপদে আছে। প্ল্যান নিলেই আবার আগের মতো ব্যবহার করতে পারবে।', at:sub.expiresAt || now, action:{label:'প্ল্যান নাও', href:SUBSCRIPTION.checkoutUrl}});
+    } else if(sub.status === 'rejected'){
+      push({id:'rej-' + ((sub.order && sub.order.id) || ''), kind:'plan', tone:'danger', icon:'⚠️', sticky:true, title:'পেমেন্ট ভেরিফাই করা যায়নি', body:'ট্রানজেকশন ID মেলেনি। সঠিক ID সহ সাপোর্টে লেখো, অথবা নতুন করে পেমেন্ট করো।', at:tsMs(sub.order && sub.order.createdAt), action:{label:'আবার পেমেন্ট', href:SUBSCRIPTION.checkoutUrl}});
+    }
+  }
+  if(cOn && a.complimentaryUntil){
+    const until = Date.parse(a.complimentaryUntil + 'T23:59:59'), dl = Math.max(0, Math.ceil((until - now) / DAY)), th = days.find(d => dl <= d);
+    if(th != null) push({id:'cexp-' + th + '-' + a.complimentaryUntil, kind:'plan', tone:dl <= 1 ? 'danger' : 'warn', icon:'🎁', title:'Complimentary অ্যাক্সেস আর ' + bn(dl) + ' দিন', body:dfmt(until) + '-এর পর বিনামূল্যের Pro বন্ধ হবে। আগেই প্ল্যান নিয়ে রাখতে পারো।', at:Math.min(now, until - th * DAY), action:{label:'প্ল্যান নাও', href:SUBSCRIPTION.checkoutUrl}});
+  }
+  if(r.suspended) push({id:'susp', kind:'plan', tone:'danger', icon:'⛔', sticky:true, title:'অ্যাকাউন্ট সাসপেন্ড করা আছে', body:'আপাতত অ্যাপ ব্যবহার করা যাবে না। তোমার লেখা নিরাপদে আছে — সাপোর্টে যোগাযোগ করো।', at:now});
+  else if(r.readOnly) push({id:'ro', kind:'plan', tone:'warn', icon:'👁️', sticky:true, title:'Read-only মোড চালু', body:'এই অ্যাকাউন্টে এখন নতুন লেখা সেভ করা যাচ্ছে না। পড়তে ও এক্সপোর্ট করতে পারবে।', at:now});
+  const lim = r.entryLimit || cf.entryLimitDefault || 0;
+  if(lim > 0 && state.loaded && state.loaded.entries){
+    const n = derived().active.length;
+    if(n >= lim) push({id:'lim-full-' + lim, kind:'plan', tone:'danger', icon:'📦', title:'এন্ট্রির সীমা পূর্ণ', body:bn(n) + '/' + bn(lim) + 'টি এন্ট্রি ব্যবহার হয়েছে। নতুন লিখতে পুরোনো কিছু আর্কাইভ বা মুছতে হবে।', at:now, action:{label:'টাইমলাইন', go:'timeline'}});
+    else if(n >= Math.ceil(lim * .8)) push({id:'lim-near-' + lim, kind:'plan', tone:'warn', icon:'📦', title:'এন্ট্রির সীমা কাছে', body:bn(n) + '/' + bn(lim) + 'টি এন্ট্রি ব্যবহার হয়েছে — আর ' + bn(lim - n) + 'টি লেখা যাবে।', at:now});
+  }
+
+  /* writing life */
+  if(state.loaded && state.loaded.entries && !r.suspended){
+    const today = todayISO(), hr = new Date().getHours(), dv = derived(), st = state.settings || {};
+    if(c.nudges !== false && s.prefs.nudges !== false && st.dailyReminder !== false){
+      const rh = parseInt(String(st.dailyReminderTime || '20:00').slice(0, 2), 10), from = isNaN(rh) ? 20 : rh;
+      if(hr >= from && !hasEntryOn(today)){
+        const stk = getStreak();
+        if(stk >= 3) push({id:'risk-' + today, kind:'journal', tone:'warn', icon:'🔥', title:bn(stk) + ' দিনের স্ট্রিক বিপদে!', body:'আজ এখনো কিছু লেখা হয়নি। এক মিনিটের ছোট্ট একটা এন্ট্রিই স্ট্রিক বাঁচিয়ে দেবে।', at:todayStart() + from * 3600000, action:{label:'এখনই লেখো', go:'write'}});
+        else push({id:'nudge-' + today, kind:'journal', tone:'info', icon:'✍️', title:'আজ এখনো লেখোনি', body:'আজকের দিনটা নিয়ে এক-দুই লাইনই যথেষ্ট — লিখে ফেলো।', at:todayStart() + from * 3600000, action:{label:'লেখো', go:'write'}});
+      }
+    }
+    if(c.nudges !== false && s.prefs.nudges !== false && st.weeklySummary && dv.active.length && new Date().getDay() === (st.weeklyReminderDay == null ? 0 : st.weeklyReminderDay)){
+      const wh = parseInt(String(st.weeklyReminderTime || '21:00').slice(0, 2), 10) || 21;
+      if(hr >= wh) push({id:'week-' + today, kind:'journal', tone:'info', icon:'🗓️', title:'সাপ্তাহিক রিফ্লেকশনের সময়', body:'এই সপ্তাহে কী লিখলে, কী শিখলে — একবার ঘুরে দেখো।', at:todayStart() + wh * 3600000, action:{label:'Insights', go:'insights'}});
+    }
+    if(c.memories !== false && s.prefs.memories !== false){
+      const md = today.slice(5), yr = +today.slice(0, 4);
+      const hit = dv.active.filter(e => e.date && e.date.slice(5) === md && +e.date.slice(0, 4) < yr).sort((x, y) => x.date < y.date ? 1 : -1)[0];
+      if(hit){ const yrs = yr - +hit.date.slice(0, 4);
+        push({id:'mem-' + today, kind:'journal', tone:'memory', icon:'🕰️', title:bn(yrs) + ' বছর আগের আজ', body:'“' + snippet(hit) + '”', at:Math.min(now, todayStart() + 6 * 3600000), action:{label:'আবার পড়ো', go:'write', arg:hit.id}}); }
+    }
+    if(dv.active.length >= 5 && now - (s.backupAt || s.born) > 30 * DAY)
+      push({id:'bk-' + Math.floor(now / (30 * DAY)), kind:'journal', tone:'info', icon:'💾', title:'ব্যাকআপ নেওয়ার সময়', body:'অনেকদিন এক্সপোর্ট করা হয়নি। একটা JSON ব্যাকআপ রেখে দাও — কয়েক সেকেন্ডের কাজ।', at:Math.max(s.backupAt || s.born, now - 30 * DAY), action:{label:'এক্সপোর্ট', go:'settings', section:'set-export'}});
+  }
+
+  /* news: what's new, admin broadcasts, direct messages, saved events */
+  if(c.whatsNew !== false) WHATS_NEW.forEach(w => { const t = Date.parse(w.at + 'T09:00:00'); if(now >= t && now - t < 30 * DAY) push({id:'wn-' + w.id, kind:'update', tone:'info', icon:w.icon, title:w.title, body:w.body, at:t, action:w.action}); });
+  (Array.isArray(cf.announcements) ? cf.announcements : []).forEach(n => {
+    if(!n || !n.id || n.active === false || !(n.title || n.body)) return;
+    if(n.expiresAt && Date.parse(n.expiresAt + 'T23:59:59') < now) return;
+    const au = n.audience || 'all';
+    if(au === 'pro' && !proNow()) return; if(au === 'free' && proNow()) return; if(au === 'admins' && !adminU) return;
+    const l = safeLink(n.link);
+    push({id:'bc-' + n.id, kind:'update', tone:n.tone || 'info', icon:n.icon || '📣', title:n.title || 'নতুন খবর', body:n.body || '', at:Date.parse(n.createdAt) || now - DAY, from:'admin', action:l ? {label:n.linkLabel || 'দেখো', href:l} : null});
+  });
+  (Array.isArray(a.inbox) ? a.inbox : []).slice(-30).forEach(m => {
+    if(!m || !m.id) return; const l = safeLink(m.link);
+    push({id:'dm-' + m.id, kind:'update', tone:m.tone || 'info', icon:m.icon || '💬', title:m.title || 'তোমার জন্য মেসেজ', body:m.body || '', at:Date.parse(m.at) || now, from:'admin', dm:true, action:l ? {label:m.linkLabel || 'খোলো', href:l} : null});
+  });
+  (s.events || []).forEach(e => push(e));
+
+  return out.filter(n => !s.gone[n.id]).map(n => Object.assign({}, n, {read:!!s.read[n.id], at:n.at || now})).sort((x, y) => y.at - x.at);
+}
+
+/* ---------- painting ---------- */
+function unreadCount(l){ return (l || list).filter(n => !n.read).length; }
+function paintBell(){
+  const n = unreadCount(), b = $('bellBadge'), w = $('bellWrap'), btn = $('bellBtn');
+  if(b){ b.textContent = n > 99 ? '99+' : bn(n); b.hidden = !n; }
+  if(w) w.classList.toggle('has', n > 0);
+  if(btn) btn.setAttribute('aria-label', n ? 'Notifications — ' + n + ' unread' : 'Notifications');
+  try{ if(navigator.setAppBadge){ n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } }catch(e){}
+}
+function ringHtml(p){
+  if(p.days == null || !p.total) return '<div class="nf-ring"><i>' + p.icon + '</i></div>';
+  const pct = Math.max(3, Math.min(100, Math.round(p.days / p.total * 100)));
+  return '<div class="nf-ring"><svg viewBox="0 0 44 44"><circle class="bg" cx="22" cy="22" r="19"/><circle class="fg" cx="22" cy="22" r="19" pathLength="100" stroke-dasharray="' + pct + ' 100"/></svg><b>' + bn(p.days) + '</b><small>দিন</small></div>';
+}
+function planCardHtml(mode){
+  const p = plan();
+  return '<div class="nf-plan tone-' + p.tone + (mode === 'tile' ? ' in-tile' : '') + '">' + ringHtml(p) +
+    '<div class="nf-plan-t"><b>' + esc(p.title) + '</b>' + (p.sub ? '<span>' + esc(p.sub) + '</span>' : '') + '</div>' +
+    (p.cta ? (mode === 'tile' ? '<a class="nf-pill" href="' + esc(SUBSCRIPTION.checkoutUrl) + '">' + esc(p.cta) + '</a>' : '<button type="button" class="nf-pill" data-plan>' + esc(p.cta) + '</button>') : '') + '</div>';
+}
+function paintPlan(){ const el = $('nfPlan'); if(el) el.innerHTML = planCardHtml('panel'); }
+function paintTabs(){
+  const el = $('nfTabs'); if(!el) return;
+  el.innerHTML = TABS.map(t => { const u = list.filter(n => !n.read && (t[0] === 'all' || n.kind === t[0])).length;
+    return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" class="' + (tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + (u ? '<em>' + bn(u) + '</em>' : '') + '</button>'; }).join('');
+}
+function itemHtml(n, i){
+  return '<div class="nf-item tone-' + esc(n.tone || 'info') + (n.read ? '' : ' unread') + '" role="listitem" tabindex="0" data-i="' + i + '">' +
+    '<span class="nf-ic" aria-hidden="true">' + esc(n.icon || '🔔') + '</span>' +
+    '<div class="nf-bd"><div class="nf-tt">' + esc(n.title) + (n.from === 'admin' ? '<em>' + (n.dm ? 'তোমার জন্য' : 'Admin') + '</em>' : '') + '</div>' +
+    (n.body ? '<div class="nf-tx">' + esc(n.body) + '</div>' : '') +
+    '<div class="nf-mt"><span>' + ago(n.at) + '</span>' + (n.action ? '<button type="button" class="nf-act" data-act="' + i + '">' + esc(n.action.label || 'খোলো') + ' <b aria-hidden="true">→</b></button>' : '') + '</div></div>' +
+    (n.sticky ? '' : '<button type="button" class="nf-x" data-x="' + i + '" aria-label="মুছে ফেলো" title="মুছে ফেলো"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>') + '</div>';
+}
+function paintList(){
+  const el = $('nfList'); if(!el) return;
+  const vis = list.map((n, i) => [n, i]).filter(([n]) => tab === 'all' || n.kind === tab);
+  if(!vis.length){
+    el.innerHTML = '<div class="nf-empty"><div class="nf-empty-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg><i>✦</i></div><b>সব ঠিকঠাক</b><span>নতুন কিছু নেই। কিছু ঘটলেই এখানে জানাব।</span></div>';
+    return;
+  }
+  const un = vis.filter(([n]) => !n.read), rd = vis.filter(([n]) => n.read);
+  el.innerHTML = (un.length ? '<div class="nf-sec">নতুন · ' + bn(un.length) + '</div>' + un.map(([n, i]) => itemHtml(n, i)).join('') : '') +
+    (rd.length ? '<div class="nf-sec">আগের</div>' + rd.map(([n, i]) => itemHtml(n, i)).join('') : '');
+}
+function prefRow(id, label, desc, on, dis){
+  return '<div class="nf-pref"><div><b>' + label + '</b><span>' + desc + '</span></div><label class="switch"><input type="checkbox" id="' + id + '" ' + (on ? 'checked' : '') + (dis ? ' disabled' : '') + '><span class="track"></span></label></div>';
+}
+function paintPrefs(){
+  const el = $('nfPrefs'); if(!el) return;
+  const s = load(), sup = typeof Notification !== 'undefined', perm = sup ? Notification.permission : 'unsupported';
+  const bdesc = !sup ? 'এই ব্রাউজারে সাপোর্ট নেই' : perm === 'denied' ? 'ব্রাউজারে ব্লক করা আছে — ঠিকানার পাশের 🔒 থেকে অনুমতি দাও' : 'অ্যাপ খোলা থাকলে নতুন নোটিফিকেশনে ব্রাউজার অ্যালার্ট দেখাবে';
+  el.innerHTML = '<div class="nf-prefs-h">পছন্দ</div>' +
+    prefRow('nfPBrowser', 'ব্রাউজার অ্যালার্ট', bdesc, !!s.prefs.browser && perm === 'granted', !sup || perm === 'denied') +
+    prefRow('nfPNudge', 'লেখার রিমাইন্ডার ও স্ট্রিক', '“আজ এখনো লেখোনি” ও স্ট্রিক সতর্কতা', s.prefs.nudges !== false) +
+    prefRow('nfPMem', 'মেমোরি', '“এক বছর আগের আজ” মনে করানো', s.prefs.memories !== false) +
+    '<div class="nf-prefs-f"><button type="button" class="nf-link" data-act2="settings">দৈনিক/সাপ্তাহিক রিমাইন্ডারের সময় বদলাও →</button><button type="button" class="nf-link" data-act2="clear">পড়া নোটিফিকেশন মুছে ফেলো</button></div>';
+}
+function paintHead(){
+  const n = unreadCount(), t = $('nfSub'); if(t) t.textContent = n ? bn(n) + 'টি নতুন' : 'সব দেখা হয়েছে';
+  const b = $('nfReadAll'); if(b) b.disabled = !n;
+}
+function paintPanel(){ paintHead(); paintPlan(); paintTabs(); paintList(); if(prefsOpen) paintPrefs(); }
+
+/* ---------- state changes ---------- */
+function refresh(){
+  if(!state.user){ list = []; paintBell(); return; }
+  load();
+  if(!ready()) return;
+  detectChanges(); detectMilestones();
+  const prev = list; list = build();
+  const wasSeen = seen; seen = new Set(list.map(n => n.id));
+  if(!primed){
+    primed = true;
+    const hot = list.filter(n => !n.read && (n.from === 'admin' || n.tone === 'danger' || n.tone === 'warn'));
+    if(hot.length && !toastedStart){ toastedStart = true; setTimeout(() => { if(!isOpen) toast('🔔 তোমার ' + bn(unreadCount()) + 'টি নতুন নোটিফিকেশন আছে', {type:'info', ttl:6000, action:{label:'দেখো', fn:open}}); }, 1600); }
+  } else {
+    const fresh = list.filter(n => !n.read && !wasSeen.has(n.id));
+    if(fresh.length){
+      const bell = $('bellWrap'); if(bell && !REDUCED_MOTION.matches){ bell.classList.remove('ring'); void bell.offsetWidth; bell.classList.add('ring'); }
+      const top = fresh.find(n => n.from === 'admin');
+      if(top && !isOpen) toast('🔔 ' + (top.title || 'নতুন মেসেজ'), {type:'info', ttl:6500, action:{label:'দেখো', fn:open}});
+      const s = load();
+      if(s.prefs.browser && typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.visibilityState !== 'visible'){
+        fresh.slice(0, 2).forEach(n => { if(!s.alerted[n.id]){ s.alerted[n.id] = Date.now(); sendNotification(n.title, n.body); } }); save();
+      }
+    }
+  }
+  paintBell(); if(isOpen) paintPanel();
+}
+function soon(){
+  clearTimeout(soonT); soonT = setTimeout(refresh, 220);
+  if(!ticker){ ticker = setInterval(refresh, 60000); document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') soon(); }); }
+}
+
+/* ---------- open / close ---------- */
+function open(){
+  if(!state.user) return;
+  try{ closeProfileMenu(); }catch(e){}
+  const th = $('themeWrap'); if(th) th.classList.remove('open');
+  document.querySelectorAll('#toastRegion .toast-item').forEach(el => { if((el.dataset.msg || '').indexOf('🔔') === 0) dismissToast(el); });
+  refresh();
+  const p = $('nfPanel'), sc = $('nfScrim'), b = $('bellBtn'); if(!p) return;
+  lastFocus = document.activeElement;
+  isOpen = true; prefsOpen = false; const pr = $('nfPrefs'); if(pr) pr.classList.remove('show');
+  paintPanel();
+  p.classList.add('show'); sc.classList.add('show'); document.body.classList.add('nf-open');
+  if(b) b.setAttribute('aria-expanded', 'true');
+  setTimeout(() => { try{ p.focus({preventScroll:true}); }catch(e){} }, 30);
+}
+function close(){
+  if(!isOpen) return; isOpen = false;
+  const p = $('nfPanel'), sc = $('nfScrim'), b = $('bellBtn');
+  if(p){ p.classList.remove('show'); p.style.transform = ''; } if(sc) sc.classList.remove('show'); document.body.classList.remove('nf-open');
+  if(b) b.setAttribute('aria-expanded', 'false');
+  try{ if(lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true}); }catch(e){}
+}
+function toggle(){ isOpen ? close() : open(); }
+function mark(id){ const s = load(); if(!s.read[id]){ s.read[id] = Date.now(); save(); } }
+function run(a){
+  if(!a) return;
+  close();
+  if(a.href){ const l = safeLink(a.href); if(l){ if(/^https:/i.test(l) && l.indexOf(location.origin) !== 0) window.open(l, '_blank', 'noopener'); else location.href = l; } return; }
+  if(a.go){ go(a.go, a.arg); if(a.section) setTimeout(() => { const t = document.getElementById(a.section); if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); }, 320); }
+}
+function readAll(){ const s = load(), T = Date.now(); list.forEach(n => { s.read[n.id] = T; }); save(); list = build(); paintBell(); paintPanel(); }
+function clearRead(){ const s = load(), T = Date.now(); list.forEach(n => { if(n.read && !n.sticky) s.gone[n.id] = T; }); save(); list = build(); paintBell(); paintPanel(); }
+
+/* ---------- wiring ---------- */
+function wire(){
+  const p = $('nfPanel'); if(!p || p._wired) return; p._wired = true;
+  $('nfScrim').addEventListener('click', close);
+  $('nfClose').addEventListener('click', close);
+  $('nfReadAll').addEventListener('click', readAll);
+  $('nfPrefsBtn').addEventListener('click', () => { prefsOpen = !prefsOpen; $('nfPrefs').classList.toggle('show', prefsOpen); $('nfPrefsBtn').setAttribute('aria-expanded', String(prefsOpen)); if(prefsOpen){ paintPrefs(); const l = $('nfList'); if(l) l.scrollTop = 0; } });
+  p.addEventListener('click', e => {
+    const t = e.target;
+    const tb = t.closest('[data-tab]'); if(tb){ tab = tb.dataset.tab; paintTabs(); paintList(); return; }
+    if(t.closest('[data-plan]')){ const pl = plan(); run({href:SUBSCRIPTION.checkoutUrl}); return; }
+    const x = t.closest('[data-x]'); if(x){ const n = list[+x.dataset.x]; if(n){ const s = load(); s.gone[n.id] = Date.now(); save(); list = build(); paintBell(); paintPanel(); } return; }
+    const ac = t.closest('[data-act]'); if(ac){ const n = list[+ac.dataset.act]; if(n){ mark(n.id); run(n.action); soon(); } return; }
+    const a2 = t.closest('[data-act2]'); if(a2){ if(a2.dataset.act2 === 'settings') run({go:'settings', section:'set-notifications'}); else clearRead(); return; }
+    const it = t.closest('.nf-item'); if(it){ const n = list[+it.dataset.i]; if(n && !n.read){ mark(n.id); list = build(); paintBell(); paintHead(); paintTabs(); it.classList.remove('unread'); } }
+  });
+  p.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('nf-item')){ e.preventDefault(); e.target.click(); } });
+  p.addEventListener('change', e => {
+    const s = load(), id = e.target.id;
+    if(id === 'nfPNudge'){ s.prefs.nudges = e.target.checked; save(); list = build(); paintBell(); paintPanel(); }
+    else if(id === 'nfPMem'){ s.prefs.memories = e.target.checked; save(); list = build(); paintBell(); paintPanel(); }
+    else if(id === 'nfPBrowser'){
+      if(!e.target.checked){ s.prefs.browser = false; save(); return; }
+      if(typeof Notification === 'undefined'){ e.target.checked = false; return; }
+      const done = perm => { s.prefs.browser = perm === 'granted'; save(); state.notifPermission = perm; paintPrefs(); if(perm === 'granted') toast('ব্রাউজার অ্যালার্ট চালু হয়েছে', {type:'success'}); };
+      if(Notification.permission === 'granted') done('granted'); else Notification.requestPermission().then(done, () => done('denied'));
+    }
+  });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && isOpen){ e.stopPropagation(); close(); } }, true);
+  // phone: drag the sheet down to dismiss
+  let y0 = null, dy = 0;
+  const grab = p.querySelector('.nf-grab'), head = p.querySelector('.nf-head');
+  [grab, head].forEach(h => h && h.addEventListener('touchstart', e => { if(window.innerWidth > 600) return; y0 = e.touches[0].clientY; dy = 0; p.style.transition = 'none'; }, {passive:true}));
+  p.addEventListener('touchmove', e => { if(y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); p.style.transform = 'translateY(' + dy + 'px)'; }, {passive:true});
+  p.addEventListener('touchend', () => { if(y0 == null) return; p.style.transition = ''; const far = dy > 110; y0 = null; if(far) close(); else p.style.transform = ''; });
+}
+function reset(){ S = null; uid = null; list = []; seen = new Set(); primed = false; toastedStart = false; entriesSeenAt = 0; close(); paintBell(); }
+function init(){
+  wire();
+  // keep the bell in step with every data change the app already reacts to
+  ['applyGlobalGates', 'renderSubBar', 'updateStreak'].forEach(n => { const f = window[n]; if(typeof f === 'function') window[n] = function(){ const r = f.apply(this, arguments); soon(); return r; }; });
+  const rs = window.resetSessionState; if(typeof rs === 'function') window.resetSessionState = function(){ const r = rs.apply(this, arguments); reset(); return r; };
+  const tp = window.toggleProfileMenu; if(typeof tp === 'function') window.toggleProfileMenu = function(){ if(isOpen) close(); return tp.apply(this, arguments); };
+  ['exportDataJSON', 'exportDataMarkdown'].forEach(n => { const f = window[n]; if(typeof f === 'function') window[n] = function(){ try{ const s = load(); s.backupAt = Date.now(); save(); soon(); }catch(e){} return f.apply(this, arguments); }; });
+  soon();
+}
+return {init, open, close, toggle, refresh, soon, reset, readAll, planCardHtml, plan, cfg, get list(){ return list; }, get unread(){ return unreadCount(); }};
+})();
+window.Notifs = Notifs;
+Notifs.init();
+</script>
+<script>
+/* ================================================================
+   Round 12 — LUXE behaviours: card spotlight, staggered entrance, number
+   count-up, two dashboard cards, tiny keyboard shortcuts.
+   ================================================================ */
+(function(){
+'use strict';
+const RM = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : {matches:false};
+
+/* spotlight follows the pointer over cards (mouse / trackpad only) */
+if(window.matchMedia && matchMedia('(hover:hover)').matches){
+  let raf = 0, last = null;
+  document.addEventListener('pointermove', e => {
+    const t = e.target && e.target.closest ? e.target.closest('.tile,.card') : null;
+    if(!t) return; last = [t, e.clientX, e.clientY];
+    if(raf) return;
+    raf = requestAnimationFrame(() => { raf = 0; const el = last[0], r = el.getBoundingClientRect(); el.style.setProperty('--mx', (last[1] - r.left) + 'px'); el.style.setProperty('--my', (last[2] - r.top) + 'px'); });
+  }, {passive:true});
+}
+
+/* a view change gets the staggered rise; the dashboard numbers count up */
+function countUp(root){
+  root.querySelectorAll('.dash-stat .num').forEach(el => {
+    const t = el.textContent.trim(); if(!/^\d{1,6}$/.test(t)) return;
+    const to = +t; if(to < 2) return;
+    const T0 = performance.now(), D = 700; el.textContent = '0';
+    (function step(now){ const k = Math.min(1, (now - T0) / D), e = 1 - Math.pow(1 - k, 3); el.textContent = String(Math.round(to * e)); if(k < 1 && el.isConnected) requestAnimationFrame(step); else el.textContent = String(to); })(T0);
+  });
+}
+let lastView = null, lt = 0;
+function enter(){
+  const m = document.getElementById('main'); if(!m || RM.matches) return;
+  m.classList.add('luxe-in'); clearTimeout(lt); lt = setTimeout(() => m.classList.remove('luxe-in'), 1150);
+  if(state.view === 'dashboard') countUp(m);
+}
+const r0 = window.render;
+if(typeof r0 === 'function') window.render = function(){
+  const out = r0.apply(this, arguments);
+  try{ if(state.view !== lastView){ lastView = state.view; enter(); } }catch(e){}
+  return out;
+};
+
+/* dashboard cards */
+window.dashPlanTile = function(){
+  if(!window.Notifs) return '';
+  const p = Notifs.plan(), n = Notifs.unread, days = (Notifs.cfg().expiryDays || []).map(Number).filter(x => x > 0).sort((a, b) => b - a);
+  const note = (p.k === 'active' || p.k === 'pending' || p.k === 'comp') && days.length
+    ? '<div class="pt-note">⏰ মেয়াদ শেষের <b>' + days.map(bnDigits).join(', ') + ' দিন</b> আগে নোটিফিকেশন পাবে।</div>' : '';
+  return '<div class="tile dash-narrow plan-tile"><div class="dash-tile-head"><span class="t">👑 Your plan</span><span class="link" style="cursor:pointer;" onclick="Notifs.open()">🔔 Alerts</span></div>' +
+    Notifs.planCardHtml('tile') + note +
+    '<button type="button" class="pt-bell" onclick="Notifs.open()"><span>🔔</span><b>' + (n ? bnDigits(n) + 'টি নতুন নোটিফিকেশন' : 'সব নোটিফিকেশন দেখা হয়েছে') + '</b><i>→</i></button></div>';
+};
+window.dashMemoryTile = function(){
+  const today = todayISO(), md = today.slice(5), yr = +today.slice(0, 4);
+  const hits = derived().active.filter(e => e.date && e.date.slice(5) === md && +e.date.slice(0, 4) < yr).sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 3);
+  const body = hits.length ? hits.map(e => {
+    const n = yr - +e.date.slice(0, 4), t = (e.title || '').trim();
+    return '<div class="mem-row" role="button" tabindex="0" onclick="go(\'write\',\'' + e.id + '\')" onkeydown="if(event.key===\'Enter\')this.click()"><div class="mem-yr">' + bnDigits(n) + '<small>বছর আগে</small></div><div class="mem-bd"><b>' + escapeHtml(t || 'Untitled') + '</b><span>' + escapeHtml(entryPreview(e, 120)) + '</span></div></div>';
+  }).join('') : '<div class="empty" style="padding:12px 0;">আজকের দিনের পুরোনো লেখা এখনো নেই। এক বছর পর এখানে আজকের এই দিনটা ফিরে আসবে।</div>';
+  return '<div class="tile dash-wide mem-tile"><div class="dash-tile-head"><span class="t">🕰️ On This Day</span></div>' + body + '</div>';
+};
+
+/* keyboard: B = notifications, N = new journal (never while typing, never over a dialog) */
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.repeat) return;
+  const t = e.target, tag = t && t.tagName;
+  if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+  if(!state.user || document.querySelector('#appLock.show, .modal-backdrop.show, .cmdk.show')) return;
+  if(e.key === 'b' || e.key === 'B'){ e.preventDefault(); Notifs.toggle(); }
+  else if((e.key === 'n' || e.key === 'N') && state.view !== 'write'){ e.preventDefault(); if(typeof startQuickWrite === 'function') startQuickWrite(); }
+});
 })();
 </script>
 </body>
