@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-22.5">
+<meta name="app-build" content="2026-11-22.6">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2420,6 +2420,26 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 @media (max-width:640px){.fb-moods{grid-template-columns:repeat(3,1fr)}.fb-mood{padding:12px 2px;font-size:12px}.fb-mood .em{font-size:26px}.fb-chip{min-height:40px}}
 @media (pointer:coarse){.fb-pill,.fb-tabs button{min-height:44px}}
 
+/* ===== Design polish v2 — ideas from reference journals: soft cards, gentle note, prompt card, mood week, tile links ===== */
+.gentle{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:9px 10px 9px 16px;border-radius:14px;background:color-mix(in srgb,var(--accent) 9%,var(--paper-card));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--rule));color:var(--ink-soft);font-size:13.5px}
+.gentle .sp{color:var(--accent)}.gentle .t{flex:1;text-align:center}
+.gentle button{width:34px;height:34px;border:0;border-radius:50%;background:none;color:var(--ink-faint);cursor:pointer;font-size:12px}.gentle button:hover{background:var(--paper-dim);color:var(--ink)}
+.dash-prompt{grid-column:span 8;display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:170px;padding:20px 22px;border-radius:var(--radius-lg);border:1px solid color-mix(in srgb,var(--accent) 26%,var(--rule));background:linear-gradient(125deg,color-mix(in srgb,var(--accent) 17%,var(--paper-card)),var(--paper-card) 72%);box-shadow:var(--shadow)}
+.dash-prompt .pr-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.dash-prompt .another{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:6px 8px;border-radius:9px;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;cursor:pointer}.dash-prompt .another:hover{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--ink)}
+.dash-prompt q{quotes:none;max-width:26ch;font-family:var(--font-serif);font-size:clamp(20px,2.6vw,27px);line-height:1.25;letter-spacing:-.01em;color:var(--ink)}
+.dash-week{grid-column:span 4;display:flex;flex-direction:column}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:14px 0 10px}
+.wk>div{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;color:var(--ink-faint)}
+.wk-dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;line-height:1}
+.wk-dot:not([class*="mood-"]){border:1.5px dashed var(--rule)}
+.wk .today .wk-dot{box-shadow:0 0 0 2px var(--paper-card),0 0 0 3.5px var(--accent)}.wk .today{color:var(--ink);font-weight:600}
+.wk-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-soft)}
+.tile-link{cursor:pointer}
+.tile-link::after{content:attr(data-go) "  →";display:block;margin-top:auto;padding-top:10px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-soft);transition:color .15s}
+.tile-link:hover{transform:translateY(-2px);box-shadow:var(--shadow-float)}.tile-link:hover::after{color:var(--accent)}
+@media (max-width:900px){.dash-prompt,.dash-week{grid-column:span 12}.dash-prompt{min-height:0}}
+@media (prefers-reduced-motion:reduce){.tile-link:hover{transform:none}}
 /* ===== UX polish v1 (additive, token-based; see CHANGES.md) ===== */
 :is(a,button,input,select,textarea,summary,[tabindex],[role=button],.btn,.chip-btn,.nav-item):focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important}
 ::selection{background:var(--accent-soft);color:var(--ink)}
@@ -6001,6 +6021,40 @@ function getStreak(){
 }
 function updateStreak(){ document.getElementById('streakNum').textContent = getStreak(); }
 
+
+/* ---------------- Dashboard design pass: gentle note, daily prompt, mood week ---------------- */
+const WRITING_PROMPTS = [
+  'What felt heavy today, and what helped even a little?', 'What is one small thing you are grateful for right now?',
+  'What did you learn about yourself this week?', 'Describe a moment from today that you want to remember.',
+  'What are you avoiding, and what would a gentle first step look like?', 'Who made your day easier, and how?',
+  'What do you need more of, and less of, this month?', 'Write a short letter to yourself one year from now.',
+  'What made you smile recently?', 'What would make tomorrow feel like a good day?',
+  'What are you proud of that nobody noticed?', 'আজ মনটা কেমন, এক কথায় লেখো। তারপর কেন সেটা লেখো।'
+];
+function promptIndex(){
+  let i = NaN; try{ i = parseInt(sessionStorage.getItem('journalos.promptIdx'), 10); }catch(e){}
+  if(!(i >= 0)) i = Math.floor(Date.now() / 86400000);
+  return i % WRITING_PROMPTS.length;
+}
+function nextPrompt(){ try{ sessionStorage.setItem('journalos.promptIdx', String((promptIndex() + 1) % WRITING_PROMPTS.length)); }catch(e){} render(); }
+function startPrompt(){ window.__promptSeed = {t: WRITING_PROMPTS[promptIndex()], at: Date.now()}; go('write'); }
+function takePromptSeed(){ const s = window.__promptSeed; window.__promptSeed = null; return s && Date.now() - s.at < 15000 ? s.t : ''; }
+const GENTLE_LINES = ['A few honest sentences are enough. Writing today already counts.', 'There is no right way to journal. Start with one line.', 'You do not have to write about everything. Just what matters today.', 'Missed a day? Nothing is lost. Your journal is here when you are.', 'Small entries add up to a whole year of you.'];
+function gentleHtml(today){
+  let gone = ''; try{ gone = localStorage.getItem('journalos.gentle') || ''; }catch(e){}
+  if(gone === today) return '';
+  const line = GENTLE_LINES[Math.floor(Date.now() / 86400000) % GENTLE_LINES.length];
+  return `<div class="gentle" role="note"><span class="sp" aria-hidden="true">✦</span><span class="t">${escapeHtml(line)}</span><button type="button" aria-label="Dismiss this note" onclick="dismissGentle(this)">✕</button></div>`;
+}
+function dismissGentle(btn){ try{ localStorage.setItem('journalos.gentle', todayISO()); }catch(e){} const n = btn.closest('.gentle'); if(n) n.remove(); }
+function moodWeekHtml(dv, last7){
+  const days = last7.map(d => {
+    const e = (dv.byDate.get(d.key) || []).find(x => hasMood(x.mood)), m = e ? moodInfo(e.mood) : null;
+    return `<div class="${d.key === todayISO() ? 'today' : ''}"><span class="wk-dot ${m ? m.cls : ''}" title="${m ? escapeAttr(m.label) : 'No mood logged'}">${m ? m.emoji : ''}</span><span>${escapeHtml(fmtDate(d.key, {weekday: 'short'}))}</span></div>`;
+  }).join('');
+  const logged = last7.filter(d => (dv.byDate.get(d.key) || []).some(x => hasMood(x.mood))).length;
+  return `<div class="tile dash-week"><div class="dash-tile-head"><span class="t">Mood this week</span><span class="link" onclick="go('insights')" style="cursor:pointer;">Insights →</span></div><div class="wk" role="list">${days}</div><div class="wk-foot">${logged} of 7 days logged</div></div>`;
+}
 function renderDashboard(){
   const today = todayISO();
   const dv = derived();                      // memoized per snapshot — no re-scan of every journal per render
@@ -6071,6 +6125,8 @@ function renderDashboard(){
 
     </div>
 
+    ${gentleHtml(today)}
+
     <div class="dash-grid">
 
     ${dashSectionOn('todayJournal') ? `
@@ -6099,17 +6155,17 @@ function renderDashboard(){
     </div>` : ''}
 
     ${dashSectionOn('streakStats') ? `
-      <div class="tile dash-stat">
+      <div class="tile dash-stat tile-link" role="link" tabindex="0" data-go="Write now" onclick="go('write')" onkeydown="if(event.key==='Enter')this.click()">
         <div class="tile-icn tint-accent">✍️</div>
         <div><div class="num">${todayWords}</div><div class="lbl">Words today</div>
         ${wordsDelta!==0 ? `<div class="delta ${wordsDelta>0?'up':'down'}">${wordsDelta>0?'↑':'↓'} ${Math.abs(wordsDelta)} vs. yesterday</div>` : `<div class="delta flat">— same as yesterday</div>`}</div>
       </div>
-      <div class="tile dash-stat">
+      <div class="tile dash-stat tile-link" role="link" tabindex="0" data-go="See insights" onclick="go('insights')" onkeydown="if(event.key==='Enter')this.click()">
         <div class="tile-icn tint-rust">🔥</div>
         <div><div class="num">${streak}</div><div class="lbl">Day streak</div>
         ${streak>streakYesterday ? `<div class="delta up">↑ growing</div>` : streak===0 ? `<div class="delta down">start today</div>` : `<div class="delta flat">keep it going</div>`}</div>
       </div>
-      <div class="tile dash-stat">
+      <div class="tile dash-stat tile-link" role="link" tabindex="0" data-go="Open library" onclick="go('timeline')" onkeydown="if(event.key==='Enter')this.click()">
         <div class="tile-icn tint-sky">📚</div>
         <div><div class="num">${activeEntries.length}</div><div class="lbl">Total entries</div>
         <div class="delta flat">${totalWords.toLocaleString()} words total</div></div>
@@ -6121,7 +6177,15 @@ function renderDashboard(){
       </div>
     ` : ''}
 
-    ${dashSectionOn('memories') && typeof dashMemoryTile === 'function' ? dashMemoryTile() : ''}
+    ${dashSectionOn('todayJournal') ? `
+  <div class="dash-prompt">
+  <div class="pr-top"><span><span aria-hidden="true">✦</span> Today's prompt</span><button type="button" class="another" onclick="nextPrompt()">Show another prompt <span aria-hidden="true">↻</span></button></div>
+  <q>${escapeHtml(WRITING_PROMPTS[promptIndex()])}</q>
+  <div><button type="button" class="btn btn-primary" onclick="startPrompt()">Write about this</button></div>
+  </div>` : ''}
+  ${dashSectionOn('dailyOverview') ? moodWeekHtml(dv, last7) : ''}
+
+  ${dashSectionOn('memories') && typeof dashMemoryTile === 'function' ? dashMemoryTile() : ''}
     ${dashSectionOn('planTile') && typeof dashPlanTile === 'function' ? dashPlanTile() : ''}
 
     ${dashSectionOn('dailyOverview') ? `
@@ -6252,7 +6316,7 @@ function renderWrite(){
   const draft = entry ? {...entry, tags: entry.tags||[], notes: typeof entry.notes==='string' ? entry.notes : '', bookId: entry.bookId || DAILY_BOOK_ID} : {
     // mood starts empty on purpose — nothing is pre-selected, so a mood only
     // ever gets recorded because the user actually chose one.
-    id: null, date: todayISO(), title:'', content:'', notes:'', mood:'', moodIntensity:5, bookId: state.writeBookId || DAILY_BOOK_ID,
+    id: null, date: todayISO(), title: takePromptSeed(), content:'', notes:'', mood:'', moodIntensity:5, bookId: state.writeBookId || DAILY_BOOK_ID,
     tags:[], favorite:false, important:false, archived:false, createdAt:new Date().toISOString()
   };
   if(!hasMood(draft.mood)) draft.mood = '';
