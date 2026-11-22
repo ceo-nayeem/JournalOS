@@ -84,3 +84,11 @@ footer.site-foot{border-top:1px solid var(--line);padding:34px 0 40px;color:var(
 /* CMS announcement bar (admin → Website → Announcement) */
 .cms-announce{background:var(--teal,#0F6F6B);color:#fff;text-align:center;padding:9px 16px;font-size:14px;font-family:var(--font-bn,inherit);}
 .cms-announce a{color:#fff;font-weight:700;text-decoration:underline;margin-left:6px;}
+
+/* Design polish v2 — segmented pill navigation (desktop) */
+@media (min-width:861px){
+  .nav-links{margin-left:auto;margin-right:auto;gap:2px;padding:4px;border:1px solid var(--line);border-radius:99px;background:var(--surface2)}
+  .nav-links a{padding:8px 16px;border-radius:99px}
+  .nav-links a:hover{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(11,60,58,.12)}
+  .nav-cta{margin-left:0}
+}
