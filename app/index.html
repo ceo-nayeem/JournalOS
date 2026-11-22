@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-10.1">
+<meta name="app-build" content="2026-11-22.1">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2289,6 +2289,23 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 @media (max-width:960px){ .plan-tile .nf-plan.in-tile{flex-wrap:nowrap;} }
 
 @media (prefers-reduced-motion:reduce){ .announce-bar.show>span,.announce-bar.show>span::before{animation:none!important;} #main.luxe-in *{animation:none!important;} }
+
+/* ===== UX polish v1 (additive, token-based; see CHANGES.md) ===== */
+:is(a,button,input,select,textarea,summary,[tabindex],[role=button],.btn,.chip-btn,.nav-item):focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important}
+::selection{background:var(--accent-soft);color:var(--ink)}
+html{scrollbar-width:thin;scrollbar-color:var(--rule) transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transparent}
+.btn,.chip-btn,.sheet-action{transition:transform .12s ease-out,background-color .15s ease-out,border-color .15s ease-out,opacity .15s ease-out}
+.btn:active:not(:disabled),.chip-btn:active,.sheet-action:active{transform:scale(.97)}
+.btn:disabled,.btn[disabled]{opacity:.55;cursor:not-allowed}
+.modal,.sheet{overscroll-behavior:contain}
+[contenteditable],textarea{overflow-wrap:anywhere;line-height:1.8;letter-spacing:0;font-kerning:normal;text-rendering:optimizeLegibility}
+.tabcount,time,[class*="stat"],[class*="count"],[class*="streak"]{font-variant-numeric:tabular-nums}
+@media (pointer:coarse){
+  .btn:not(.btn-sm),.sheet-action{min-height:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px;min-height:44px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -11653,6 +11670,13 @@ document.addEventListener('keydown', e => {
   else if((e.key === 'n' || e.key === 'N') && state.view !== 'write'){ e.preventDefault(); if(typeof startQuickWrite === 'function') startQuickWrite(); }
 });
 })();
+</script>
+<script>/* UX polish v1: accessible names for icon-only buttons + polite live region for toasts (no content is read or sent) */
+(function(){var t=null;function fix(){try{document.querySelectorAll('button[title]:not([aria-label]),[role=button][title]:not([aria-label])').forEach(function(b){b.setAttribute('aria-label',b.getAttribute('title'));});
+document.querySelectorAll('.toast-region:not([aria-live])').forEach(function(r){r.setAttribute('role','status');r.setAttribute('aria-live','polite');});}catch(e){}}
+function later(){clearTimeout(t);t=setTimeout(fix,400);}
+function start(){fix();try{new MutationObserver(later).observe(document.body,{childList:true,subtree:true});}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();})();
 </script>
 </body>
 </html>
