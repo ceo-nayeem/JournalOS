@@ -222,3 +222,40 @@ td .nm{font-weight:600}td .em{font-size:12px;color:var(--mute)}
 .menu-btn{display:none}@media(max-width:900px){.menu-btn{display:grid}}
 :root[data-dens="compact"] td{padding:7px 14px}:root[data-dens="compact"] .card{padding:15px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+
+/* JournalOS UI kit — theme bridge: works with the app's tokens (--paper-card…) and the admin's (--card…) */
+.uk-sel,.uk-pop{--uk-bg:var(--paper-card,var(--card,#fff));--uk-dim:var(--paper-dim,var(--card2,#f3f4f6));--uk-line:var(--rule,var(--line,#d9dde3));--uk-ink:var(--ink,#111);--uk-ink2:var(--ink-soft,var(--ink2,#555));--uk-mute:var(--ink-faint,var(--mute,#8a8f98));--uk-acc:var(--accent,var(--a,#5b5bf0));--uk-soft:var(--accent-soft,var(--asoft,rgba(91,91,240,.14)));--uk-on:var(--paper-card,var(--card,#fff));--uk-r:10px}
+.uk-hide{position:absolute!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}
+.uk-sel{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px;max-width:100%;padding:0 11px;border:1px solid var(--uk-line);border-radius:var(--uk-r);background:var(--uk-bg);color:var(--uk-ink);font:inherit;font-size:14px;text-align:left;cursor:pointer;vertical-align:middle;transition:border-color .15s,background-color .15s}
+.uk-sel.block{display:flex;width:100%}.uk-sel.sm{min-height:30px;padding:0 8px;font-size:13px}.uk-sel.uk-date{justify-content:flex-start}
+.uk-sel:hover{border-color:var(--uk-acc)}.uk-sel[aria-expanded=true]{border-color:var(--uk-acc);box-shadow:0 0 0 3px var(--uk-soft)}
+.uk-sel:disabled{opacity:.55;cursor:not-allowed}.uk-sel.ph .uk-t{color:var(--uk-mute)}
+.uk-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.uk-car{flex:none;opacity:.6;transition:transform .15s}.uk-sel[aria-expanded=true] .uk-car{transform:rotate(180deg)}
+.uk-pop{position:fixed;z-index:100000;min-width:170px;max-width:min(92vw,340px);max-height:min(72vh,440px);overflow:auto;overscroll-behavior:contain;padding:6px;border:1px solid var(--uk-line);border-radius:14px;background:var(--uk-bg);color:var(--uk-ink);font-family:inherit;box-shadow:var(--shadow-float,var(--sh,0 14px 38px -10px rgba(0,0,0,.35)));animation:ukIn .14s ease-out}
+.uk-pop[hidden],.uk-scrim{display:none!important}.uk-pop.cal{width:300px}.uk-pop.tim{width:260px}.uk-ph{display:none}
+.uk-list{display:flex;flex-direction:column;gap:2px}.uk-grp{padding:8px 11px 3px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--uk-mute)}
+.uk-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:38px;padding:7px 11px;border:0;border-radius:9px;background:none;color:var(--uk-ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.uk-opt[hidden]{display:none}.uk-opt:hover,.uk-opt:focus-visible{background:var(--uk-dim);outline:none}.uk-opt:disabled{opacity:.45;cursor:not-allowed}
+.uk-opt.on{background:var(--uk-soft);font-weight:600}.uk-ck{visibility:hidden;color:var(--uk-acc);font-style:normal}.uk-opt.on .uk-ck{visibility:visible}
+.uk-find{width:100%;min-height:38px;margin-bottom:6px;padding:7px 11px;border:1px solid var(--uk-line);border-radius:9px;background:var(--uk-dim);color:var(--uk-ink);font:inherit;font-size:14px}
+.uk-ch{display:flex;align-items:center;gap:2px;margin-bottom:6px}.uk-ch b{flex:1;text-align:center;font-size:14.5px}
+.uk-ch button{width:32px;height:32px;border:0;border-radius:9px;background:none;color:var(--uk-ink2);font-size:17px;cursor:pointer}.uk-ch button:hover{background:var(--uk-dim)}
+.uk-cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.uk-wd{font-style:normal;text-align:center;font-size:11px;color:var(--uk-mute);padding:3px 0}
+.uk-cd{aspect-ratio:1;min-height:34px;border:0;border-radius:10px;background:none;color:var(--uk-ink);font:inherit;font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums}
+.uk-cd:hover:not(:disabled),.uk-cd:focus-visible{background:var(--uk-dim);outline:none}.uk-cd.today{box-shadow:inset 0 0 0 1.5px var(--uk-acc)}
+.uk-cd.sel{background:var(--uk-acc);color:var(--uk-on);font-weight:700}.uk-cd:disabled{opacity:.3;cursor:not-allowed}
+.uk-cf{display:flex;justify-content:space-between;gap:8px;margin-top:8px}.uk-cf button{min-height:34px;padding:0 14px;border:0;border-radius:9px;background:none;color:var(--uk-acc);font:inherit;font-size:13px;font-weight:600;cursor:pointer}.uk-cf button:hover{background:var(--uk-dim)}.uk-cf button:disabled{opacity:.4}
+.uk-cf .uk-done{margin-left:auto;background:var(--uk-acc);color:var(--uk-on)}
+.uk-tw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.uk-tc{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto;overscroll-behavior:contain;padding:2px}
+.uk-tv{min-height:36px;border:0;border-radius:9px;background:none;color:var(--uk-ink);font:inherit;font-size:14px;cursor:pointer;font-variant-numeric:tabular-nums}.uk-tv:hover{background:var(--uk-dim)}.uk-tv.on{background:var(--uk-acc);color:var(--uk-on);font-weight:700}
+@keyframes ukIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (pointer:coarse){.uk-sel{min-height:44px}.uk-sel.sm{min-height:36px}.uk-opt,.uk-tv{min-height:44px}.uk-cd{min-height:40px}}
+@media (max-width:640px){
+  .uk-scrim{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.45)}.uk-pop:not([hidden])~.uk-scrim,.uk-scrim:not([hidden]){display:block!important}
+  .uk-pop{left:0!important;right:0;bottom:0;top:auto!important;width:auto!important;max-width:none;max-height:85vh;padding:0 14px calc(14px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;border-bottom:0;animation:ukUp .22s ease-out}
+  .uk-ph{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1;margin:0 -14px 8px;padding:14px 12px 10px 18px;background:var(--uk-bg)}.uk-ph b{font-size:16px}
+  .uk-x{width:40px;height:40px;border:0;border-radius:50%;background:var(--uk-dim);color:var(--uk-ink);cursor:pointer}
+  .uk-cd{min-height:44px;font-size:15px}.uk-tc{max-height:240px}
+}
+@keyframes ukUp{from{transform:translateY(28px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.uk-pop,.uk-sel,.uk-car{animation:none!important;transition:none!important}}

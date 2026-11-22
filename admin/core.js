@@ -310,3 +310,149 @@ A.spark = function(vals){
 };
 A._db = () => db;
 })();
+
+/* JournalOS UI kit — replaces native <select>, <input type=date|time> with themed popovers (bottom sheets on phones).
+   Progressive enhancement: the native control stays in the DOM (hidden), so every existing onchange / .value / label keeps working. */
+(function(){
+  if(window.UK) return; const UK = window.UK = {};
+  const SKIP = '[multiple],[data-native],.fmt-size,.uk-native';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const el = (t, c, h) => { const e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
+  const narrow = () => { try{ return matchMedia('(max-width:640px)').matches; }catch(e){ return false; } };
+  const p2 = n => String(n).padStart(2, '0');
+  const CARET = '<svg class="uk-car" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CALIC = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>';
+  const CLKIC = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  let pop, scrim, cur = null;
+
+  function ensure(){
+    if(pop) return;
+    pop = el('div', 'uk-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog');
+    scrim = el('div', 'uk-scrim'); scrim.hidden = true; scrim.onclick = close;
+    document.body.append(scrim, pop);
+    document.addEventListener('click', e => { if(cur && !e.composedPath().some(n => n === pop || n === cur.trig)) close(); });
+    document.addEventListener('keydown', e => { if(cur && e.key === 'Escape'){ e.stopPropagation(); const t = cur.trig; close(); t.focus(); } }, true);
+    document.addEventListener('scroll', e => { if(cur && !pop.contains(e.target) && !narrow()) close(); }, true);
+    addEventListener('resize', place);
+  }
+  function open(trig, title, body, cls){
+    ensure(); close();
+    pop.className = 'uk-pop ' + (cls || ''); pop.innerHTML = ''; 
+    const h = el('div', 'uk-ph', `<b>${esc(title)}</b>`); const x = el('button', 'uk-x', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.onclick = () => { close(); trig.focus(); }; h.append(x);
+    pop.append(h, body); pop.hidden = false; scrim.hidden = false; cur = {trig}; trig.setAttribute('aria-expanded', 'true'); place();
+  }
+  function close(){ if(!cur) return; pop.hidden = true; scrim.hidden = true; cur.trig.setAttribute('aria-expanded', 'false'); cur = null; }
+  function place(){
+    if(!cur) return;
+    if(narrow()){ pop.style.left = pop.style.top = ''; return; }
+    const r = cur.trig.getBoundingClientRect(); pop.style.minWidth = Math.round(r.width) + 'px';
+    const w = pop.offsetWidth, h = pop.offsetHeight; let top = r.bottom + 6;
+    if(top + h > innerHeight - 8 && r.top - h - 6 > 8) top = r.top - h - 6;
+    pop.style.left = Math.min(Math.max(8, r.left), Math.max(8, innerWidth - w - 8)) + 'px'; pop.style.top = Math.max(8, top) + 'px';
+  }
+  function wrapProp(node, proto, prop, after){
+    const d = Object.getOwnPropertyDescriptor(proto, prop); if(!d || !d.set) return;
+    Object.defineProperty(node, prop, { configurable: true, get(){ return d.get.call(node); }, set(v){ d.set.call(node, v); after(); } });
+  }
+  function fire(node){ node.dispatchEvent(new Event('input', {bubbles: true})); node.dispatchEvent(new Event('change', {bubbles: true})); }
+  function makeTrigger(node, icon){
+    const b = el('button', 'uk-sel'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-expanded', 'false');
+    const lab = node.getAttribute('aria-label') || (node.id && (document.querySelector('label[for="' + node.id + '"]') || {}).textContent) || '';
+    b.setAttribute('aria-label', lab || node.title || 'Choose'); b.dataset.title = lab || 'Choose';
+    if(node.offsetHeight && node.offsetHeight <= 32) b.classList.add('sm');
+    const par = node.parentElement; if(par && par.clientWidth && node.offsetWidth >= par.clientWidth * .9) b.classList.add('block');
+    b.style.maxWidth = node.style.maxWidth; b.style.width = node.style.width;
+    node.before(b); node.classList.add('uk-hide'); node.tabIndex = -1; node.setAttribute('aria-hidden', 'true');
+    node.addEventListener('focus', () => b.focus());
+    return b;
+  }
+  /* ---------- select ---------- */
+  function enhanceSelect(s){
+    if(s.__uk || s.matches(SKIP) || s.size > 1) return; s.__uk = 1;
+    const b = makeTrigger(s);
+    const sync = () => { const o = s.options[s.selectedIndex]; b.innerHTML = `<span class="uk-t">${esc(o ? o.text : '')}</span>${CARET}`; b.disabled = s.disabled; b.classList.toggle('ph', !o || o.value === ''); };
+    sync(); s.addEventListener('change', sync);
+    new MutationObserver(sync).observe(s, {childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'label']});
+    wrapProp(s, HTMLSelectElement.prototype, 'value', sync); wrapProp(s, HTMLSelectElement.prototype, 'selectedIndex', sync);
+    b.onclick = () => cur && cur.trig === b ? close() : openSelect(s, b);
+    b.onkeydown = e => { if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); openSelect(s, b); } };
+  }
+  function openSelect(s, b){
+    const opt = o => `<button type="button" role="option" class="uk-opt${o.selected ? ' on' : ''}" data-i="${o.index}" data-s="${esc(o.text.toLowerCase())}" aria-selected="${o.selected}" ${o.disabled ? 'disabled' : ''}><span>${esc(o.text) || '—'}</span><i class="uk-ck" aria-hidden="true">✓</i></button>`;
+    const list = el('div', 'uk-list'); list.setAttribute('role', 'listbox');
+    list.innerHTML = [...s.children].map(c => c.tagName === 'OPTGROUP' ? `<div class="uk-grp">${esc(c.label)}</div>` + [...c.children].map(opt).join('') : opt(c)).join('');
+    const body = el('div', 'uk-body');
+    if(s.options.length > 10){ const f = el('input', 'uk-find'); f.type = 'search'; f.placeholder = 'Search'; f.setAttribute('aria-label', 'Search options'); f.oninput = () => { const q = f.value.toLowerCase(); list.querySelectorAll('.uk-opt').forEach(o => { o.hidden = !!q && !o.dataset.s.includes(q); }); }; body.append(f); }
+    body.append(list);
+    list.onclick = e => { const o = e.target.closest('.uk-opt'); if(!o) return; s.selectedIndex = +o.dataset.i; fire(s); close(); b.focus(); };
+    list.onkeydown = e => {
+      const items = [...list.querySelectorAll('.uk-opt:not([hidden]):not([disabled])')], i = items.indexOf(document.activeElement);
+      if(e.key === 'ArrowDown'){ e.preventDefault(); (items[i + 1] || items[0]).focus(); } else if(e.key === 'ArrowUp'){ e.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+      else if(e.key === 'Home'){ e.preventDefault(); items[0].focus(); } else if(e.key === 'End'){ e.preventDefault(); items[items.length - 1].focus(); }
+    };
+    open(b, b.dataset.title, body, 'sel');
+    const on = list.querySelector('.uk-opt.on') || list.querySelector('.uk-opt'); if(on){ on.focus({preventScroll: true}); on.scrollIntoView({block: 'nearest'}); }
+  }
+  /* ---------- date ---------- */
+  const fmtD = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? new Intl.DateTimeFormat(undefined, {day: 'numeric', month: 'short', year: 'numeric'}).format(new Date(+m[1], +m[2] - 1, +m[3])) : ''; };
+  const todayISO = () => { const t = new Date(); return t.getFullYear() + '-' + p2(t.getMonth() + 1) + '-' + p2(t.getDate()); };
+  function enhanceDate(i){
+    if(i.__uk || i.matches('[data-native]')) return; i.__uk = 1;
+    const b = makeTrigger(i); b.classList.add('uk-date');
+    const sync = () => { const t = fmtD(i.value); b.innerHTML = `${CALIC}<span class="uk-t">${esc(t || i.placeholder || 'Select date')}</span>`; b.classList.toggle('ph', !t); b.disabled = i.disabled; };
+    sync(); i.addEventListener('change', sync); new MutationObserver(sync).observe(i, {attributes: true, attributeFilter: ['disabled', 'value']}); wrapProp(i, HTMLInputElement.prototype, 'value', sync);
+    b.onclick = () => cur && cur.trig === b ? close() : openDate(i, b);
+  }
+  function openDate(i, b){
+    const base = /^\d{4}-\d{2}-\d{2}$/.test(i.value) ? i.value : (i.max && todayISO() > i.max ? i.max : todayISO());
+    const st = {y: +base.slice(0, 4), m: +base.slice(5, 7) - 1}, body = el('div', 'uk-body');
+    const draw = () => {
+      const first = new Date(st.y, st.m, 1).getDay(), n = new Date(st.y, st.m + 1, 0).getDate(), t = todayISO();
+      let g = ['S','M','T','W','T','F','S'].map(d => `<i class="uk-wd">${d}</i>`).join('') + '<i></i>'.repeat(first);
+      for(let d = 1; d <= n; d++){
+        const iso = st.y + '-' + p2(st.m + 1) + '-' + p2(d), dis = (i.min && iso < i.min) || (i.max && iso > i.max);
+        g += `<button type="button" class="uk-cd${iso === i.value ? ' sel' : ''}${iso === t ? ' today' : ''}" data-d="${iso}" aria-pressed="${iso === i.value}" ${dis ? 'disabled' : ''}>${d}</button>`;
+      }
+      body.innerHTML = `<div class="uk-ch"><button type="button" aria-label="Previous year" data-n="-12">«</button><button type="button" aria-label="Previous month" data-n="-1">‹</button><b>${esc(new Intl.DateTimeFormat(undefined, {month: 'long', year: 'numeric'}).format(new Date(st.y, st.m, 1)))}</b><button type="button" aria-label="Next month" data-n="1">›</button><button type="button" aria-label="Next year" data-n="12">»</button></div><div class="uk-cg">${g}</div><div class="uk-cf"><button type="button" data-a="today" ${(i.min && t < i.min) || (i.max && t > i.max) ? 'disabled' : ''}>Today</button>${i.value && !i.required ? '<button type="button" data-a="clear">Clear</button>' : ''}</div>`;
+    };
+    body.onclick = e => {
+      const x = e.target.closest('button'); if(!x || x.disabled) return;
+      if(x.dataset.n){ const d = new Date(st.y, st.m + +x.dataset.n, 1); st.y = d.getFullYear(); st.m = d.getMonth(); draw(); return; }
+      const v = x.dataset.d || (x.dataset.a === 'today' ? todayISO() : x.dataset.a === 'clear' ? '' : null); if(v === null) return;
+      i.value = v; fire(i); close(); b.focus();
+    };
+    draw(); open(b, b.dataset.title === 'Choose' ? 'Select date' : b.dataset.title, body, 'cal');
+    const f = body.querySelector('.uk-cd.sel') || body.querySelector('.uk-cd.today') || body.querySelector('.uk-cd'); if(f) f.focus({preventScroll: true});
+  }
+  /* ---------- time ---------- */
+  const fmtT = v => { const m = /^(\d{2}):(\d{2})/.exec(v || ''); return m ? new Intl.DateTimeFormat(undefined, {hour: 'numeric', minute: '2-digit'}).format(new Date(2000, 0, 1, +m[1], +m[2])) : ''; };
+  function enhanceTime(i){
+    if(i.__uk || i.matches('[data-native]')) return; i.__uk = 1;
+    const b = makeTrigger(i); b.classList.add('uk-date');
+    const sync = () => { const t = fmtT(i.value); b.innerHTML = `${CLKIC}<span class="uk-t">${esc(t || 'Select time')}</span>`; b.classList.toggle('ph', !t); b.disabled = i.disabled; };
+    sync(); i.addEventListener('change', sync); wrapProp(i, HTMLInputElement.prototype, 'value', sync);
+    b.onclick = () => cur && cur.trig === b ? close() : openTime(i, b);
+  }
+  function openTime(i, b){
+    const m = /^(\d{2}):(\d{2})/.exec(i.value || '') || [0, '08', '00'], h24 = +m[1], st = {h: h24 % 12 || 12, mi: +m[2], pm: h24 >= 12};
+    const mins = [...new Set([0,5,10,15,20,25,30,35,40,45,50,55, st.mi])].sort((a, c) => a - c), body = el('div', 'uk-body');
+    const col = (key, items, on) => `<div class="uk-tc" role="listbox" aria-label="${key}">${items.map(([v, t]) => `<button type="button" role="option" class="uk-tv${on(v) ? ' on' : ''}" data-k="${key}" data-v="${v}" aria-selected="${on(v)}">${t}</button>`).join('')}</div>`;
+    const draw = () => { body.innerHTML = `<div class="uk-tw">${col('Hour', Array.from({length: 12}, (_, k) => [k + 1, k + 1]), v => v === st.h)}${col('Minute', mins.map(v => [v, p2(v)]), v => v === st.mi)}${col('Period', [[0, 'AM'], [1, 'PM']], v => !!v === st.pm)}</div><div class="uk-cf"><button type="button" class="uk-done" data-a="done">Done</button></div>`; body.querySelectorAll('.uk-tv.on').forEach(o => o.scrollIntoView({block: 'center'})); };
+    body.onclick = e => {
+      const x = e.target.closest('button'); if(!x) return;
+      if(x.dataset.a === 'done'){ i.value = p2((st.h % 12) + (st.pm ? 12 : 0)) + ':' + p2(st.mi); fire(i); close(); b.focus(); return; }
+      const v = +x.dataset.v; if(x.dataset.k === 'Hour') st.h = v; else if(x.dataset.k === 'Minute') st.mi = v; else st.pm = !!v;
+      const tops = [...body.querySelectorAll('.uk-tc')].map(c => c.scrollTop); draw(); body.querySelectorAll('.uk-tc').forEach((c, k) => { c.scrollTop = tops[k]; });
+    };
+    draw(); open(b, b.dataset.title === 'Choose' ? 'Select time' : b.dataset.title, body, 'tim');
+  }
+  /* ---------- scan ---------- */
+  const SEL = 'select,input[type=date],input[type=time]';
+  function enhance(n){
+    if(n.tagName === 'SELECT') enhanceSelect(n); else if(n.tagName === 'INPUT' && n.type === 'date') enhanceDate(n); else if(n.tagName === 'INPUT' && n.type === 'time') enhanceTime(n);
+  }
+  function scan(root){ if(root.nodeType !== 1) return; if(root.matches(SEL)) enhance(root); root.querySelectorAll(SEL).forEach(enhance); }
+  UK.scan = scan; UK.close = close;
+  function start(){ scan(document.body); new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(scan))).observe(document.body, {childList: true, subtree: true}); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
