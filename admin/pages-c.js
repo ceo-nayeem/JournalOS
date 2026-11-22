@@ -44,10 +44,18 @@ A.purge = async function(w){
 const AF = S.af = {q:'', a:'all'};
 function auditRows(){ const q = AF.q.toLowerCase(); return S.audit.filter(a => (AF.a === 'all' || (a.action || '').startsWith(AF.a)) && (!q || [a.action, a.target, a.detail, a.by].some(x => String(x || '').toLowerCase().includes(q)))); }
 function auditTable(){ const r = auditRows(); return r.length ? '<table><thead><tr><th>When</th><th>Action</th><th>Target</th><th>Detail</th><th>By</th></tr></thead><tbody>' + r.map(a => '<tr><td class="sm muted" style="white-space:nowrap">' + A.fmt(a.at) + '</td><td><span class="badge mono">' + esc(a.action) + '</span></td><td>' + esc(a.target) + '</td><td class="sm muted">' + esc(a.detail) + '</td><td class="sm">' + esc(a.by) + '</td></tr>').join('') + '</tbody></table>' : '<div class="empty"><b>কিছু নেই</b></div>'; }
+UK.fb.defs.auBar = {
+  titles: {a:'Action'},
+  lead(){ return UK.fb.search('খোঁজো…', AF.q, 'A.auQ(this.value)'); },
+  pills(){ return [{k:'a', ic:UK.ic.filter, t:AF.a === 'all' ? 'All actions' : esc(AF.a), on:AF.a !== 'all'}]; },
+  pop(k){ const kinds = [...new Set(S.audit.map(a => (a.action || '').split(':')[0]))]; return UK.fb.opts([['all','All actions']].concat(kinds.map(x => [x, esc(x)])), AF.a, 'a'); },
+  apply(k, v){ A.auA(v); },
+  dirty(){ return AF.a !== 'all' || !!AF.q; }, reset(){ AF.a = 'all'; AF.q = ''; A.repaint(); }
+};
 A.page('audit', {title:'Audit log', group:'sys', icon:'log', needs:['audit'], render(){
   const kinds = [...new Set(S.audit.map(a => (a.action || '').split(':')[0]))];
   return A.errBanner(['audit']) + A.head('Audit log', 'অ্যাডমিন হিসেবে কে কখন কী বদলেছে — মোছা যায় না।', '<button class="btn" onclick="A.csv(\'audit.csv\',[[\'at\',\'action\',\'target\',\'detail\',\'by\']].concat(A.S.audit.map(a=>[a.at,a.action,a.target,a.detail,a.by])))">' + ic('dl') + ' CSV</button>') +
-  '<div class="tools"><div class="search">' + ic('log') + '<input type="search" placeholder="খোঁজো…" value="' + esc(AF.q) + '" oninput="A.auQ(this.value)"></div><select onchange="A.auA(this.value)"><option value="all">All actions</option>' + kinds.map(k => '<option ' + (AF.a === k ? 'selected' : '') + '>' + esc(k) + '</option>').join('') + '</select></div><div class="tbl-w" id="auT">' + auditTable() + '</div>';
+  UK.fb.html('auBar') + '<div class="tbl-w" id="auT">' + auditTable() + '</div>';
 }});
 A.auQ = A.debounce(v => { AF.q = v; $('auT').innerHTML = auditTable(); }, 150);
 A.auA = v => { AF.a = v; $('auT').innerHTML = auditTable(); };

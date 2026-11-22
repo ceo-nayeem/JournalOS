@@ -53,11 +53,27 @@ function ordTable(){
     '<td><div>' + esc((o.method || '').toUpperCase()) + ' ' + (o._dup ? '<span class="badge bad">⚠ dup</span>' : '') + '</div><div class="em mono">' + esc(o.txnId || '') + '</div></td><td>' + A.stBadge(o.status) + '</td><td class="sm muted">' + A.ago(o.createdAt) + '</td>' +
     '<td onclick="event.stopPropagation()"><div class="row" style="flex-wrap:nowrap">' + (o.status !== 'verified' ? '<button class="btn sm ok" onclick="A.setOrder(\'' + o.id + '\',\'verified\')">' + ic('check') + '</button>' : '') + (o.status !== 'rejected' ? '<button class="btn sm bad" onclick="A.setOrder(\'' + o.id + '\',\'rejected\')">' + ic('x') + '</button>' : '') + '</div></td></tr>').join('') + '</tbody></table>';
 }
+UK.fb.defs.ordBar = {
+  titles: {f:'Status', m:'Method'},
+  lead(){ return UK.fb.search('নাম, ইমেইল, TrxID, ফোন…', OF.q, 'A.ordQ(this.value)'); },
+  pills(){ const L = {pending:'Pending', verified:'Verified', rejected:'Rejected', all:'All'}; return [{k:'f', ic:UK.ic.filter, t:'Status: ' + L[OF.f], on:OF.f !== 'pending'}, {k:'m', ic:UK.ic.tag, t:OF.m === 'all' ? 'Method' : (OF.m === 'bkash' ? 'bKash' : 'Nagad'), on:OF.m !== 'all'}]; },
+  pop(k){ const n = s => S.orders.filter(o => o.status === s).length; return k === 'f' ? UK.fb.opts([['pending','Pending',n('pending')],['verified','Verified',n('verified')],['rejected','Rejected',n('rejected')],['all','All',S.orders.length]], OF.f, 'f') : UK.fb.opts([['all','All methods'],['bkash','bKash'],['nagad','Nagad']], OF.m, 'm'); },
+  apply(k, v){ k === 'f' ? A.ordF(v) : A.ordM(v); },
+  dirty(){ return OF.f !== 'pending' || OF.m !== 'all' || !!OF.q; }, reset(){ OF.f = 'pending'; OF.m = 'all'; OF.q = ''; OF.sel.clear(); A.repaint(); }
+};
+UK.fb.defs.usrBar = {
+  titles: {st:'Status', so:'Sort by'},
+  lead(){ return UK.fb.search('নাম, ইমেইল, UID, ট্যাগ, নোট…', UF.q, 'A.usrQ(this.value)'); },
+  pills(){ const L = {all:'All', pro:'Pro', pending:'Pending', none:'Free', expired:'Expired', suspended:'Suspended', restricted:'Restricted', tagged:'Tagged'}, S2 = {recent:'Newest', seen:'Last seen', entries:'Most entries', name:'Name'}; return [{k:'st', ic:UK.ic.filter, t:'Status: ' + (L[UF.st] || 'All'), on:UF.st !== 'all'}, {k:'so', ic:UK.ic.sort, t:S2[UF.sort] || 'Newest', on:false}]; },
+  pop(k){ const c = x => S.users.filter(u => { const s = A.userStatus(u); return x === 'pro' ? (s === 'active' || s === 'comp') : s === x; }).length;
+    return k === 'st' ? UK.fb.opts([['all','All',S.users.length],['pro','Pro',c('pro')],['pending','Pending',c('pending')],['none','Free',c('none')],['expired','Expired',c('expired')],['suspended','Suspended',c('suspended')],['restricted','Restricted'],['tagged','Tagged']], UF.st, 'st') : UK.fb.opts([['recent','Newest'],['seen','Last seen'],['entries','Most entries'],['name','Name']], UF.sort || 'recent', 'so'); },
+  apply(k, v){ k === 'st' ? A.usrF(v) : A.usrS(v); },
+  dirty(){ return UF.st !== 'all' || !!UF.q || (UF.sort && UF.sort !== 'recent'); }, reset(){ UF.st = 'all'; UF.sort = 'recent'; UF.q = ''; UF.page = 0; UF.sel.clear(); A.repaint(); }
+};
 A.page('orders', {title:'Orders & payments', group:'com', icon:'orders', badge:true, needs:['orders'], render(){
   const n = s => S.orders.filter(o => o.status === s).length;
   return A.errBanner(['orders']) + A.head('Orders & payments', 'bKash / Nagad পেমেন্ট ভেরিফাই করো। Pending অর্ডারও ইউজারকে Pro অ্যাক্সেস দেয় — তাই দ্রুত যাচাই করো।', '<button class="btn" onclick="A.exportOrders()">' + ic('dl') + ' CSV</button><button class="btn pri" onclick="A.verifyAllPending()">' + ic('check') + ' Verify all pending</button>') +
-  A.tabs(OF.f, [['pending', 'Pending', n('pending')], ['verified', 'Verified', n('verified')], ['rejected', 'Rejected', n('rejected')], ['all', 'All', S.orders.length]], 'A.ordF') +
-  '<div class="tools" style="margin-top:14px"><div class="search">' + ic('orders') + '<input type="search" placeholder="নাম, ইমেইল, TrxID, ফোন…" value="' + esc(OF.q) + '" oninput="A.ordQ(this.value)"></div><select onchange="A.ordM(this.value)"><option value="all">All methods</option><option value="bkash" ' + (OF.m === 'bkash' ? 'selected' : '') + '>bKash</option><option value="nagad" ' + (OF.m === 'nagad' ? 'selected' : '') + '>Nagad</option></select></div>' +
+  UK.fb.html('ordBar') +
   '<div class="tbl-w" id="ordT">' + ordTable() + '</div><div id="ordBulk"></div>';
 }});
 A.ordF = f => { OF.f = f; OF.sel.clear(); A.repaint(); };
@@ -122,8 +138,7 @@ function userTable(){
 A.page('users', {title:'Users', group:'ppl', icon:'users', badge:true, needs:['users'], render(){
   const c = k => S.users.filter(u => { const s = A.userStatus(u); return k === 'pro' ? (s === 'active' || s === 'comp') : s === k; }).length;
   return A.errBanner(['users']) + A.head('User management', 'প্রতিটা ইউজারের অ্যাক্সেস, সীমা, Pro, রোল, ট্যাগ ও নোট — সব এখান থেকে।', '<button class="btn" onclick="A.exportUsers()">' + ic('dl') + ' CSV</button><button class="btn" onclick="A.copy(location.origin+\'/checkout/\')">' + ic('ext') + ' Copy signup link</button>') +
-  A.tabs(UF.st, [['all', 'All', S.users.length], ['pro', 'Pro', c('pro')], ['pending', 'Pending', c('pending')], ['none', 'Free', c('none')], ['expired', 'Expired', c('expired')], ['suspended', 'Suspended', c('suspended')], ['restricted', 'Restricted'], ['tagged', 'Tagged']], 'A.usrF') +
-  '<div class="tools" style="margin-top:14px"><div class="search">' + ic('users') + '<input type="search" placeholder="নাম, ইমেইল, UID, ট্যাগ, নোট…" value="' + esc(UF.q) + '" oninput="A.usrQ(this.value)"></div><select onchange="A.usrS(this.value)"><option value="recent">Newest</option><option value="seen" ' + (UF.sort === 'seen' ? 'selected' : '') + '>Last seen</option><option value="entries" ' + (UF.sort === 'entries' ? 'selected' : '') + '>Most entries</option><option value="name" ' + (UF.sort === 'name' ? 'selected' : '') + '>Name</option></select></div>' +
+  UK.fb.html('usrBar') +
   '<div class="tbl-w" id="usrT">' + userTable() + '</div><div id="usrBulk"></div>';
 }});
 A.usrF = f => { UF.st = f; UF.page = 0; UF.sel.clear(); A.repaint(); };

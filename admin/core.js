@@ -335,13 +335,13 @@ A._db = () => db;
     document.addEventListener('scroll', e => { if(cur && !pop.contains(e.target) && !narrow()) close(); }, true);
     addEventListener('resize', place);
   }
-  function open(trig, title, body, cls){
+  function open(trig, title, body, cls, onClose){
     ensure(); close();
     pop.className = 'uk-pop ' + (cls || ''); pop.innerHTML = ''; 
     const h = el('div', 'uk-ph', `<b>${esc(title)}</b>`); const x = el('button', 'uk-x', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.onclick = () => { close(); trig.focus(); }; h.append(x);
-    pop.append(h, body); pop.hidden = false; scrim.hidden = false; cur = {trig}; trig.setAttribute('aria-expanded', 'true'); place();
+    pop.append(h, body); pop.hidden = false; scrim.hidden = false; cur = {trig, onClose}; trig.setAttribute('aria-expanded', 'true'); place();
   }
-  function close(){ if(!cur) return; pop.hidden = true; scrim.hidden = true; cur.trig.setAttribute('aria-expanded', 'false'); cur = null; }
+  function close(){ if(!cur) return; const c = cur; pop.hidden = true; scrim.hidden = true; c.trig.setAttribute('aria-expanded', 'false'); cur = null; if(c.onClose) c.onClose(); }
   function place(){
     if(!cur) return;
     if(narrow()){ pop.style.left = pop.style.top = ''; return; }
@@ -452,7 +452,58 @@ A._db = () => db;
     if(n.tagName === 'SELECT') enhanceSelect(n); else if(n.tagName === 'INPUT' && n.type === 'date') enhanceDate(n); else if(n.tagName === 'INPUT' && n.type === 'time') enhanceTime(n);
   }
   function scan(root){ if(root.nodeType !== 1) return; if(root.matches(SEL)) enhance(root); root.querySelectorAll(SEL).forEach(enhance); }
-  UK.scan = scan; UK.close = close;
+
+  /* ---------- filter bar engine (one compact bar of pills; each pill opens a popover / bottom sheet) ---------- */
+  const IC = UK.ic = {
+    date: CALIC, time: CLKIC,
+    mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0M9 9.5h.01M15 9.5h.01"/></svg>',
+    tag: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/></svg>',
+    more: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>',
+    sort: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3.5 16.5L7 20l3.5-3.5M17 20V4M13.5 7.5L17 4l3.5 3.5"/></svg>',
+    filter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>',
+    search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'
+  };
+  const FB = UK.fb = {defs: {}, cur: null};
+  FB.html = id => {
+    const d = FB.defs[id], ps = d.pills(), dirty = d.dirty && d.dirty();
+    return `<div class="fb" id="${id}"><div class="fb-in">${d.lead ? d.lead() : ''}<div class="fb-pills">${ps.map(p => `<button type="button" class="fb-pill${p.on ? ' on' : ''}" data-k="${p.k}" ${p.tgl ? `aria-pressed="${!!p.on}" onclick="UK.fb.tgl('${id}','${p.k}')"` : `aria-haspopup="dialog" aria-expanded="false" onclick="UK.fb.toggle('${id}','${p.k}')"`}>${p.ic || ''}<span class="fb-t">${p.t}</span>${p.n ? `<b class="fb-n">${p.n}</b>` : ''}${p.tgl ? '' : CARET}</button>`).join('')}${dirty ? `<button type="button" class="fb-reset" onclick="UK.fb.reset('${id}')">Reset</button>` : ''}${d.meta ? `<span class="fb-meta" role="status">${d.meta()}</span>` : ''}</div></div></div>`;
+  };
+  FB.search = (ph, val, oninput, attrs) => `<div class="fb-search">${IC.search}<input type="search" ${attrs || ''} value="${esc(val)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" autocomplete="off" enterkeyhint="search" oninput="${oninput}" oncompositionstart="this.dataset.c='1'" oncompositionend="this.dataset.c='0';${oninput}"></div>`;
+  FB.toggle = (id, k) => {
+    const bar = document.getElementById(id), t = bar && bar.querySelector('.fb-pill[data-k="' + k + '"]'); if(!t) return;
+    if(cur && cur.trig === t){ close(); return; }
+    const d = FB.defs[id], body = el('div', 'uk-body'); body.innerHTML = d.pop(k);
+    open(t, (d.titles && d.titles[k]) || k, body, 'fbp ' + ((d.cls && d.cls[k]) || ''), () => { FB.cur = null; });
+    FB.cur = {id, k};
+  };
+  FB.tgl = (id, k) => { close(); FB.defs[id].apply(k); };
+  FB.reset = id => { close(); FB.defs[id].reset(); };
+  FB.pick = btn => { const c = FB.cur; if(!c) return; const d = FB.defs[c.id], k = btn.dataset.k || c.k; if(!btn.dataset.keep) close(); d.apply(k, btn.dataset.v); };
+  FB.refresh = id => {
+    const bar = document.getElementById(id); if(!bar) return; const was = FB.cur && FB.cur.id === id ? FB.cur.k : null;
+    bar.outerHTML = FB.html(id);
+    if(was && cur){ const t = document.querySelector('#' + id + ' .fb-pill[data-k="' + was + '"]'), b = pop.querySelector('.uk-body'); if(t && b){ cur.trig = t; t.setAttribute('aria-expanded', 'true'); b.innerHTML = FB.defs[id].pop(was); place(); } }
+  };
+  const on1 = (v, cv) => String(v) === String(cv);
+  FB.opts = (items, cv, k, keep) => `<div class="uk-list" role="menu">${items.map(([v, t, n]) => `<button type="button" role="menuitemradio" aria-checked="${on1(v, cv)}" class="uk-opt${on1(v, cv) ? ' on' : ''}" data-v="${esc(v)}" ${k ? `data-k="${k}"` : ''} ${keep ? 'data-keep="1"' : ''} onclick="UK.fb.pick(this)"><span>${t}</span>${n != null ? `<small class="fb-cnt">${n}</small>` : ''}<i class="uk-ck" aria-hidden="true">✓</i></button>`).join('')}</div>`;
+  FB.chips = (items, isOn, k, keep) => `<div class="fb-chips">${items.map(([v, t]) => `<button type="button" class="fb-chip${isOn(v) ? ' on' : ''}" aria-pressed="${!!isOn(v)}" data-v="${esc(v)}" data-k="${k}" ${keep ? 'data-keep="1"' : ''} onclick="UK.fb.pick(this)">${t}</button>`).join('')}</div>`;
+  FB.moods = (items, isOn, k) => `<div class="fb-moods">${items.map(([v, e, t]) => `<button type="button" class="fb-mood${isOn(v) ? ' on' : ''}" aria-pressed="${!!isOn(v)}" data-v="${esc(v)}" data-k="${k}" data-keep="1" onclick="UK.fb.pick(this)"><span class="em">${e}</span><span>${esc(t)}</span></button>`).join('')}</div>`;
+  FB.sw = (isOn, label, k, v) => `<button type="button" class="uk-opt fb-row" role="switch" aria-checked="${!!isOn}" data-k="${k}" data-v="${v}" data-keep="1" onclick="UK.fb.pick(this)"><span>${label}</span><i class="sw"></i></button>`;
+  const rc = {y: 0, m: 0, from: '', to: ''};
+  const rcBody = () => {
+    const first = new Date(rc.y, rc.m, 1).getDay(), n = new Date(rc.y, rc.m + 1, 0).getDate(), t = todayISO();
+    let g = ['S','M','T','W','T','F','S'].map(d => `<i class="uk-wd">${d}</i>`).join('') + '<i></i>'.repeat(first);
+    for(let d = 1; d <= n; d++){ const iso = rc.y + '-' + p2(rc.m + 1) + '-' + p2(d), sel = iso === rc.from || iso === rc.to, mid = rc.from && rc.to && iso > rc.from && iso < rc.to; g += `<button type="button" class="uk-cd${sel ? ' sel' : ''}${mid ? ' mid' : ''}${iso === t ? ' today' : ''}" aria-pressed="${sel}" onclick="UK.fb.rcPick('${iso}')">${d}</button>`; }
+    return `<div class="uk-ch"><button type="button" aria-label="Previous year" onclick="UK.fb.rcNav(-12)">«</button><button type="button" aria-label="Previous month" onclick="UK.fb.rcNav(-1)">‹</button><b>${esc(new Intl.DateTimeFormat(undefined, {month: 'long', year: 'numeric'}).format(new Date(rc.y, rc.m, 1)))}</b><button type="button" aria-label="Next month" onclick="UK.fb.rcNav(1)">›</button><button type="button" aria-label="Next year" onclick="UK.fb.rcNav(12)">»</button></div><div class="uk-cg">${g}</div><div class="uk-hint" role="status">${rc.from && !rc.to ? 'Now pick the end date' : 'Custom range: pick a start, then an end date'}</div>`;
+  };
+  FB.range = (from, to) => { const b = /^\d{4}-\d{2}-\d{2}$/.test(from || '') ? from : todayISO(); rc.y = +b.slice(0, 4); rc.m = +b.slice(5, 7) - 1; rc.from = from || ''; rc.to = to || ''; return `<div class="fb-rc">${rcBody()}</div>`; };
+  const rcPaint = () => { const e = pop && pop.querySelector('.fb-rc'); if(e) e.innerHTML = rcBody(); };
+  FB.rcNav = n => { const d = new Date(rc.y, rc.m + n, 1); rc.y = d.getFullYear(); rc.m = d.getMonth(); rcPaint(); };
+  FB.rcPick = iso => {
+    if(!rc.from || rc.to){ rc.from = iso; rc.to = ''; rcPaint(); return; }
+    const a = iso < rc.from ? iso : rc.from, b = iso < rc.from ? rc.from : iso, c = FB.cur; close(); if(c && FB.defs[c.id].range) FB.defs[c.id].range(a, b);
+  };
+  UK.scan = scan; UK.close = close; UK.open = open; UK.cur = () => cur;
   function start(){ scan(document.body); new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(scan))).observe(document.body, {childList: true, subtree: true}); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
