@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+             'ceo.nayeemuhammad@gmial.com',
+             'ceo.nayeemuhammad@gmail.com'
+           ];
+    }
+    function me(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    // A person owns everything under their own users/{uid} document.
+    // The admin may read it (for the backend's Data inspector) but not write it.
+    match /users/{uid} {
+      allow read:  if me(uid) || isAdmin();
+      allow write: if me(uid);
+      match /{sub=**} {
+        allow read:  if me(uid) || isAdmin();
+        allow write: if me(uid);
+      }
+    }
+
+    // The backend's user list. A person may create and refresh only their own
+    // row, and only the identity/usage fields — never restrictions, role, note,
+    // complimentary access or subscription data (those are admin-only).
+    match /userDirectory/{uid} {
+      allow read: if me(uid) || isAdmin();
+      allow create: if me(uid)
+        && !request.resource.data.keys().hasAny(['complimentary','subscription'])
+        && (!request.resource.data.keys().hasAny(['restrictions'])
+            || request.resource.data.restrictions == {'suspended':false,'readOnly':false,'aiDisabled':false,'mediaDisabled':false,'exportDisabled':false,'entryLimit':0})
+        && (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'user')
+        && (!request.resource.data.keys().hasAny(['note']) || request.resource.data.note == '');
+      allow update: if isAdmin() || (
+        me(uid) &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['restrictions','role','note','complimentary','subscription'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Payment orders (bKash / Nagad). A buyer can only CREATE a "pending" order
+    // for themselves; only the admin can verify, reject or change it.
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email.lower() == request.auth.token.email.lower()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0 && request.resource.data.amount <= 5000
+        && request.resource.data.months is number
+        && request.resource.data.months >= 1 && request.resource.data.months <= 24
+        && request.resource.data.method in ['bkash','nagad']
+        && request.resource.data.txnId is string
+        && request.resource.data.txnId.size() >= 6 && request.resource.data.txnId.size() <= 24
+        && request.resource.data.keys().hasOnly(['uid','email','name','phone','planId','planLabel',
+             'months','amount','currency','method','senderNumber','txnId','status','createdAt']);
+      allow update, delete: if isAdmin();
+    }
+
+    // Landing-page reviews: anyone can read PUBLISHED ones; signed-in users can
+    // submit one (unpublished); only the admin publishes / edits / deletes.
+    match /reviews/{reviewId} {
+      allow read: if resource.data.approved == true || isAdmin()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.approved == false
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 10 && request.resource.data.text.size() <= 320
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.keys().hasOnly(['uid','name','rating','text','approved','createdAt']);
+      allow update, delete: if isAdmin();
+    }
+
+    // Global configuration: everyone signed-in reads it, only the admin writes it.
+    match /appConfig/{doc} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Public website content (landing text, plans, payment numbers, FAQ …).
+    // Anyone may read it (the landing page is public); only the admin writes it.
+    match /siteConfig/{doc} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Append-only audit trail.
+    match /adminAudit/{id} {
+      allow read:   if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}
