@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-22.6">
+<meta name="app-build" content="2026-11-22.7">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2440,6 +2440,16 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .tile-link:hover{transform:translateY(-2px);box-shadow:var(--shadow-float)}.tile-link:hover::after{color:var(--accent)}
 @media (max-width:900px){.dash-prompt,.dash-week{grid-column:span 12}.dash-prompt{min-height:0}}
 @media (prefers-reduced-motion:reduce){.tile-link:hover{transform:none}}
+/* ===== Top bar v3: history buttons left, search + add right, streak in the sidebar ===== */
+.topnav{display:flex;gap:6px;flex:none}
+.chip-btn:disabled{opacity:.38;cursor:default;pointer-events:none}
+.topbar-actions .dock{position:relative;left:auto;top:auto;transform:none;flex:none}
+.topbar-actions .dock-menu{left:auto;right:0}
+.nav-foot{margin-top:auto;padding-top:8px;border-top:1px solid var(--rule)}
+.nav-streak .ic{position:relative;font-size:20px}
+.nav-streak .lbl b{margin-right:3px;font-family:var(--font-display,var(--font-serif));font-size:16px;color:var(--accent)}
+.sidebar:not(.expanded):not(.open) .nav-streak .ic::after{content:attr(data-n);position:absolute;right:1px;bottom:1px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:700;line-height:18px;text-align:center}
+@media (max-width:600px){#navFwd{display:none}.topbar-actions{gap:5px}}
 /* ===== UX polish v1 (additive, token-based; see CHANGES.md) ===== */
 :is(a,button,input,select,textarea,summary,[tabindex],[role=button],.btn,.chip-btn,.nav-item):focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important}
 ::selection{background:var(--accent-soft);color:var(--ink)}
@@ -2483,8 +2493,12 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
     <button class="hamburger mobile-only" onclick="toggleSidebar()" aria-label="মেনু খুলো">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
-    <div class="brand"><span class="mark">J</span><span class="word serif" data-brand-word>JournalOS</span></div>
+    <div class="topnav" role="group" aria-label="History">
+  <button type="button" class="chip-btn" id="navBack" onclick="navBack()" aria-label="Go back" title="Back (Alt+←)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <button type="button" class="chip-btn" id="navFwd" onclick="navFwd()" aria-label="Go forward" title="Forward (Alt+→)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
+  </div>
+  <div class="topbar-actions">
   <div class="dock" id="topDock" role="toolbar" aria-label="Quick actions">
     <div class="dock-seg dock-add" id="dockAdd">
       <button type="button" class="dock-btn" id="dockAddBtn" onclick="dockToggle('add',event)" aria-label="নতুন" aria-haspopup="true" aria-expanded="false">
@@ -2509,10 +2523,6 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
       </div>
     </div>
   </div>
-  <div class="topbar-actions">
-    <div class="topbar-streak" id="streakChip" title="Day streak" onclick="go('dashboard')">
-      <span aria-hidden="true">🔥</span><b id="streakNum">0</b><span class="stxt">day streak</span>
-    </div>
     <div class="theme-wrap" id="themeWrap">
       <button class="chip-btn theme-chip" id="themeChip" onclick="themeChipClick(event)" aria-label="থিম" aria-haspopup="true">
         <svg class="ti-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M21 13.2A8.5 8.5 0 1110.8 3a6.8 6.8 0 0010.2 10.2z"/></svg>
@@ -2650,6 +2660,11 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
       <span class="lbl">Life</span><span class="tip">Life — Achievements, Plans &amp; Memories</span>
     </button>
 
+  <div class="nav-foot">
+  <button type="button" class="nav-item nav-streak" id="streakChip" onclick="go('dashboard')" aria-label="Day streak">
+  <span class="ic" data-n="0"><span aria-hidden="true">🔥</span></span><span class="lbl"><b id="streakNum">0</b> day streak</span><span class="tip">Day streak</span>
+  </button>
+  </div>
   </aside>
 
   <main class="main" id="main" tabindex="-1"></main>
@@ -5709,6 +5724,32 @@ function logout(){
 }
 
 /* ---------------- NAV ---------------- */
+
+/* ---------------- App history: back / forward buttons (top-left) + browser back/forward ---------------- */
+const JNAV = {stack: [], i: -1, busy: false, first: 'dashboard'};
+function navSync(){
+  const b = document.getElementById('navBack'), f = document.getElementById('navFwd');
+  if(b) b.disabled = JNAV.i <= 0;
+  if(f) f.disabled = JNAV.i >= JNAV.stack.length - 1;
+}
+function navPush(view, param){
+  if(JNAV.busy) return;
+  if(!JNAV.stack.length){ JNAV.stack.push({view: JNAV.first, param: null}); JNAV.i = 0; try{ history.replaceState({jos: 0}, '', location.href); }catch(e){} }
+  const t = {view, param: param == null ? null : param}, cur = JNAV.stack[JNAV.i];
+  if(cur && cur.view === t.view && String(cur.param) === String(t.param)){ navSync(); return; }
+  JNAV.stack = JNAV.stack.slice(0, JNAV.i + 1); JNAV.stack.push(t); JNAV.i = JNAV.stack.length - 1;
+  try{ history.pushState({jos: JNAV.i}, '', location.href); }catch(e){}
+  navSync();
+}
+function navBack(){ if(JNAV.i > 0) history.back(); }
+function navFwd(){ if(JNAV.i < JNAV.stack.length - 1) history.forward(); }
+window.addEventListener('popstate', e => {
+  const k = e.state && e.state.jos, t = typeof k === 'number' && JNAV.stack[k];
+  if(!t) return;
+  JNAV.i = k; JNAV.busy = true;
+  try{ go(t.view, t.param); }finally{ JNAV.busy = false; }
+  navSync();
+});
 function go(view, param){
   // Module 09: leaving the write view mid-recording must not leave the
   // microphone stream open — stop (don't save, since we're navigating away
@@ -5721,6 +5762,7 @@ function go(view, param){
     if(isAdminUser()){ openAdminGate(); return; }
     toast('Backend access is restricted.', {type:'error'}); view = 'dashboard';
   }
+  if(!JNAV.stack.length) JNAV.first = state.view || 'dashboard';
   state.view = view;
   state.editingId = (view==='write') ? (param||null) : state.editingId;
   if(view==='shelf') state.shelfBook = param || null;
@@ -5740,6 +5782,7 @@ function go(view, param){
   document.getElementById('main').scrollTop = 0;
   window.scrollTo(0,0);
   if(enteringWrite && state.focusMode) toggleFocusMode(true);
+  navPush(state.view, state.view === 'write' ? state.editingId : (state.view === 'shelf' ? state.shelfBook : null));
 }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
@@ -6019,7 +6062,11 @@ function getStreak(){
   while(dates.has(dateToISO(d))){ streak++; d.setDate(d.getDate()-1); }
   return streak;
 }
-function updateStreak(){ document.getElementById('streakNum').textContent = getStreak(); }
+function updateStreak(){
+  const n = getStreak(), num = document.getElementById('streakNum'), c = document.getElementById('streakChip');
+  if(num) num.textContent = n;
+  if(c){ const ic = c.querySelector('.ic'); if(ic) ic.dataset.n = n; c.setAttribute('aria-label', n + ' day streak'); }
+}
 
 
 /* ---------------- Dashboard design pass: gentle note, daily prompt, mood week ---------------- */
@@ -11228,12 +11275,12 @@ const PWA = {
     });
     const register = ()=>navigator.serviceWorker.register('/app/sw.js', {scope:'/app/'}).then(reg=>{
       this.reg = reg;
-      if(reg.waiting && navigator.serviceWorker.controller) this.markUpdate();
+      
       reg.addEventListener('updatefound', ()=>{
         const w = reg.installing; if(!w) return;
-        w.addEventListener('statechange', ()=>{ if(w.state === 'installed' && navigator.serviceWorker.controller) this.markUpdate(); });
+        w.addEventListener('statechange', ()=>{ if(w.state === 'installed' && navigator.serviceWorker.controller) this.check(false); });
       });
-      setTimeout(()=>this.check(false), 12000);
+      setTimeout(()=>this.baseline(), 3500);
     }).catch(err=>{ this.lastResult = 'sw-failed'; console.warn('SW registration failed', err && err.message); });
     if(document.readyState === 'complete') register(); else window.addEventListener('load', register);
     document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && Date.now() - this.lastCheck > 15*60*1000) this.check(false); });
@@ -11247,22 +11294,23 @@ const PWA = {
     try{ localStorage.setItem('journalos_install_offered', '1'); }catch(e){}
     setTimeout(()=>{ if(state && state.user) toast('JournalOS-কে অ্যাপ হিসেবে ইনস্টল করতে পারো।', {action:{label:'Install', fn:()=>this.install()}, ttl:10000}); }, 4000);
   },
-  ask(msg, ms){
-    return new Promise(resolve=>{
-      const ctl = navigator.serviceWorker && navigator.serviceWorker.controller;
-      if(!ctl){ resolve(null); return; }
-      const ch = new MessageChannel(); const t = setTimeout(()=>resolve(null), ms || 15000);
-      ch.port1.onmessage = e=>{ clearTimeout(t); resolve(e.data); };
-      try{ ctl.postMessage(msg, [ch.port2]); }catch(e){ clearTimeout(t); resolve(null); }
-    });
-  },
-  // Fallback for browsers/hosts without a controlling worker: compare the <meta name="app-build"> of a fresh copy.
-  async checkViaFetch(){
+  /* A page is "behind" only if the server's index differs from the one it is running. Same build after a reload = nothing to say. */
+  async fingerprint(){
     try{
-      const r = await fetch(location.pathname, {cache:'no-store'}); if(!r.ok) return 'error';
-      const m = /<meta\s+name=["']app-build["']\s+content=["']([^"']*)["']/i.exec(await r.text());
-      return (m && this.build && m[1] !== this.build) ? 'updated' : 'current';
-    }catch(e){ return 'offline'; }
+      const r = await fetch(location.pathname, {cache: 'no-store'}); if(!r.ok) return null;
+      const t = await r.text(), m = /<meta\s+name=["']app-build["']\s+content=["']([^"']*)["']/i.exec(t);
+      let h = 5381; for(let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+      return {build: m ? m[1] : '', hash: h};
+    }catch(e){ return null; }
+  },
+  async baseline(){
+    const f = await this.fingerprint(); if(!f) return;
+    this.base = f;
+    if(!(f.build && this.build && f.build !== this.build)){ try{ sessionStorage.removeItem('jos.autoreload'); }catch(e){} this.lastResult = 'current'; this.refreshUI(); return; }
+    // This page was served from an older copy (slow network): refresh once, silently, unless the person is mid-entry.
+    let n = 0; try{ n = +sessionStorage.getItem('jos.autoreload') || 0; }catch(e){}
+    const busy = typeof state !== 'undefined' && state.view === 'write' && typeof draftIsDirty === 'function' && draftIsDirty();
+    if(n < 1 && !busy){ try{ sessionStorage.setItem('jos.autoreload', '1'); }catch(e){} location.reload(); } else this.markUpdate();
   },
   async check(manual){
     if(this.checking) return;
@@ -11270,11 +11318,10 @@ const PWA = {
     this.checking = true; this.refreshUI();
     let status = 'current';
     try{
-      if(this.reg){ try{ await this.reg.update(); }catch(e){} if(this.reg.waiting && navigator.serviceWorker.controller) status = 'updated'; }
-      if(status !== 'updated'){
-        const r = await this.ask({type:'CHECK_UPDATE', build:this.build});
-        status = r ? r.status : await this.checkViaFetch();
-      }
+        if(this.reg){ try{ await this.reg.update(); }catch(e){} }
+  const f = await this.fingerprint();
+  if(!f) status = 'offline';
+  else { if(!this.base) this.base = f; status = ((f.build && this.build && f.build !== this.build) || f.hash !== this.base.hash) ? 'updated' : 'current'; }
     }catch(e){ status = 'error'; }
     this.checking = false; this.lastCheck = Date.now(); this.lastResult = status;
     if(status === 'updated') this.markUpdate();
@@ -11282,8 +11329,9 @@ const PWA = {
     this.refreshUI();
   },
   markUpdate(){
-    if(this.updateReady) return;
-    this.updateReady = true; this.refreshUI(); this.showBar();
+      if(this.updateReady) return;
+  try{ if(Date.now() - (+sessionStorage.getItem('jos.applied') || 0) < 120000) return; }catch(e){}
+  this.updateReady = true; this.refreshUI(); this.showBar();
   },
   showBar(){
     let bar = $('updateBar');
@@ -11299,8 +11347,9 @@ const PWA = {
   applyUpdate(){
     try{ if(typeof scheduleAutosave === 'function' && window.__draft) scheduleAutosave(); }catch(e){}
     if(typeof state !== 'undefined' && state.view === 'write' && typeof draftIsDirty === 'function' && draftIsDirty()) toast('অসংরক্ষিত লেখা এই ডিভাইসে ড্রাফট হিসেবে রাখা আছে — রিলোডের পর ফিরে পাবে।', {ttl:3500});
-    this.wantReload = true;
-    const w = this.reg && this.reg.waiting;
+      this.wantReload = true;
+  try{ sessionStorage.setItem('jos.applied', String(Date.now())); }catch(e){}
+  const w = this.reg && this.reg.waiting;
     if(w){ w.postMessage({type:'SKIP_WAITING'}); setTimeout(()=>{ if(!this._reloaded) location.reload(); }, 2500); }
     else setTimeout(()=>location.reload(), 150);
   }

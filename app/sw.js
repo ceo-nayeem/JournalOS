@@ -6,13 +6,13 @@
  *   • A running app also asks this worker "is there a newer index.html?"
  *     every hour / on tab focus; if yes, the user sees an
  *     "Update available" bar and one tap reloads into the new version.
- *   • If you change THIS file (e.g. bump VERSION) browsers install the new
- *     worker in the background and the same bar appears.
+ *   • A changed worker installs and takes over silently (skipWaiting + claim);
+ *     the bar only appears when a live page is running an older index.html.
  *   • Bump VERSION whenever you want old caches cleared.
  * Firebase / Firestore / Auth / Storage / Gemini calls are NEVER cached
  * or intercepted — they always go straight to the network.
  */
-const VERSION = '1.7.6';
+const VERSION = '1.8.0';
 const SHELL_CACHE = 'journalos-shell-' + VERSION;
 const RUNTIME_CACHE = 'journalos-runtime-' + VERSION;
 const SCOPE = self.registration.scope;               // https://your-domain.com/app/
@@ -36,7 +36,8 @@ self.addEventListener('install', event => {
     ]);
     const rt = await caches.open(RUNTIME_CACHE);
     await Promise.allSettled(CDN_PRECACHE.map(async u => { const r = await fetch(u); if (r.ok) await rt.put(u, r); }));
-    // NOTE: no skipWaiting() here — the page asks for it when the user taps "Update".
+    // Activate immediately: navigation is network-first and caches are versioned, so there is nothing to "wait" for.
+    self.skipWaiting();
   })());
 });
 
