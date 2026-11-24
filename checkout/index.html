@@ -106,8 +106,20 @@
     });
   };
 
+  function guard(u){
+    JOS.accessCheck(u).then(r => {
+      const old = $('blockCard'); if(old) old.remove();
+      const locked = r.kind !== 'ok';
+      $('infoCard').style.display = locked || !user ? 'none' : '';
+      document.querySelector('.sum').classList.toggle('lock', locked);
+      if(!locked) return;
+      $('signinCard').insertAdjacentHTML('beforebegin', JOS.blockCardHtml(r).replace('class="card blockcard', 'id="blockCard" class="card blockcard'));
+      document.querySelector('#blockCard [data-out]').onclick = () => JOS.auth.signOut();
+    });
+  }
   JOS.onUser(u => {
     user = u;
+    if(!u){ const b = $('blockCard'); if(b) b.remove(); document.querySelector('.sum').classList.remove('lock'); }
     $('signinCard').style.display = u ? 'none' : '';
     $('infoCard').style.display = u ? '' : 'none';
     $('gBtn').disabled = false;
@@ -116,6 +128,7 @@
     $('switchAcc').onclick = () => JOS.auth.signOut();
     if(!$('name').value) $('name').value = u.displayName || '';
     $('email').value = u.email || '';
+    guard(u);
     try{ const old = JSON.parse(sessionStorage.getItem('jos_checkout') || 'null'); if(old && old.uid === u.uid && !$('phone').value) $('phone').value = old.phone || ''; }catch(e){}
   });
 
