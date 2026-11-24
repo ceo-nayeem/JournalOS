@@ -96,38 +96,4 @@ function autoHtml(){
     A.tog('cfg', 'notifications.whatsNew', 'নতুন ফিচারের খবর', 'অ্যাপে নতুন কী এল তার ছোট নোট', true) +
     '<div class="sub" style="margin-top:12px">সবসময় চালু (বন্ধ করা যায় না): পেমেন্ট ভেরিফাই/রিজেক্ট, প্ল্যান বদল, মেয়াদ শেষ, অ্যাকাউন্ট রিস্ট্রিকশন ও কমপ্লিমেন্টারি অ্যাক্সেসের খবর।</div></div>';
 }
-
-/* ================= ADMIN TEAM ================= */
-const TM = S.tm = {email:''};
-A.page('team', {title:'Admins', group:'sys', icon:'shield', needs:['admins', 'users'], render(){
-  const owners = A.ADMIN_EMAILS, sel = S.admins || [], can = !!S.isSuper;
-  const row = (email, kind, extra) => { const u = S.users.find(x => (x.email || '').toLowerCase() === email); return '<div class="srow"><div class="cellu"><div class="av">' + esc((u && u.name || email)[0].toUpperCase()) + '</div><div><div class="t">' + esc(u && u.name ? u.name : email) + ' ' + kind + '</div><div class="d">' + esc(email) + (extra || '') + '</div></div></div>' +
-    (kind.indexOf('Owner') > -1 ? '' : (can ? '<button class="btn sm bad" onclick="A.tmDel(\'' + esc(email) + '\')">' + ic('trash') + ' Remove</button>' : '')) + '</div>'; };
-  const picks = S.users.filter(u => u.email && !owners.includes(u.email.toLowerCase()) && !sel.some(a => a.email === u.email.toLowerCase())).sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
-  return A.errBanner(['admins']) + A.head('Admins', 'কে কে ব্যাকএন্ডে ঢুকতে পারবে — শুধু এদের কাছেই অ্যাপের মেনুতে "Go to Backend" দেখাবে।') +
-    (can ? '' : '<div class="card" style="border-color:var(--warn);margin-bottom:16px"><b>শুধু দেখার অনুমতি।</b> <span class="muted">নতুন অ্যাডমিন যোগ/বাদ দিতে পারে কেবল Owner অ্যাকাউন্ট।</span></div>') +
-    '<div class="grid g2"><div class="card"><h3>Owners</h3><div class="sub">সোর্স কোড ও firestore.rules-এ বাঁধা — এখান থেকে বাদ দেওয়া যায় না</div>' + owners.map(e => row(e, A.badge('Owner', 'ok'))).join('') + '</div>' +
-    '<div class="card"><h3>Selected admins <span class="muted sm">(' + sel.length + ')</span></h3><div class="sub">Owner যাদের বাছাই করেছে</div>' +
-      (sel.length ? sel.map(a => row(a.email, A.badge('Admin', ''), ' · যোগ হয়েছে ' + A.day(a.addedAt) + (a.addedBy ? ' (' + esc(a.addedBy) + ')' : ''))).join('') : '<div class="muted">এখনো কাউকে বাছাই করা হয়নি।</div>') + '</div></div>' +
-    '<div class="card" style="margin-top:16px"><h3>নতুন অ্যাডমিন যোগ করো</h3><div class="sub">তাকে ঐ ইমেইলের Google অ্যাকাউন্টে সাইন-ইন করতে হবে। ব্যাকএন্ডের পাসকোডও তাকে দিতে হবে।</div>' +
-    '<div class="row" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:220px;margin:0"><input id="tmE" type="email" placeholder="name@gmail.com" value="' + esc(TM.email) + '" oninput="A.tmSet(this.value)" ' + (can ? '' : 'disabled') + '></div>' +
-    '<button class="btn pri" onclick="A.tmAdd()" ' + (can ? '' : 'disabled') + '>' + ic('plus') + ' Add admin</button></div>' +
-    (picks.length ? '<div class="field" style="margin-top:10px"><label>অথবা রেজিস্টার্ড ইউজার থেকে বাছাই করো</label><select onchange="if(this.value){A.tmSet(this.value);A.tmAdd()}" ' + (can ? '' : 'disabled') + '><option value="">— ইউজার বেছে নাও —</option>' + picks.map(u => '<option value="' + esc(u.email) + '">' + esc((u.name || 'Unnamed') + ' — ' + u.email) + '</option>').join('') + '</select></div>' : '') + '</div>';
-}});
-A.tmSet = v => { TM.email = v; };
-A.tmAdd = async function(){
-  if(!S.isSuper) return A.toast('শুধু Owner অ্যাডমিন যোগ করতে পারে', 'err');
-  const em = (TM.email || '').trim().toLowerCase();
-  if(!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(em)) return A.toast('সঠিক ইমেইল দাও', 'err');
-  if(A.ADMIN_EMAILS.includes(em) || (S.admins || []).some(a => a.email === em)) return A.toast('ইনি আগে থেকেই অ্যাডমিন', 'err');
-  if(!await A.confirm(em + ' কে অ্যাডমিন বানাবে?', 'সে ব্যাকএন্ডের সব ডেটা (ইউজার, অর্ডার, কনফিগ) দেখতে ও বদলাতে পারবে।', 'অ্যাডমিন বানাও')) return;
-  try{ await A._db().collection('admins').doc(em).set({email:em, addedBy:S.user.email, addedAt:new Date().toISOString()}); A.audit('admin:add', em, ''); TM.email = ''; A.toast('অ্যাডমিন যোগ হয়েছে'); }
-  catch(e){ A.err(e, 'যোগ হয়নি — firestore.rules ডিপ্লয় করেছ? (admins কালেকশনের রুল লাগবে)'); }
-};
-A.tmDel = async function(em){
-  if(!S.isSuper) return A.toast('শুধু Owner বাদ দিতে পারে', 'err');
-  if(!await A.confirm(em + ' কে অ্যাডমিন থেকে বাদ দেবে?', 'সে আর ব্যাকএন্ডে ঢুকতে পারবে না, অ্যাপের মেনুতেও অপশন দেখবে না।', 'বাদ দাও', 'bad')) return;
-  try{ await A._db().collection('admins').doc(em).delete(); A.audit('admin:remove', em, ''); A.toast('বাদ দেওয়া হয়েছে'); }
-  catch(e){ A.err(e); }
-};
 })();

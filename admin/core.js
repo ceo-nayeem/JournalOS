@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const C = window.JOURNALOS_SITE;
-const ADMIN_EMAILS = ['ceo.nayeemuhammad@gmial.com','ceo.nayeemuhammad@gmail.com'];
+const ADMIN_EMAILS = ['ceo.nayeemuhammad@gmail.com'];
 const PASS = '12340';
 const SKEY = 'journalos.adminUnlocked';
 const $ = id => document.getElementById(id);
@@ -96,14 +96,9 @@ A.boot = function(){
     S.user = u;
     if(!u){ stopData(); show('gLogin'); return; }
     const em = (u.email || '').toLowerCase();
-    // An administrator is an owner (ADMIN_EMAILS) or someone an owner selected on the Admins page.
-    S.isSuper = ADMIN_EMAILS.includes(em); let ok = S.isSuper;
-    if(!ok){
-      show('gLoad');
-      try{ const d = await db.collection('admins').doc(em).get(); ok = d.exists; }catch(e){ ok = false; }
-      if(!S.user || S.user.uid !== u.uid) return;
-    }
-    if(!ok){ show('gDeny'); $('denyMsg').textContent = (u.email || 'এই অ্যাকাউন্ট') + ' ব্যাকএন্ড অ্যাডমিন তালিকায় নেই।'; return; }
+    // Only the owner account (ADMIN_EMAILS) may enter the Control Center.
+  S.isSuper = ADMIN_EMAILS.includes(em); const ok = S.isSuper;
+  if(!ok){ show('gDeny'); $('denyMsg').textContent = (u.email || 'এই অ্যাকাউন্ট') + ' ব্যাকএন্ড অ্যাডমিন তালিকায় নেই।'; return; }
     if(sessionStorage.getItem(SKEY) === '1') enter(); else { show('gPin'); $('pinWho').textContent = u.email; setTimeout(() => $('pinIn').focus(), 100); }
   });
   window.addEventListener('hashchange', route);
@@ -140,7 +135,6 @@ function startData(){
   stopData();
   listen('orders', db.collection('orders'), s => { S.orders = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a, b) => A.ms(b.createdAt) - A.ms(a.createdAt)); });
   listen('users', db.collection('userDirectory'), s => { S.users = s.docs.map(d => ({uid:d.id, ...d.data()})); });
-  listen('admins', db.collection('admins'), s => { S.admins = s.docs.map(d => ({email:d.id, ...d.data()})); });
   listen('reviews', db.collection('reviews'), s => { S.reviews = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a, b) => A.ms(b.createdAt) - A.ms(a.createdAt)); });
   listen('audit', db.collection('adminAudit').orderBy('at', 'desc').limit(400), s => { S.audit = s.docs.map(d => ({id:d.id, ...d.data()})); });
   unsubs.push(db.collection('appConfig').doc('global').onSnapshot(s => { S.loaded.cfg = true; const wasDirty = !!S.drafts.cfg && isDirty('cfg'); S.cfgSaved = A.merge(A.DEF_CFG, s.exists ? s.data() : {}); if(!S.drafts.cfg || !wasDirty) S.drafts.cfg = A.clone(S.cfgSaved); refresh(); paintSavebars(); }, e => { S.loaded.cfg = true; S.errors.cfg = e.code; }));
@@ -194,12 +188,11 @@ A.sub = function(uid){
 };
 A.userStatus = function(u){
   const r = Object.assign({}, A.DEF_RESTR, u.restrictions || {});
-  if(r.suspended) return 'suspended';
-  if(ADMIN_EMAILS.includes((u.email || '').toLowerCase()) || (S.admins || []).some(a => a.email === (u.email || '').toLowerCase())) return 'admin';
+  if(ADMIN_EMAILS.includes((u.email || '').toLowerCase())) return 'admin'; if(u.trashed) return 'trashed'; if(r.suspended) return 'suspended';
   if(u.complimentary && (!u.complimentaryUntil || Date.parse(u.complimentaryUntil + 'T23:59:59') > Date.now())) return 'comp';
   return A.sub(u.uid).status;
 };
-A.stBadge = s => ({active:'<span class="badge ok">Pro</span>', pending:'<span class="badge warn">Pending Pro</span>', expired:'<span class="badge mute">Expired</span>', none:'<span class="badge mute">Free</span>', comp:'<span class="badge">Complimentary</span>', admin:'<span class="badge">Admin</span>', suspended:'<span class="badge bad">Suspended</span>', verified:'<span class="badge ok">verified</span>', rejected:'<span class="badge bad">rejected</span>'}[s] || '<span class="badge mute">' + esc(s) + '</span>');
+A.ADMIN_EMAILS = ADMIN_EMAILS; A.stBadge = s => ({active:'<span class="badge ok">Pro</span>', pending:'<span class="badge warn">Pending Pro</span>', expired:'<span class="badge mute">Expired</span>', none:'<span class="badge mute">Free</span>', comp:'<span class="badge">Complimentary</span>', admin:'<span class="badge">Admin</span>', trashed:'<span class=\"badge bad\">In Trash</span>', suspended:'<span class="badge bad">Suspended</span>', verified:'<span class="badge ok">verified</span>', rejected:'<span class="badge bad">rejected</span>'}[s] || '<span class="badge mute">' + esc(s) + '</span>');
 
 /* ---------- nav / router ---------- */
 A.group = (id, label) => A.GROUPS.push({id, label});

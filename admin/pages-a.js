@@ -64,9 +64,9 @@ UK.fb.defs.ordBar = {
 UK.fb.defs.usrBar = {
   titles: {st:'Status', so:'Sort by'},
   lead(){ return UK.fb.search('নাম, ইমেইল, UID, ট্যাগ, নোট…', UF.q, 'A.usrQ(this.value)'); },
-  pills(){ const L = {all:'All', pro:'Pro', pending:'Pending', none:'Free', expired:'Expired', suspended:'Suspended', restricted:'Restricted', tagged:'Tagged'}, S2 = {recent:'Newest', seen:'Last seen', entries:'Most entries', name:'Name'}; return [{k:'st', ic:UK.ic.filter, t:'Status: ' + (L[UF.st] || 'All'), on:UF.st !== 'all'}, {k:'so', ic:UK.ic.sort, t:S2[UF.sort] || 'Newest', on:false}]; },
+  pills(){ const L = {all:'All', pro:'Pro', pending:'Pending', none:'Free', expired:'Expired', suspended:'Suspended', restricted:'Restricted', tagged:'Tagged', trash:'Trash'}, S2 = {recent:'Newest', seen:'Last seen', entries:'Most entries', name:'Name'}; return [{k:'st', ic:UK.ic.filter, t:'Status: ' + (L[UF.st] || 'All'), on:UF.st !== 'all'}, {k:'so', ic:UK.ic.sort, t:S2[UF.sort] || 'Newest', on:false}]; },
   pop(k){ const c = x => S.users.filter(u => { const s = A.userStatus(u); return x === 'pro' ? (s === 'active' || s === 'comp') : s === x; }).length;
-    return k === 'st' ? UK.fb.opts([['all','All',S.users.length],['pro','Pro',c('pro')],['pending','Pending',c('pending')],['none','Free',c('none')],['expired','Expired',c('expired')],['suspended','Suspended',c('suspended')],['restricted','Restricted'],['tagged','Tagged']], UF.st, 'st') : UK.fb.opts([['recent','Newest'],['seen','Last seen'],['entries','Most entries'],['name','Name']], UF.sort || 'recent', 'so'); },
+    return k === 'st' ? UK.fb.opts([['all','All',S.users.filter(u => A.userStatus(u) !== 'trashed').length],['pro','Pro',c('pro')],['pending','Pending',c('pending')],['none','Free',c('none')],['expired','Expired',c('expired')],['suspended','Suspended',c('suspended')],['restricted','Restricted'],['tagged','Tagged'],['trash','Trash',S.users.filter(u => A.userStatus(u) === 'trashed').length]], UF.st, 'st') : UK.fb.opts([['recent','Newest'],['seen','Last seen'],['entries','Most entries'],['name','Name']], UF.sort || 'recent', 'so'); },
   apply(k, v){ k === 'st' ? A.usrF(v) : A.usrS(v); },
   dirty(){ return UF.st !== 'all' || !!UF.q || (UF.sort && UF.sort !== 'recent'); }, reset(){ UF.st = 'all'; UF.sort = 'recent'; UF.q = ''; UF.page = 0; UF.sel.clear(); A.repaint(); }
 };
@@ -121,6 +121,8 @@ function userRows(){
   const q = UF.q.trim().toLowerCase();
   let r = S.users.map(u => Object.assign({}, u, {_st:A.userStatus(u)})).filter(u => {
     if(q && ![u.email, u.name, u.uid, u.note, (u.tags || []).join(' ')].some(x => String(x || '').toLowerCase().includes(q))) return false;
+    if(UF.st === 'trash') return u._st === 'trashed';
+    if(u._st === 'trashed') return false;
     if(UF.st === 'all') return true; if(UF.st === 'restricted') return Object.entries(Object.assign({}, A.DEF_RESTR, u.restrictions || {})).some(([k, v]) => v && v !== 0 && k !== 'entryLimit') || (u.restrictions && u.restrictions.entryLimit > 0);
     if(UF.st === 'pro') return u._st === 'active' || u._st === 'comp'; if(UF.st === 'tagged') return (u.tags || []).length > 0; return u._st === UF.st;
   });
@@ -132,7 +134,7 @@ function userTable(){
   if(!rows.length) return '<div class="empty"><b>কোনো ইউজার নেই</b>ফিল্টার বদলে দেখো।</div>';
   return '<table><thead><tr><th style="width:34px"><input type="checkbox" onchange="A.usrAll(this.checked)"></th><th>User</th><th>Plan</th><th>Entries</th><th>Last seen</th><th>Joined</th><th>Flags</th></tr></thead><tbody>' + rows.map(u => {
     const r = Object.assign({}, A.DEF_RESTR, u.restrictions || {}), fl = []; if(r.readOnly) fl.push('read-only'); if(r.aiDisabled) fl.push('no-AI'); if(r.mediaDisabled) fl.push('no-media'); if(r.exportDisabled) fl.push('no-export'); if(r.entryLimit) fl.push('cap ' + r.entryLimit); if(u.role && u.role !== 'user') fl.push(u.role);
-    return '<tr class="clk" onclick="A.openUser(\'' + u.uid + '\')"><td onclick="event.stopPropagation()"><input type="checkbox" ' + (UF.sel.has(u.uid) ? 'checked' : '') + ' onchange="A.usrSel(\'' + u.uid + '\',this.checked)"></td><td><div class="cellu"><div class="av">' + (u.photoURL ? '<img referrerpolicy="no-referrer" src="' + esc(u.photoURL) + '" alt="">' : esc((u.name || u.email || '?')[0].toUpperCase())) + '</div><div style="min-width:0"><div class="nm">' + esc(u.name || 'Unnamed') + '</div><div class="em">' + esc(u.email || '') + '</div></div></div></td><td>' + A.stBadge(u._st) + '</td><td>' + A.num((u.stats && u.stats.entries) || 0) + '</td><td class="sm muted">' + A.ago(u.lastSeenAt) + '</td><td class="sm muted">' + A.day(u.createdAt) + '</td><td>' + fl.map(f => '<span class="badge warn">' + esc(f) + '</span> ').join('') + (u.tags || []).map(t => '<span class="badge">#' + esc(t) + '</span> ').join('') + '</td></tr>'; }).join('') + '</tbody></table>' +
+    return '<tr class="clk" onclick="A.openUser(\'' + u.uid + '\')"><td onclick="event.stopPropagation()"><input type="checkbox" ' + (UF.sel.has(u.uid) ? 'checked' : '') + (A.isOwnerUser(u) ? ' disabled' : '') + ' onchange="A.usrSel(\'' + u.uid + '\',this.checked)"></td><td><div class="cellu"><div class="av">' + (u.photoURL ? '<img referrerpolicy="no-referrer" src="' + esc(u.photoURL) + '" alt="">' : esc((u.name || u.email || '?')[0].toUpperCase())) + '</div><div style="min-width:0"><div class="nm">' + esc(u.name || 'Unnamed') + '</div><div class="em">' + esc(u.email || '') + '</div></div></div></td><td>' + A.stBadge(u._st) + '</td><td>' + A.num((u.stats && u.stats.entries) || 0) + '</td><td class="sm muted">' + A.ago(u.lastSeenAt) + '</td><td class="sm muted">' + A.day(u.createdAt) + '</td><td>' + fl.map(f => '<span class="badge warn">' + esc(f) + '</span> ').join('') + (u.tags || []).map(t => '<span class="badge">#' + esc(t) + '</span> ').join('') + '</td></tr>'; }).join('') + '</tbody></table>' +
     '<div class="pager"><span>' + all.length + ' users · page ' + (UF.page + 1) + '/' + pages + '</span><span class="row"><button class="btn sm" ' + (UF.page ? '' : 'disabled') + ' onclick="A.usrPg(-1)">←</button><button class="btn sm" ' + (UF.page < pages - 1 ? '' : 'disabled') + ' onclick="A.usrPg(1)">→</button></span></div>';
 }
 A.page('users', {title:'Users', group:'ppl', icon:'users', badge:true, needs:['users'], render(){
@@ -147,9 +149,16 @@ A.usrQ = A.debounce(v => { UF.q = v; UF.page = 0; $('usrT').innerHTML = userTabl
 A.usrPg = d => { UF.page += d; $('usrT').innerHTML = userTable(); };
 A.usrSel = (id, on) => { on ? UF.sel.add(id) : UF.sel.delete(id); ubulk(); };
 A.usrAll = on => { UF.sel.clear(); if(on) userRows().slice(UF.page * PER, UF.page * PER + PER).forEach(u => UF.sel.add(u.uid)); $('usrT').innerHTML = userTable(); ubulk(); };
-function ubulk(){ const b = $('usrBulk'); if(!b) return; b.innerHTML = UF.sel.size ? '<div class="bulk"><b>' + UF.sel.size + ' selected</b><button class="btn sm" onclick="A.bulkUsr(\'suspend\')">Suspend</button><button class="btn sm" onclick="A.bulkUsr(\'unsuspend\')">Unsuspend</button><button class="btn sm" onclick="A.bulkUsr(\'comp\')">Give Pro (30d)</button><button class="btn sm" onclick="A.bulkUsr(\'readonly\')">Read-only</button><button class="btn sm" onclick="A.bulkUsr(\'reset\')">Reset limits</button><button class="btn sm" onclick="A.bulkUsr(\'tag\')">+ Tag</button></div>' : ''; }
+function ubulk(){
+  const b = $('usrBulk'); if(!b) return; const n = UF.sel.size;
+  if(!n){ b.innerHTML = ''; return; }
+  const B = (act, label, cls) => '<button class="btn sm ' + (cls || '') + '" onclick="A.bulkUsr(\'' + act + '\')">' + label + '</button>';
+  b.innerHTML = '<div class="bulk"><b>' + n + ' selected</b>' + (UF.st === 'trash'
+    ? B('restore', ic('undo') + ' Restore', 'ok') + B('purge', ic('trash') + ' Delete forever', 'bad')
+    : B('suspend', 'Suspend') + B('unsuspend', 'Unsuspend') + B('comp', 'Give Pro (30d)') + B('readonly', 'Read-only') + B('reset', 'Reset limits') + B('tag', '+ Tag') + B('trash', ic('trash') + ' Move to Trash', 'bad')) + '</div>';
+}
 A.bulkUsr = async function(act){
-  const ids = [...UF.sel]; let tag = ''; if(act === 'tag'){ tag = (await A.prompt('ট্যাগ', 'সবার জন্য যোগ হবে', '') || '').trim(); if(!tag) return; } else if(!await A.confirm(ids.length + ' জন ইউজার → ' + act, 'নিশ্চিত?', 'হ্যাঁ')) return;
+  const ids = [...UF.sel].filter(uid => { const u = S.users.find(x => x.uid === uid); return u && !A.isOwnerUser(u); }); if(!ids.length){ A.toast('The main administrator cannot be changed.', 'err'); return; } if(act === 'trash') return A.trashUsers(ids); if(act === 'restore') return A.restoreUsers(ids); if(act === 'purge') return A.purgeUsers(ids); let tag = ''; if(act === 'tag'){ tag = (await A.prompt('ট্যাগ', 'সবার জন্য যোগ হবে', '') || '').trim(); if(!tag) return; } else if(!await A.confirm(ids.length + ' জন ইউজার → ' + act, 'নিশ্চিত?', 'হ্যাঁ')) return;
   try{
     const b = A._db().batch();
     ids.forEach(uid => { const u = S.users.find(x => x.uid === uid) || {}, r = Object.assign({}, A.DEF_RESTR, u.restrictions || {}); let p = {};
@@ -162,6 +171,8 @@ A.bulkUsr = async function(act){
 A.exportUsers = () => A.csv('users-' + new Date().toISOString().slice(0, 10) + '.csv', [['uid', 'name', 'email', 'status', 'role', 'entries', 'words', 'sign_ins', 'joined', 'last_seen', 'tags', 'note']].concat(S.users.map(u => [u.uid, u.name, u.email, A.userStatus(u), u.role || 'user', u.stats && u.stats.entries, u.stats && u.stats.words, u.signInCount, u.createdAt, u.lastSeenAt, (u.tags || []).join('|'), u.note])));
 
 function userHtml(u){
+  if(A.isOwnerUser(u)) return ownerCard(u);
+  if(u.trashed) return trashCard(u);
   const r = Object.assign({}, A.DEF_RESTR, u.restrictions || {}), st = A.userStatus(u), sub = A.sub(u.uid), id = esc(u.uid);
   const T = (k, l, d) => '<div class="srow"><div><div class="t">' + l + '</div><div class="d">' + d + '</div></div><label class="sw"><input type="checkbox" ' + (r[k] ? 'checked' : '') + ' onchange="A.uRestr(\'' + id + '\',\'' + k + '\',this.checked)"><i></i></label></div>';
   return '<div class="cellu" style="margin-bottom:16px"><div class="av" style="width:56px;height:56px;font-size:20px">' + (u.photoURL ? '<img referrerpolicy="no-referrer" src="' + esc(u.photoURL) + '" alt="">' : esc((u.name || u.email || '?')[0].toUpperCase())) + '</div><div><h3 style="font-size:18px">' + esc(u.name || 'Unnamed') + '</h3><div class="muted">' + esc(u.email || '') + '</div><div class="mono sm muted">' + id + '</div></div></div>' +
@@ -176,7 +187,7 @@ function userHtml(u){
   '<div style="margin:8px 0">' + (u.tags || []).map((t, i) => '<span class="chip">#' + esc(t) + '<button onclick="A.uTagDel(\'' + id + '\',' + i + ')">×</button></span>').join('') + '<button class="btn sm" onclick="A.uTagAdd(\'' + id + '\')">' + ic('plus') + ' tag</button></div>' +
   '<div class="field" style="margin-top:12px"><label>Internal note</label><textarea rows="3" placeholder="শুধু অ্যাডমিন দেখবে…" onchange="A.uField(\'' + id + '\',\'note\',this.value)">' + esc(u.note || '') + '</textarea></div>' +
   '<h4 style="margin:18px 0 6px">Orders (' + sub.orders.length + ')</h4>' + (sub.orders.map(o => '<div class="list-i"><div class="sp"><b>' + esc(o.planLabel) + '</b> · ' + A.money(o.amount) + '<div class="sm muted">' + A.fmt(o.createdAt) + '</div></div>' + A.stBadge(o.status) + '<button class="btn sm" onclick="A.openOrder(\'' + o.id + '\')">open</button></div>').join('') || '<div class="muted sm">কোনো অর্ডার নেই</div>') +
-  '<div class="row" style="margin-top:22px"><button class="btn sm" onclick="A.uReset(\'' + id + '\')">' + ic('undo') + ' Reset restrictions</button><button class="btn sm" onclick="A.uPeek(\'' + id + '\')">' + ic('eye') + ' Inspect data</button><button class="btn sm bad" onclick="A.uRemove(\'' + id + '\')">' + ic('trash') + ' Remove</button></div><div id="peekBox" style="margin-top:16px"></div>';
+  '<div class="row" style="margin-top:22px"><button class="btn sm" onclick="A.uReset(\'' + id + '\')">' + ic('undo') + ' Reset restrictions</button><button class="btn sm" onclick="A.uPeek(\'' + id + '\')">' + ic('eye') + ' Inspect data</button><button class="btn sm bad" onclick="A.uTrash(\'' + id + '\')">' + ic('trash') + ' Move to Trash</button></div><div id="peekBox" style="margin-top:16px"></div>';
 }
 A.openUser = function(uid){ const u = S.users.find(x => x.uid === uid); if(!u) return; S.drawerUid = uid; A.drawer(esc(u.name || u.email || 'User'), userHtml(u)); };
 A.reopenUser = function(){ const u = S.users.find(x => x.uid === S.drawerUid); const b = $('drawerB'); if(u && b){ const y = b.scrollTop, pk = $('peekBox') ? $('peekBox').innerHTML : ''; b.innerHTML = userHtml(u); b.scrollTop = y; if($('peekBox')) $('peekBox').innerHTML = pk; } };
@@ -187,7 +198,74 @@ A.uComp = async function(uid, days){ const u = S.users.find(x => x.uid === uid) 
 A.uTagAdd = async function(uid){ const t = (await A.prompt('নতুন ট্যাগ', 'যেমন: beta, vip, tester', '') || '').trim().replace(/^#/, ''); if(!t) return; const u = S.users.find(x => x.uid === uid) || {}; A.uField(uid, 'tags', [...new Set((u.tags || []).concat(t))]); };
 A.uTagDel = function(uid, i){ const u = S.users.find(x => x.uid === uid) || {}; const t = (u.tags || []).slice(); t.splice(i, 1); A.uField(uid, 'tags', t); };
 A.uReset = async function(uid){ if(!await A.confirm('সব রেস্ট্রিকশন তুলে নেবে?', 'ইউজার আবার পুরো অ্যাপ ব্যবহার করতে পারবে।', 'রিসেট')) return; try{ await uref(uid).set({restrictions:Object.assign({}, A.DEF_RESTR)}, {merge:true}); A.audit('restriction:reset', uid, ''); A.toast('Reset', 'ok'); }catch(e){ A.err(e); } };
-A.uRemove = async function(uid){ if(!await A.confirm('ডিরেক্টরি থেকে সরাবে?', 'শুধু এই তালিকার সারি মুছবে — ইউজারের জার্নাল ডেটা মুছবে না। পরের সাইন-ইনে সে আবার যোগ হবে।', 'সরাও', 'bad')) return; try{ await uref(uid).delete(); A.audit('user:remove-row', uid, ''); A.closeDrawer(); A.toast('সরানো হয়েছে', 'ok'); }catch(e){ A.err(e); } };
+/* ---- Trash / delete forever. The owner account is never touched. ---- */
+const USER_SUBS = ['entries', 'books', 'media', 'moodLogs', 'analytics', 'searchIndex', 'meta', 'achievements', 'plans', 'quotes', 'ideas', 'lessons', 'challenges', 'moments', 'events', 'people', 'places'];
+A.isOwnerUser = u => A.ADMIN_EMAILS.includes(String((u && u.email) || '').toLowerCase());
+const uLabel = u => (u && (u.name || u.email)) || 'this user';
+const pickable = ids => ids.filter(id => { const u = S.users.find(x => x.uid === id); return u && !A.isOwnerUser(u); });
+const whoText = ids => ids.length === 1 ? uLabel(S.users.find(x => x.uid === ids[0])) : ids.length + ' users';
+A.trashUsers = async function(raw){
+  const ids = pickable(raw); if(!ids.length) return;
+  if(!await A.confirm('Move ' + whoText(ids) + ' to Trash?', 'They lose access right away and cannot buy a plan. You can restore them, or delete them forever, from the Trash tab.', 'Move to Trash', 'bad')) return;
+  try{
+    const b = A._db().batch(), at = new Date().toISOString();
+    ids.forEach(id => b.set(uref(id), {trashed: true, trashedAt: at, trashedBy: S.user.email}, {merge: true}));
+    await b.commit(); A.audit('user:trash', ids.length + ' user(s)', ids.join(',').slice(0, 250));
+    UF.sel.clear(); A.closeDrawer(); A.toast('Moved to Trash', 'ok'); A.repaint();
+  }catch(e){ A.err(e); }
+};
+A.restoreUsers = async function(raw){
+  const ids = pickable(raw); if(!ids.length) return;
+  try{
+    const b = A._db().batch(), del = firebase.firestore.FieldValue.delete();
+    ids.forEach(id => b.set(uref(id), {trashed: del, trashedAt: del, trashedBy: del}, {merge: true}));
+    await b.commit(); A.audit('user:restore', ids.length + ' user(s)', ids.join(',').slice(0, 250));
+    UF.sel.clear(); A.closeDrawer(); A.toast('Restored', 'ok'); A.repaint();
+  }catch(e){ A.err(e); }
+};
+async function wipeCol(db, ref){
+  for(let i = 0; i < 500; i++){
+    const s = await ref.limit(400).get(); if(s.empty) return;
+    const b = db.batch(); s.docs.forEach(d => b.delete(d.ref)); await b.commit();
+    if(s.size < 400) return;
+  }
+}
+async function purgeOne(uid){
+  const db = A._db(), base = db.collection('users').doc(uid);
+  for(const name of USER_SUBS) await wipeCol(db, base.collection(name));
+  try{ await base.delete(); }catch(e){ /* the parent document may not exist */ }
+  for(const c of ['orders', 'reviews']){
+    const s = await db.collection(c).where('uid', '==', uid).get();
+    if(!s.empty){ const b = db.batch(); s.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
+  }
+  await uref(uid).delete();   // last, so a failed run leaves the person listed and can simply be retried
+}
+A.purgeUsers = async function(raw){
+  const ids = pickable(raw); if(!ids.length) return;
+  if(!await A.confirm('Delete ' + whoText(ids) + ' forever?', 'This erases the account and every journal entry, mood log, order and review from the app, the website and this backend. It cannot be undone. The person can sign in again, but only as a brand-new account that has to choose a plan.', 'Delete forever', 'bad')) return;
+  let done = 0, fail = 0; A.toast('Deleting…');
+  for(const id of ids){ try{ await purgeOne(id); done++; }catch(e){ fail++; console.error(e); } }
+  await new Promise(r => setTimeout(r, 3500)); for(const id of ids){ try{ await uref(id).delete(); }catch(e){} }
+  A.audit('user:purge', done + ' user(s)', ids.join(',').slice(0, 250)); UF.sel.clear(); A.closeDrawer();
+  if(fail) A.toast(done + ' deleted, ' + fail + ' failed. Publish the updated firestore.rules, then try again.', 'err'); else A.toast('Deleted forever', 'ok');
+  A.repaint();
+};
+A.uTrash = id => A.trashUsers([id]); A.uRestore = id => A.restoreUsers([id]); A.uPurge = id => A.purgeUsers([id]);
+function userHead(u){
+  return '<div class="cellu" style="margin-bottom:16px"><div class="av" style="width:56px;height:56px;font-size:20px">' + (u.photoURL ? '<img referrerpolicy="no-referrer" src="' + esc(u.photoURL) + '" alt="">' : esc((u.name || u.email || '?')[0].toUpperCase())) + '</div><div style="min-width:0"><div class="nm">' + esc(u.name || 'Unnamed') + '</div><div class="em">' + esc(u.email || '') + '</div></div></div>';
+}
+function ownerCard(u){
+  return userHead(u) + '<div class="row" style="margin-bottom:14px"><span class="badge">Main administrator</span><span class="badge ok">Pro · all access</span></div>' +
+    '<div class="card" style="box-shadow:none"><b>Always full access</b><p class="sm muted" style="margin:6px 0 0">This account has every feature switched on at all times. It cannot be restricted, moved to Trash, deleted or given a plan, so there is nothing to customise.</p></div>' +
+    '<dl class="kv" style="margin-top:16px"><dt>Joined</dt><dd>' + A.fmt(u.createdAt) + '</dd><dt>Last seen</dt><dd>' + A.fmt(u.lastSeenAt) + '</dd></dl>';
+}
+function trashCard(u){
+  const id = esc(u.uid);
+  return userHead(u) + '<div class="row" style="margin-bottom:14px"><span class="badge bad">In Trash</span><span class="badge mute">since ' + A.day(u.trashedAt) + '</span></div>' +
+    '<div class="card" style="box-shadow:none"><b>This person cannot open the app or buy a plan.</b><p class="sm muted" style="margin:6px 0 0">Restore to give access back. Delete forever erases everything, and they can then sign in again only as a brand-new account.</p></div>' +
+    '<dl class="kv" style="margin-top:16px"><dt>Moved by</dt><dd>' + esc(u.trashedBy || '') + '</dd><dt>Joined</dt><dd>' + A.fmt(u.createdAt) + '</dd><dt>Entries</dt><dd>' + A.num((u.stats && u.stats.entries) || 0) + '</dd></dl>' +
+    '<div class="row" style="margin-top:22px"><button class="btn sm ok" onclick="A.uRestore(\'' + id + '\')">' + ic('undo') + ' Restore</button><button class="btn sm bad" onclick="A.uPurge(\'' + id + '\')">' + ic('trash') + ' Delete forever</button></div>';
+}
 A.uPeek = async function(uid){
   const box = $('peekBox'); box.innerHTML = '<div class="skel"></div>';
   try{ const base = A._db().collection('users').doc(uid); const [doc, en, me, bk] = await Promise.all([base.get(), base.collection('entries').orderBy('date', 'desc').limit(25).get(), base.collection('media').limit(20).get(), base.collection('books').limit(30).get()]);
