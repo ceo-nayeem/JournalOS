@@ -39,6 +39,47 @@
   S.perMonth = p => Math.round(p.price / p.months);
   S.savePct = p => { const base = C.plans.find(x => x.months === 1); return base && p.months > 1 ? Math.round((1 - p.price / (base.price * p.months)) * 100) : 0; };
   S.q = k => new URLSearchParams(location.search).get(k);
+  /* ---- who may buy? (used by /checkout/ and /payment/) ---- */
+  S.isOwner = u => !!u && (C.adminEmails || []).includes(String(u.email || '').toLowerCase());
+  S.subStatus = function(orders){
+    const now = Date.now(), cap = (C.pendingMaxDays || 14) * 86400000;
+    const ms = v => !v ? now : (typeof v.toMillis === 'function' ? v.toMillis() : (typeof v === 'number' ? v : (isNaN(Date.parse(v)) ? now : Date.parse(v))));
+    const add = (t, n) => { const d = new Date(t); d.setMonth(d.getMonth() + n); return d.getTime(); };
+    const all = orders.map(o => Object.assign({}, o, {_t: ms(o.createdAt)})).sort((a, b) => a._t - b._t);
+    let cursor = 0, covering = null;
+    all.forEach(o => {
+      if(o.status === 'rejected') return;
+      if(o.status !== 'verified' && now - o._t > cap) return;
+      const start = Math.max(o._t, cursor), end = add(start, o.months || 1); cursor = end;
+      if(!covering && now >= start && now < end) covering = {status: o.status === 'verified' ? 'active' : 'pending'};
+    });
+    return covering ? {status: covering.status, until: cursor, daysLeft: Math.max(0, Math.ceil((cursor - now) / 86400000))} : {status: 'none'};
+  };
+  /* kind: 'ok' (may buy) | 'admin' | 'active' (already has Pro) | 'trashed'. A failed lookup never blocks a real customer. */
+  S.accessCheck = async function(user){
+    if(S.isOwner(user)) return {kind: 'admin'};
+    try{
+      const [dir, ord] = await Promise.all([S.db.collection('userDirectory').doc(user.uid).get(), S.db.collection('orders').where('uid', '==', user.uid).get()]);
+      const d = dir.exists ? dir.data() : {};
+      if(d.trashed) return {kind: 'trashed'};
+      const until = d.complimentaryUntil ? Date.parse(d.complimentaryUntil + 'T23:59:59') : 0;
+      if(d.complimentary && (!until || until > Date.now())) return {kind: 'active', source: 'comp', until};
+      const sub = S.subStatus(ord.docs.map(x => x.data())), win = C.renewWindowDays == null ? 5 : C.renewWindowDays;
+      if(sub.status === 'pending') return {kind: 'active', source: 'pending', until: sub.until};
+      if(sub.status === 'active' && sub.daysLeft > win) return {kind: 'active', source: 'pro', until: sub.until};
+    }catch(e){}
+    return {kind: 'ok'};
+  };
+  S.blockCardHtml = function(r){
+    const until = r.until ? new Date(r.until).toLocaleDateString('bn-BD', {day: 'numeric', month: 'long', year: 'numeric'}) : '';
+    const T = {
+      admin: ['এটা মূল অ্যাডমিন অ্যাকাউন্ট', 'এই অ্যাকাউন্টে সব ফিচার সবসময় চালু। কোনো প্ল্যান কেনার দরকার নেই।'],
+      active: ['আপনার Pro আগে থেকেই চালু আছে', (r.source === 'pending' ? 'আপনার আগের পেমেন্ট ভেরিফাইয়ের অপেক্ষায় আছে, তাই নতুন করে পেমেন্ট করা যাবে না।' : 'এই Gmail-এ Pro প্ল্যান চালু আছে' + (until ? ' (মেয়াদ: ' + until + ')' : '') + '। তাই নতুন করে পেমেন্ট করা যাবে না।') + ' মেয়াদ শেষের কাছাকাছি এলে রিনিউ করতে পারবেন।'],
+      trashed: ['এই অ্যাকাউন্টটি এখন পাওয়া যাচ্ছে না', 'অ্যাকাউন্টটি সরিয়ে রাখা হয়েছে, তাই পেমেন্ট করা যাবে না। ভুল মনে হলে সাপোর্টে যোগাযোগ করুন।']
+    }[r.kind];
+    return '<div class="card blockcard' + (r.kind === 'admin' ? ' info' : '') + '" role="alert"><h2>' + S.esc(T[0]) + '</h2><p>' + S.esc(T[1]) + '</p><div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-primary" href="' + C.appUrl + '">অ্যাপে যাও</a><button class="btn btn-ghost" type="button" data-out>অন্য অ্যাকাউন্টে সাইন-ইন</button></div></div>';
+  };
+
 
   /* ---- theme (same key the app uses, so light/dark follows you into /app/) ---- */
   function applyTheme(){

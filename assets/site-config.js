@@ -26,6 +26,12 @@ window.JOURNALOS_SITE = {
 
   support: { email: 'ceo.nayeemuhammad@gmail.com' },
 
+  /* The main administrator account: full access always, never asked to pay. */
+  adminEmails: ['ceo.nayeemuhammad@gmail.com'],
+
+  /* An active Pro plan blocks a second purchase until this many days before it ends (0 = block until it has ended). */
+  renewWindowDays: 5,
+
   /* A "pending" order gives full Pro access until you verify it. If you never
      verify/reject it, access stops after this many days. */
   pendingMaxDays: 14,
