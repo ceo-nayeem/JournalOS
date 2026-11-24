@@ -5,10 +5,7 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isAdmin() {
       return isSignedIn() && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in [
-             'ceo.nayeemuhammad@gmial.com',
-             'ceo.nayeemuhammad@gmail.com'
-           ];
+        && request.auth.token.email.lower() == 'ceo.nayeemuhammad@gmail.com';
     }
     function me(uid) { return isSignedIn() && request.auth.uid == uid; }
 
@@ -17,9 +14,13 @@ service cloud.firestore {
     match /users/{uid} {
       allow read:  if me(uid) || isAdmin();
       allow write: if me(uid);
+      // only the owner may erase a person's data (Control Center → Users → Delete forever)
+      allow delete: if isAdmin();
       match /{sub=**} {
         allow read:  if me(uid) || isAdmin();
         allow write: if me(uid);
+      // only the owner may erase a person's data (Control Center → Users → Delete forever)
+      allow delete: if isAdmin();
       }
     }
 
@@ -29,7 +30,7 @@ service cloud.firestore {
     match /userDirectory/{uid} {
       allow read: if me(uid) || isAdmin();
       allow create: if me(uid)
-        && !request.resource.data.keys().hasAny(['complimentary','subscription'])
+        && !request.resource.data.keys().hasAny(['complimentary','subscription','trashed','trashedAt','trashedBy'])
         && (!request.resource.data.keys().hasAny(['restrictions'])
             || request.resource.data.restrictions == {'suspended':false,'readOnly':false,'aiDisabled':false,'mediaDisabled':false,'exportDisabled':false,'entryLimit':0})
         && (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'user')
@@ -37,7 +38,7 @@ service cloud.firestore {
       allow update: if isAdmin() || (
         me(uid) &&
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['restrictions','role','note','complimentary','subscription'])
+          .hasAny(['restrictions','role','note','complimentary','subscription','trashed','trashedAt','trashedBy'])
       );
       allow delete: if isAdmin();
     }
