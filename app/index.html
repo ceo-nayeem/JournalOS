@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-22.8">
+<meta name="app-build" content="2026-11-22.9">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2976,10 +2976,7 @@ function canUseFeature(name){
    to the admin email(s). The shipped firestore.rules file does exactly
    that — deploy it, or anyone could write these documents directly.
    ================================================================ */
-const ADMIN_EMAILS = Object.freeze([
-  'ceo.nayeemuhammad@gmial.com',   // as provided
-  'ceo.nayeemuhammad@gmail.com'    // the likely-intended spelling, kept so a typo can't lock you out
-].map(e=>e.toLowerCase()));
+const ADMIN_EMAILS = Object.freeze(['ceo.nayeemuhammad@gmail.com']);
 const ADMIN_PASSCODE = '12340';           // change here (and in firestore.rules deploys, nothing else)
 const ADMIN_SESSION_KEY = 'journalos.adminUnlocked';
 
@@ -2989,18 +2986,8 @@ function isSuperAdmin(){
 }
 // An administrator is an owner (ADMIN_EMAILS) or someone an owner selected in the
 // Control Center → Admins page (a document admins/{email}, checked on the server).
-function isAdminUser(){ return isSuperAdmin() || !!state.isDelegatedAdmin; }
-function attachAdminRoleCheck(){
-  state.isDelegatedAdmin = false;
-  const em = (state.user && state.user.email || '').trim().toLowerCase(), uid = state.user && state.user.uid;
-  if(!em || isSuperAdmin()){ syncProfileUI(); return; }
-  db.collection('admins').doc(em).get().then(snap=>{
-    if(!state.user || state.user.uid !== uid) return;
-    state.isDelegatedAdmin = !!snap.exists;
-    syncProfileUI();
-    if(state.isDelegatedAdmin && typeof attachAdminListeners === 'function'){ try{ attachAdminListeners(); }catch(e){} }
-  }).catch(err=>{ state.isDelegatedAdmin = false; console.warn('admin role check unavailable', err && err.code); });
-}
+function isAdminUser(){ return isSuperAdmin(); }
+function attachAdminRoleCheck(){ state.isDelegatedAdmin = false; syncProfileUI(); }
 function adminUnlocked(){
   try{ return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }catch(e){ return false; }
 }
@@ -4338,9 +4325,7 @@ function entriesColRef(){ return userDocRef().collection('entries'); }
    ================================================================ */
 let unsubAccess = null, unsubAppConfig = null;
 
-function currentRestrictions(){
-  return {...DEFAULT_RESTRICTIONS, ...((state.access && state.access.restrictions) || {})};
-}
+function currentRestrictions(){ if(isSuperAdmin()) return {...DEFAULT_RESTRICTIONS}; return {...DEFAULT_RESTRICTIONS, ...((state.access && state.access.restrictions) || {})}; }
 function appConfig(){
   return {...DEFAULT_APP_CONFIG, ...(state.appConfig || {}),
     maintenance:{...DEFAULT_APP_CONFIG.maintenance, ...((state.appConfig||{}).maintenance||{})},
@@ -4411,6 +4396,8 @@ function syncUserStats(){
 function attachAccessListener(){
   if(unsubAccess) unsubAccess();
   unsubAccess = userDirectoryRef().onSnapshot(snap=>{
+    if(snap.exists) state.accessSeen = true;
+    else if(state.accessSeen && !snap.metadata.fromCache && !isSuperAdmin()){ handleAccountRemoved(); return; }
     const prev = JSON.stringify(currentRestrictions());
     state.access = snap.exists ? (snap.data() || {}) : {};
     state.accessLoaded = true;
@@ -4423,7 +4410,13 @@ function attachAccessListener(){
     state.accessLoaded = true; applyRemoteEntitlements(); applyGlobalGates();
   });
 }
-function detachAccessListener(){ if(unsubAccess){ unsubAccess(); unsubAccess=null; } state.access=null; state.accessLoaded=false; }
+function detachAccessListener(){ if(unsubAccess){ unsubAccess(); unsubAccess=null; } state.access=null; state.accessLoaded=false; state.accessSeen=false; }
+/* The owner erased this account (Control Center → Delete forever): stop writing, sign out, and let the person start fresh. */
+function handleAccountRemoved(){
+  clearTimeout(__statsTimer);
+  toast('This account was removed. You can sign in again to start a new one.');
+  logout();
+}
 function attachAppConfigListener(){
   if(unsubAppConfig) unsubAppConfig();
   unsubAppConfig = appConfigRef().onSnapshot(snap=>{
@@ -4457,8 +4450,7 @@ function applyGlobalGates(){
   document.querySelectorAll('[data-brand-word]').forEach(el=>{ el.textContent = brandName; });
   const av = document.getElementById('authVersion');
   if(av) av.textContent = brandName + ' v' + APP.version;
-  let lock = null;
-  if(r.suspended) lock = {icon:'\u26D4', title:'Your account has been suspended.',
+  let lock = null; if(state.access && state.access.trashed && !admin) lock = {icon:'\u{1F5D1}\uFE0F', title:'This account is not available.', body:'It has been removed from JournalOS. If you think this is a mistake, please contact support.'}; else if(r.suspended) lock = {icon:'\u26D4', title:'Your account has been suspended.',
     body:'এই অ্যাকাউন্ট দিয়ে আপাতত JournalOS ব্যবহার করা যাবে না। তোমার লেখা কিছুই মুছে যায়নি — সব নিরাপদে আছে। প্রশ্ন থাকলে অ্যাডমিনের সাথে যোগাযোগ করো।'};
   else if(cfg.maintenance.enabled && !admin) lock = {icon:'\u{1F6E0}\uFE0F', title:'Under maintenance', body: cfg.maintenance.message};
   else if(state.user && !subGateReady()) lock = {icon:'\u23F3', title:'একটু অপেক্ষা করো…', body:'তোমার প্ল্যান চেক করা হচ্ছে।', actions:''};
@@ -10680,7 +10672,6 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && request.auth.token.email_verified == true
         && request.auth.token.email.lower() in [
-             'ceo.nayeemuhammad@gmial.com',
              'ceo.nayeemuhammad@gmail.com'
            ];
     }
