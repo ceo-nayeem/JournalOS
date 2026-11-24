@@ -141,6 +141,12 @@
   JOS.onUser(u => {
     if(!u || u.uid !== draft.uid){ location.replace('/checkout/?plan=' + plan.id); return; }
     user = u; $('sMail').textContent = u.email; $('main').hidden = false;
+    JOS.accessCheck(u).then(r => {
+      if(r.kind === 'ok') return;
+      $('main').hidden = true;
+      const h = document.createElement('div'); h.className = 'wrap'; h.style.padding = '34px 0'; h.innerHTML = JOS.blockCardHtml(r);
+      $('main').before(h); h.querySelector('[data-out]').onclick = () => JOS.auth.signOut();
+    });
     if(!$('sender').value) $('sender').value = draft.phone || '';
   });
 
