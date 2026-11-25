@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-22.9">
+<meta name="app-build" content="2026-11-22.10">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2499,6 +2499,34 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .nav-streak .lbl b{margin-right:3px;font-family:var(--font-display,var(--font-serif));font-size:16px;color:var(--accent)}
 .sidebar:not(.expanded):not(.open) .nav-streak .ic::after{content:attr(data-n);position:absolute;right:1px;bottom:1px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--accent);color:var(--on-accent);font-size:10.5px;font-weight:700;line-height:18px;text-align:center}
 @media (max-width:600px){#navFwd{display:none}.topbar-actions{gap:5px}}
+/* ===== App chrome (mobile): bottom bar on Home / Library / Life only, app bar with a title that appears on scroll, quick-add fan ===== */
+.chip-btn[hidden]{display:none!important}
+.tb-title,.qa-fan{display:none}
+.nav-foot{display:flex;flex-direction:column;align-items:center;gap:8px}
+.nav-foot #profileBtn{flex:none;width:42px;height:42px}
+.sidebar.expanded .nav-foot,.sidebar.open .nav-foot{flex-direction:row;align-items:center}
+.sidebar.expanded .nav-foot .nav-streak,.sidebar.open .nav-foot .nav-streak{flex:1;min-width:0}
+.bn-fab svg{transition:transform .35s cubic-bezier(.2,1.2,.3,1)}.bn-fab.open svg{transform:rotate(45deg)}
+@media (max-width:860px){
+  body:not([data-view="dashboard"]):not([data-view="timeline"]):not([data-view="life"]) .bottom-nav{display:none}
+  body:not([data-view="dashboard"]):not([data-view="timeline"]):not([data-view="life"]) #main{padding-bottom:calc(44px + env(safe-area-inset-bottom))}
+  body[data-view="timeline"] .topbar-actions,body[data-view="life"] .topbar-actions{display:none}
+  .topbar::before{content:'';position:absolute;top:calc(-1 * (10px + var(--safe-t,env(safe-area-inset-top,0px))));left:-14px;right:-14px;bottom:-8px;z-index:-1;background:var(--glass-bg-strong);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border-bottom:1px solid var(--glass-border);opacity:0;transition:opacity .18s;pointer-events:none}
+  body.tb-solid .topbar::before{opacity:1}
+  .tb-title{display:block;flex:1;min-width:0;margin:0 10px;text-align:center;font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s;pointer-events:none}
+  .tb-title.show{opacity:1;transform:none}
+  .qa-fan{display:block;position:fixed;left:0;right:0;bottom:calc(98px + env(safe-area-inset-bottom));height:0;z-index:46;pointer-events:none}
+  .qa-catch{display:none;position:fixed;inset:0;z-index:-1;pointer-events:auto;background:transparent}
+  .qa-fan.show .qa-catch{display:block}
+  .qa-b{position:absolute;left:50%;bottom:0;width:60px;height:60px;margin-left:-30px;border-radius:50%;border:1px solid var(--glass-border);background:var(--glass-bg-strong);-webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));color:var(--accent);display:grid;place-items:center;box-shadow:var(--shadow-float);opacity:0;transform:translate(0,40px) scale(.3);pointer-events:none;transition:transform .42s cubic-bezier(.2,1.25,.35,1),opacity .2s,box-shadow .2s;cursor:pointer}
+  .qa-b svg{width:26px;height:26px}
+  .qa-b span{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);padding:3px 9px;border-radius:99px;background:var(--glass-bg-strong);border:1px solid var(--glass-border);font-size:11.5px;font-weight:600;color:var(--ink);white-space:nowrap}
+  .qa-l{background:var(--accent);color:var(--on-accent,#fff);border-color:transparent}
+  .qa-fan.show .qa-b{opacity:1;pointer-events:auto}
+  .qa-fan.show .qa-l{transform:translate(-68px,-18px) scale(1)}
+  .qa-fan.show .qa-r{transform:translate(68px,-18px) scale(1);transition-delay:.05s}
+  .qa-b:active{transform-origin:center;filter:brightness(.95)}
+}
 /* ===== UX polish v1 (additive, token-based; see CHANGES.md) ===== */
 :is(a,button,input,select,textarea,summary,[tabindex],[role=button],.btn,.chip-btn,.nav-item):focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important}
 ::selection{background:var(--accent-soft);color:var(--ink)}
@@ -2539,23 +2567,21 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
 <!-- ============ APP SHELL ============ -->
 <div class="topbar">
   <div class="topbar-left">
-    <button class="hamburger mobile-only" onclick="toggleSidebar()" aria-label="মেনু খুলো">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
     <div class="topnav" role="group" aria-label="History">
-  <button type="button" class="chip-btn" id="navBack" onclick="navBack()" aria-label="Go back" title="Back (Alt+←)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <button type="button" class="chip-btn" id="navBack" onclick="navBack()" aria-label="Go back" title="Back (Alt+←)" disabled hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M15 6l-6 6 6 6"/></svg></button>
   <button type="button" class="chip-btn" id="navFwd" onclick="navFwd()" aria-label="Go forward" title="Forward (Alt+→)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
   </div>
-  <div class="topbar-actions">
+  <div class="tb-title" id="tbTitle" aria-hidden="true"></div>
+<div class="topbar-actions">
   <div class="dock" id="topDock" role="toolbar" aria-label="Quick actions">
     <div class="dock-seg dock-add" id="dockAdd">
       <button type="button" class="dock-btn" id="dockAddBtn" onclick="dockToggle('add',event)" aria-label="নতুন" aria-haspopup="true" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       <div class="dock-menu" role="menu">
-        <button type="button" role="menuitem" onclick="dockClose();startQuickWrite()"><i>✍️</i><span>New Journal</span></button>
-        <button type="button" role="menuitem" id="dockMoodItem" onclick="dockClose();openMoodSheet()"><i>🌈</i><span>Add Mood</span></button>
+        <button type="button" role="menuitem" onclick="dockClose();startQuickWrite()"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 00-3-3L5 17z"/><path d="M14.5 7.5l3 3"/></svg></i><span>New Journal</span></button>
+        <button type="button" role="menuitem" id="dockMoodItem" onclick="dockClose();openMoodSheet()"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0M9 9.5h.01M15 9.5h.01"/></svg></i><span>Add Mood</span></button>
       </div>
     </div>
     <span class="dock-sep" aria-hidden="true"></span>
@@ -2594,7 +2620,7 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
       </button>
       <span class="bell-badge" id="bellBadge" hidden aria-hidden="true">0</span>
     </div>
-    <button class="chip-btn avatar-fallback" id="profileBtn" onclick="toggleProfileMenu()" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">?</button>
+    
   </div>
 </div>
 <div class="overlay" onclick="toggleSidebar()"></div>
@@ -2714,6 +2740,7 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
     </button>
 
   <div class="nav-foot">
+  <button class="chip-btn avatar-fallback" id="profileBtn" onclick="toggleProfileMenu()" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">?</button>
   <button type="button" class="nav-item nav-streak" id="streakChip" onclick="go('dashboard')" aria-label="Day streak">
   <span class="ic" data-n="0"><span aria-hidden="true">🔥</span></span><span class="lbl"><b id="streakNum">0</b> day streak</span><span class="tip">Day streak</span>
   </button>
@@ -2733,12 +2760,12 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
     <span>লাইব্রেরি</span>
   </button>
-  <button class="bn-fab" onclick="openQuickAdd()" aria-label="নতুন এন্ট্রি">
+  <button class="bn-fab" id="bnFab" aria-haspopup="true" aria-expanded="false" onclick="openQuickAdd()" aria-label="নতুন এন্ট্রি">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
   </button>
-  <button class="bn-item" data-view="calendar" onclick="go('calendar')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 15h.01M12 15h.01M16 15h.01"/></svg>
-    <span>ক্যালেন্ডার</span>
+  <button class="bn-item" data-view="life" onclick="go('life')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" aria-hidden="true"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6.5 7.5-6.5C19.5 11 16.5 13 12 13z"/><path d="M12 16c0-3-2.5-5-6.5-5C5.5 14.5 8 16 12 16z"/></svg>
+    <span>লাইফ</span>
   </button>
   <button class="bn-item" onclick="toggleSidebar()" aria-label="More">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
@@ -2746,20 +2773,11 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
   </button>
 </nav>
 
-<!-- ============ QUICK-ADD SHEET (+ button) ============ -->
-<div class="sheet-backdrop" id="quickAddSheet" aria-label="New entry" onclick="if(event.target===this) closeQuickAdd()">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">নতুন এন্ট্রি</div>
-    <button class="sheet-action" onclick="startQuickWrite()">
-      <span class="sheet-icon">✍️</span>
-      <div><b>জার্নাল লিখো</b><div class="sheet-sub">আজকের দিনটা নিয়ে বিস্তারিত লেখো</div></div>
-    </button>
-    <button class="sheet-action" onclick="openMoodSheet()">
-      <span class="sheet-icon">🙂</span>
-      <div><b>শুধু Mood লগ করো</b><div class="sheet-sub">এক ট্যাপে আজকের mood বসাও</div></div>
-    </button>
-  </div>
+<!-- ============ QUICK-ADD FAN (+ button): two round actions, no blur ============ -->
+<div class="qa-fan" id="qaFan">
+  <div class="qa-catch" onclick="closeQuickAdd()"></div>
+  <button type="button" class="qa-b qa-l" onclick="closeQuickAdd();startQuickWrite()" aria-label="Write journal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 00-3-3L5 17z"/><path d="M14.5 7.5l3 3"/></svg><span>Write journal</span></button>
+  <button type="button" class="qa-b qa-r" onclick="closeQuickAdd();openMoodSheet()" aria-label="Log mood"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0M9 9.5h.01M15 9.5h.01"/></svg><span>Log mood</span></button>
 </div>
 
 <!-- ============ QUICK MOOD SHEET ============ -->
@@ -3131,7 +3149,7 @@ const Dialogs = (function(){
   const openers = new Map();
   const closers = {
     confirmModal: ()=>closeConfirm(), typeConfirmModal: ()=>closeTypeConfirm(), lifeEditModal: ()=>closeLifeEdit(),
-    dayEntriesModal: ()=>closeDayEntries(), quickAddSheet: ()=>closeQuickAdd(), moodSheet: ()=>closeMoodSheet(),
+    dayEntriesModal: ()=>closeDayEntries(), moodSheet: ()=>closeMoodSheet(),
     lightbox: ()=>closeLightbox(), onboarding: ()=>finishOnboarding(false),
     adminGateModal: ()=>closeAdminGate(), adminUserModal: ()=>closeAdminUser()
   };
@@ -5777,8 +5795,22 @@ function logout(){
 const JNAV = {stack: [], i: -1, busy: false, first: 'dashboard'};
 function navSync(){
   const b = document.getElementById('navBack'), f = document.getElementById('navFwd');
-  if(b) b.disabled = JNAV.i <= 0;
+  if(b){ b.disabled = JNAV.i <= 0; b.hidden = JNAV.i <= 0 || state.view === 'dashboard'; }   // no back button on Home
   if(f) f.disabled = JNAV.i >= JNAV.stack.length - 1;
+}
+/* Mobile app bar: when the page title scrolls out of view it appears in the top bar and stays there. */
+let TITLE_OBS = null;
+function syncPageTitle(){
+  const tb = document.getElementById('tbTitle'); if(!tb) return;
+  if(TITLE_OBS){ TITLE_OBS.disconnect(); TITLE_OBS = null; }
+  const h = document.querySelector('#main .page-head h1');
+  if(!h || !('IntersectionObserver' in window)){ tb.textContent = ''; tb.classList.remove('show'); document.body.classList.remove('tb-solid'); return; }
+  tb.textContent = h.textContent.trim();
+  TITLE_OBS = new IntersectionObserver(([e]) => {
+    const away = !e.isIntersecting && e.boundingClientRect.top < 0;
+    tb.classList.toggle('show', away); document.body.classList.toggle('tb-solid', away);
+  }, {rootMargin: '-70px 0px 0px 0px'});
+  TITLE_OBS.observe(h);
 }
 function navPush(view, param){
   if(JNAV.busy) return;
@@ -5799,6 +5831,7 @@ window.addEventListener('popstate', e => {
   navSync();
 });
 function go(view, param){
+  closeQuickAdd();
   // Module 09: leaving the write view mid-recording must not leave the
   // microphone stream open — stop (don't save, since we're navigating away
   // without an explicit Stop) whenever the destination isn't the editor.
@@ -5936,6 +5969,16 @@ function syncProfileUI(){
 function toggleProfileMenu(){
   const open = document.getElementById('profileMenu').classList.toggle('show');
   const b = document.getElementById('profileBtn'); if(b) b.setAttribute('aria-expanded', String(open));
+  if(open) placeProfileMenu();
+}
+/* the account button lives at the bottom of the sidebar, so the menu opens upward from it */
+function placeProfileMenu(){
+  const menu = document.getElementById('profileMenu'), b = document.getElementById('profileBtn'); if(!menu || !b) return;
+  const r = b.getBoundingClientRect(), w = menu.offsetWidth || 252;
+  menu.style.top = 'auto'; menu.style.right = 'auto';
+  menu.style.bottom = Math.max(8, innerHeight - r.top + 10) + 'px';
+  menu.style.left = Math.min(Math.max(8, r.left), Math.max(8, innerWidth - w - 8)) + 'px';
+  menu.style.maxHeight = Math.max(160, r.top - 20) + 'px'; menu.style.overflowY = 'auto';
 }
 function closeProfileMenu(){
   document.getElementById('profileMenu').classList.remove('show');
@@ -5950,8 +5993,17 @@ document.addEventListener('click', function(e){
 });
 
 /* ---------------- MOBILE QUICK-ADD / QUICK MOOD SHEETS ---------------- */
-function openQuickAdd(){ document.getElementById('quickAddSheet').classList.add('show'); }
-function closeQuickAdd(){ document.getElementById('quickAddSheet').classList.remove('show'); }
+function openQuickAdd(){
+  const f = document.getElementById('qaFan'); if(!f) return;
+  if(f.classList.contains('show')){ closeQuickAdd(); return; }
+  f.classList.add('show');
+  const b = document.getElementById('bnFab'); if(b){ b.classList.add('open'); b.setAttribute('aria-expanded', 'true'); }
+}
+function closeQuickAdd(){
+  const f = document.getElementById('qaFan'); if(f) f.classList.remove('show');
+  const b = document.getElementById('bnFab'); if(b){ b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeQuickAdd(); });
 function openMoodSheet(){
   closeQuickAdd();
   renderQuickMoodOptions(); // rebuilt each time so the user's own emoji set is always current
@@ -5977,9 +6029,8 @@ function startQuickWrite(){
 
 /* ---------------- RENDER ROUTER ---------------- */
 let __lastView = null;
-function render(){
-  const main = document.getElementById('main');
-  if(state.view !== 'timeline') state.libPop = null;
+function render(){ const main = document.getElementById('main'); if(state.view !== 'timeline') state.libPop = null;
+  document.body.dataset.view = state.view; requestAnimationFrame(() => { syncPageTitle(); navSync(); });
   const views = {
     dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar, shelf: renderShelf,
     search: renderSearch, archive: renderArchive, insights: renderInsights, monthly: renderMonthly,
