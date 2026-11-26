@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-22.10">
+<meta name="app-build" content="2026-11-22.11">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2435,8 +2435,6 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
 .ds:first-child{border-left:0}.ds:hover{background:var(--paper-dim)}
 .ds .k{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
 .ds .v{font-family:var(--font-serif);font-size:24px;line-height:1.15;color:var(--ink)}.ds .s{font-size:12px;color:var(--ink-soft)}
-.dash-main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
-.dash-col{display:flex;flex-direction:column;gap:14px;min-width:0}.dash-col>.tile{margin:0}
 .dp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.dp-head .t{font-weight:600;font-size:14.5px}
 .another{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:6px 8px;border-radius:9px;color:var(--ink-soft);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}.another:hover{background:var(--paper-dim);color:var(--ink)}
 .dm-s{margin-top:2px;font-size:12.5px;color:var(--ink-soft)}
@@ -2527,6 +2525,38 @@ body.focus-mode .save-dock{right:calc(20px + var(--safe-r,0px));}
   .qa-fan.show .qa-r{transform:translate(68px,-18px) scale(1);transition-delay:.05s}
   .qa-b:active{transform-origin:center;filter:brightness(.95)}
 }
+/* ===== Design polish v4: aligned dashboard grid, compact in-card write toolbar, top bar inset, page title that stays ===== */
+.dash-main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:stretch;grid-auto-flow:row dense}
+.dash-main>.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+.dash-main>.dash-recent{grid-row:span 2}.dash-main>.dash-hl{grid-column:1/-1}
+.dash-recent .rc-row{flex:1;align-content:center}
+.dash-today p,.dash-insight p{flex:1}
+.dash-week2 .wk2{flex:1;align-items:center}
+.dash-prompts .dp-grid{flex:1;align-items:stretch}
+@media (max-width:980px){.dash-main{grid-template-columns:1fr}.dash-main>.dash-recent{grid-row:auto}}
+/* write toolbar: sits at the top of the writing card and sticks under the app bar while the card scrolls */
+.write-card{overflow:visible}
+.write-fixed-bar.wfb-in{position:sticky;top:calc(62px + var(--safe-t,0px));left:auto;right:auto;display:flex!important;align-items:center;flex-wrap:nowrap;gap:2px;max-width:none;margin:-8px -8px 16px;padding:5px 8px;border-radius:14px;transform:none!important;opacity:1!important;visibility:visible!important;z-index:20;overflow-x:auto;scrollbar-width:none;box-shadow:var(--shadow)}
+.write-fixed-bar.wfb-in::-webkit-scrollbar{display:none}
+body.write-mode:not(.topbar-peek) .write-fixed-bar.wfb-in{top:calc(8px + var(--safe-t,0px))}
+body.focus-mode .write-fixed-bar.wfb-in{top:14px;max-width:none;margin-left:-8px;margin-right:-8px}
+.wfb-in .fmt-btn{min-width:32px;height:32px;padding:0 7px;font-size:13px}
+.wfb-in .wfb-group{gap:2px}.wfb-in .wfb-sep{height:18px;margin:0 4px}
+.wfb-in .dict-lang{display:none}
+.wfb-book{gap:6px;max-width:150px}.wfb-book svg{color:var(--c1,var(--accent))}
+.wfb-bk-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:92px;font-size:12.5px}
+#focusToggleBtn[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink)}
+body.write-mode .main{padding-top:88px}
+@media (max-width:860px){body.write-mode .main{padding-top:calc(64px + var(--safe-t))}}
+@media (max-width:560px){.wfb-bk-t,.wfb-in #wfbFont{display:none}.wfb-in{margin-left:-6px;margin-right:-6px}}
+/* top bar: a little inward from the screen edge, and the page title stays pinned once it scrolls away (every screen size) */
+@media (min-width:861px){.topbar{left:calc(var(--dock-collapsed) + 30px);right:30px}}
+@media (max-width:860px){.topbar{left:calc(16px + var(--safe-l));right:calc(16px + var(--safe-r))}}
+.tb-title{display:block;flex:1;min-width:0;margin:0 12px;text-align:center;font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s;pointer-events:none}
+.tb-title.show{opacity:1;transform:none}
+.topbar::before{content:'';position:absolute;top:calc(-1 * (14px + var(--safe-t,env(safe-area-inset-top,0px))));left:calc(-1 * (var(--dock-collapsed) + 30px));right:-30px;bottom:-8px;z-index:-1;background:var(--glass-bg-strong);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border-bottom:1px solid var(--glass-border);opacity:0;transition:opacity .18s;pointer-events:none}
+@media (max-width:860px){.topbar::before{top:calc(-1 * (10px + var(--safe-t,env(safe-area-inset-top,0px))));left:-16px;right:-16px}}
+body.tb-solid .topbar::before{opacity:1}
 /* ===== UX polish v1 (additive, token-based; see CHANGES.md) ===== */
 :is(a,button,input,select,textarea,summary,[tabindex],[role=button],.btn,.chip-btn,.nav-item):focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important}
 ::selection{background:var(--accent-soft);color:var(--ink)}
@@ -2701,7 +2731,6 @@ button,[role=button],.btn,.chip-btn,.nav-item{-webkit-tap-highlight-color:transp
 <!-- Populated by renderWrite(); shown only in the write/edit view; slides
      away on scroll-down and reappears on scroll-up so every editing control
      (incl. Save) stays reachable at any scroll position. -->
-<div class="write-fixed-bar" id="writeFixedBar"></div>
 <div class="save-dock" id="writeSaveDock" role="toolbar" aria-label="Journal actions"></div>
 
 <div id="app">
@@ -3709,7 +3738,7 @@ function toggleFocusMode(force){
   state.focusMode = on;
   document.body.classList.toggle('focus-mode', on && state.view === 'write');
   const b = document.getElementById('focusToggleBtn');
-  if(b){ b.textContent = on ? '✕ Exit focus' : '⛶ Focus'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  if(b){ b.title = on ? 'Exit focus mode' : 'Focus mode'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
   if(on){ const ta = getContentEditor(); if(ta) ta.focus(); }
 }
 
@@ -6075,8 +6104,7 @@ function render(){ const main = document.getElementById('main'); if(state.view !
    permanently blocks content, but is always one small scroll away. */
 let __wfbLastY = 0;
 function syncWriteFixedBarVisibility(){
-  const wfb = document.getElementById('writeFixedBar');
-  if(!wfb) return;
+  const wfb = document.getElementById('writeFixedBar') || {classList: {add(){}, remove(){}}};
   if(state.view === 'write'){
     document.body.classList.add('write-mode');
     wfb.classList.add('active');
@@ -6352,16 +6380,14 @@ function renderDashboard(){
   ${dashSectionOn('streakStats') ? dashStats(todayEntry, todayWords, wordsDelta, streak, activeEntries.length, monthCount) : ''}
 
   <div class="dash-main">
-  <div class="dash-col">
-  ${dashSectionOn('todayJournal') ? dashMoodCheckin() + dashJournalCard(todayEntry, todayWords) + dashPrompts() : ''}
+  ${dashSectionOn('todayJournal') ? dashMoodCheckin() : ''}
+  ${dashSectionOn('streakStats') ? dashWeek(dv, streak) : ''}
+  ${dashSectionOn('todayJournal') ? dashJournalCard(todayEntry, todayWords) : ''}
+  ${dashSectionOn('aiSummary') ? dashInsight(todayEntry) : ''}
+  ${dashSectionOn('todayJournal') ? dashPrompts() : ''}
+  ${dashSectionOn('recentActivity') ? dashRecent(activeEntries, today, yesterdayISO) : ''}
   ${dashSectionOn('dailyOverview') ? dashHeatmap() : ''}
   ${dashSectionOn('lifeHighlights') && lifeHighlightCards.length ? `<section class="tile dash-hl"><div class="dp-head"><span class="t">Life highlights</span><button type="button" class="another" onclick="go('life')">Life hub →</button></div><div class="dp-grid">${lifeHighlightCards.map(c => `<button type="button" class="dp-chip" onclick="${c.item.sourceEntryId ? `go('write','${c.item.sourceEntryId}')` : "go('life')"}"><b>${c.icon} ${c.label}</b><br>${escapeHtml(c.item.text)}</button>`).join('')}</div></section>` : ''}
-  </div>
-  <div class="dash-col">
-  ${dashSectionOn('streakStats') ? dashWeek(dv, streak) : ''}
-  ${dashSectionOn('aiSummary') ? dashInsight(todayEntry) : ''}
-  ${dashSectionOn('recentActivity') ? dashRecent(activeEntries, today, yesterdayISO) : ''}
-  </div>
   </div>
   ${memTile || planTile ? `<div class="dash-grid" style="margin-top:14px;">${memTile}${planTile}</div>` : ''}
   `;
@@ -6399,6 +6425,47 @@ function refreshDashboardAISummary(){
   });
 }
 /* ---------------- DAILY JOURNAL / WRITE (Module 03) ---------------- */
+/* ---------------- Write toolbar: one compact bar inside the writing card ---------------- */
+function buildWriteBarHtml(draft){
+  const cur = draft.bookId || DAILY_BOOK_ID, b = getBook(cur), showBook = booksEnabled() || cur !== DAILY_BOOK_ID;
+  const P = 'onmousedown="event.preventDefault()"', PS = 'onmousedown="saveEditorSelection();event.preventDefault()"';
+  return `
+  <div class="wfb-group">
+  ${showBook ? `<button type="button" class="fmt-btn wfb-book" id="wfbBook" style="${b ? bookVars(b) : ''}" aria-haspopup="dialog" aria-expanded="false" aria-label="Book" title="Choose the book for this entry" ${P} onclick="openBookMenu(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="17" height="17" aria-hidden="true"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 19a2 2 0 012-2h13"/></svg><span class="wfb-bk-t">${escapeHtml(b ? b.title : 'Book')}</span></button><span class="wfb-sep"></span>` : ''}
+  <button type="button" class="fmt-btn dict-btn" id="dictBtn" aria-label="Voice typing" aria-pressed="false" title="ভয়েস টাইপিং — লাইভ বলে লেখো (Ctrl+Shift+M)" onmousedown="event.preventDefault()" onclick="Dictate.toggle()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span class="dict-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><button type="button" class="fmt-btn dict-lang" id="dictLangBtn" aria-label="Voice language" title="ভয়েসের ভাষা ও সেটিংস" onmousedown="event.preventDefault()" onclick="Dictate.langMenu(this)">বাং+EN</button>
+  <span class="wfb-sep"></span>
+  <button type="button" class="fmt-btn" id="fmtBoldBtn" aria-label="Bold" title="Bold (Ctrl+B)" ${P} onclick="fmtBold()"><b>B</b></button>
+  <button type="button" class="fmt-btn" id="fmtItalicBtn" aria-label="Italic" title="Italic (Ctrl+I)" ${P} onclick="fmtItalic()"><i>I</i></button>
+  <button type="button" class="fmt-btn" id="fmtUnderBtn" aria-label="Underline" title="Underline (Ctrl+U)" ${P} onclick="fmtUnderline()"><u>U</u></button>
+  <button type="button" class="fmt-btn wfb-menu" id="wfbSize" aria-haspopup="dialog" aria-label="Text size" title="Text size" ${PS} onclick="openSizeMenu(this)">Aa</button>
+  <button type="button" class="fmt-btn wfb-menu" id="wfbFont" aria-haspopup="dialog" aria-label="Font" title="Font" ${PS} onclick="openFontMenu(this)">Font</button>
+  <button type="button" class="fmt-btn" aria-label="Text color" title="Text color — select text, or set it before you start typing" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('color',this)"><span id="fmtColorChip" style="font-weight:700;border-bottom:3px solid #e5484d;line-height:1">A</span></button><button type="button" class="fmt-btn" aria-label="Highlight" title="Highlight — select text, or set it before you start typing" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('hl',this)"><span id="fmtHlChip" style="background:#fff3a3;color:#1b1b1f;border-radius:3px;padding:0 4px;font-weight:700">ab</span></button>
+  <button type="button" class="fmt-btn" id="wfbMore" aria-haspopup="dialog" aria-label="More tools" title="More tools" ${PS} onclick="openWriteMore(this)">•••</button>
+  </div>
+  <div class="wfb-spacer"></div>
+  <button type="button" class="fmt-btn" id="focusToggleBtn" aria-pressed="${!!state.focusMode}" aria-label="Focus mode" title="${state.focusMode ? 'Exit focus mode' : 'Focus mode'}" onclick="toggleFocusMode()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="17" height="17" aria-hidden="true"><path d="M4 9V5a1 1 0 011-1h4M20 9V5a1 1 0 00-1-1h-4M4 15v4a1 1 0 001 1h4M20 15v4a1 1 0 01-1 1h-4"/></svg></button>`;
+}
+function wfbMenu(btn, title, html, cls){
+  const c = UK.cur(); if(c && c.trig === btn){ UK.close(); return; }
+  const body = document.createElement('div'); body.className = 'uk-body'; body.innerHTML = html; UK.open(btn, title, body, cls || 'sel');
+}
+function openSizeMenu(btn){ wfbMenu(btn, 'Text size', `<div class="uk-list">${FONT_SIZES.map(n => `<button type="button" class="uk-opt" onmousedown="event.preventDefault()" onclick="UK.close();fmtSize(${n})"><span style="font-size:${Math.min(n, 22)}px">${n}px</span></button>`).join('')}</div>`); }
+function openFontMenu(btn){
+  const items = [['__default', 'Default', 'inherit']].concat(WRITE_FONTS.map(f => [f[0], f[2] || f[0], f[1]]));
+  wfbMenu(btn, 'Font', `<div class="uk-list">${items.map(f => `<button type="button" class="uk-opt" data-f="${escapeAttr(f[0])}" onmousedown="event.preventDefault()" onclick="UK.close();fmtFont(this.dataset.f)"><span style="font-family:${escapeAttr(f[2])}">${escapeHtml(f[1])}</span></button>`).join('')}</div>`);
+}
+function openBookMenu(btn){
+  const cur = (window.__draft && window.__draft.bookId) || DAILY_BOOK_ID, tmp = document.createElement('select'); tmp.innerHTML = bookOptionsHtml(cur);
+  wfbMenu(btn, 'Book', `<div class="uk-list">${[...tmp.options].map(o => `<button type="button" class="uk-opt${o.value === cur ? ' on' : ''}" data-v="${escapeAttr(o.value)}" onmousedown="event.preventDefault()" onclick="pickBookFromMenu(this.dataset.v)"><span>${escapeHtml(o.text)}</span><i class="uk-ck" aria-hidden="true">✓</i></button>`).join('')}</div>`);
+}
+function pickBookFromMenu(v){ UK.close(); const t = document.createElement('select'); t.innerHTML = '<option value="' + escapeAttr(v) + '"></option>'; t.value = v; onBookSel(t); }
+function writeMoreInner(){
+  const d = window.__draft || {};
+  const row = (label, click, hint) => `<button type="button" class="uk-opt" onmousedown="saveEditorSelection();event.preventDefault()" onclick="UK.close();${click}"><span>${label}</span>${hint ? `<small class="fb-cnt">${hint}</small>` : ''}</button>`;
+  const tog = (label, flag) => `<button type="button" class="uk-opt fb-row" role="switch" aria-checked="${!!d[flag]}" onmousedown="event.preventDefault()" onclick="toggleDraftFlag('${flag}')"><span>${label}</span><i class="sw"></i></button>`;
+  return `<div class="uk-list wm-more">${row('Undo', "edCmd('undo')", 'Ctrl+Z')}${row('Redo', "edCmd('redo')", 'Ctrl+Shift+Z')}${row('Strikethrough', 'fmtStrike()')}${row('Heading', 'fmtHeading()')}${row('Bulleted list', 'fmtBullet()')}${row('Quote', 'fmtQuote()')}${row('Link', 'fmtLink()')}${row('Clear formatting', 'fmtClear()')}${tog('Favorite', 'favorite')}${tog('Mark important', 'important')}${row('Voice language', "Dictate.langMenu(document.getElementById('wfbMore'))")}</div>`;
+}
+function openWriteMore(btn){ wfbMenu(btn, 'More', writeMoreInner()); }
 function renderWrite(){
   let entry = state.editingId ? state.entries.find(e=>e.id===state.editingId) : null;
   // Module 09: right after saveDraft() re-enters the editor for a brand-new
@@ -6451,49 +6518,7 @@ function renderWrite(){
   // ---- populate the fixed floating toolbar (date, flags, formatting,
   // preview toggle, word count, cancel & save) — this is the single source
   // of these controls now, reachable at any scroll position. ----
-  const wfb = document.getElementById('writeFixedBar');
-  if(wfb){
-    wfb.innerHTML = `
-      <div class="wfb-group wfb-optional">
-        <button class="btn btn-sm" id="favBtn" aria-pressed="${!!draft.favorite}" onclick="toggleDraftFlag('favorite')">${draft.favorite?'★ Favorited':'☆ Favorite'}</button>
-        <button class="btn btn-sm" id="impBtn" aria-pressed="${!!draft.important}" onclick="toggleDraftFlag('important')">${draft.important?'🔖 Important':'🏷️ Mark important'}</button>
-      </div>
-      <div class="wfb-sep wfb-optional"></div>
-      <div class="wfb-group dict-group">
-        <button type="button" class="fmt-btn dict-btn" id="dictBtn" aria-label="Voice typing" aria-pressed="false" title="ভয়েস টাইপিং — লাইভ বলে লেখো (Ctrl+Shift+M)" onmousedown="event.preventDefault()" onclick="Dictate.toggle()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span class="dict-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
-        <button type="button" class="fmt-btn dict-lang" id="dictLangBtn" aria-label="Voice language" title="ভয়েসের ভাষা ও সেটিংস" onmousedown="event.preventDefault()" onclick="Dictate.langMenu(this)">বাং+EN</button>
-      </div>
-      <div class="wfb-sep"></div>
-      <div class="wfb-group">
-        <button type="button" class="fmt-btn" aria-label="Undo" title="Undo (Ctrl+Z)" onmousedown="event.preventDefault()" onclick="edCmd('undo')">↶</button>
-        <button type="button" class="fmt-btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" onmousedown="event.preventDefault()" onclick="edCmd('redo')">↷</button>
-        <button type="button" class="fmt-btn" id="fmtBoldBtn" aria-label="Bold" title="Bold (Ctrl+B)" onmousedown="event.preventDefault()" onclick="fmtBold()"><b>B</b></button>
-        <button type="button" class="fmt-btn" id="fmtItalicBtn" aria-label="Italic" title="Italic (Ctrl+I)" onmousedown="event.preventDefault()" onclick="fmtItalic()"><i>I</i></button>
-        <button type="button" class="fmt-btn" id="fmtUnderBtn" aria-label="Underline" title="Underline (Ctrl+U)" onmousedown="event.preventDefault()" onclick="fmtUnderline()"><u>U</u></button>
-        <button type="button" class="fmt-btn" id="fmtStrikeBtn" aria-label="Strikethrough" title="Strikethrough (Ctrl+Shift+X)" onmousedown="event.preventDefault()" onclick="fmtStrike()"><s>S</s></button>
-        <select class="fmt-size" id="fmtSizeSel" aria-label="Text size" title="Text size — select text, or set it before you start typing" onmousedown="saveEditorSelection()" onchange="fmtSize(this.value); this.selectedIndex=0;">
-          <option value="" selected>Aa</option>
-          ${FONT_SIZES.map(n=>`<option value="${n}">${n}px</option>`).join('')}
-        </select>
-        <select class="fmt-size fmt-font" id="fmtFontSel" aria-label="Font" title="Font — select text, or set it before you start typing" onmousedown="saveEditorSelection()" onchange="fmtFont(this.value); this.selectedIndex=0;">
-          <option value="" selected>Font</option>
-          <option value="__default">Default</option>
-          ${WRITE_FONTS.map(f=>`<option value="${f[0]}" style="font-family:${f[1]}">${f[2]||f[0]}</option>`).join('')}
-        </select>
-        <button type="button" class="fmt-btn" aria-label="Text color" title="Text color — select text, or set it before you start typing" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('color',this)"><span id="fmtColorChip" style="font-weight:700;border-bottom:3px solid #e5484d;line-height:1">A</span></button>
-        <button type="button" class="fmt-btn" aria-label="Highlight" title="Highlight — select text, or set it before you start typing" onmousedown="saveEditorSelection();event.preventDefault()" onclick="openPalette('hl',this)"><span id="fmtHlChip" style="background:#fff3a3;color:#1b1b1f;border-radius:3px;padding:0 4px;font-weight:700">ab</span></button>
-        <button type="button" class="fmt-btn" aria-label="Heading" title="Heading" onmousedown="event.preventDefault()" onclick="fmtHeading()">H</button>
-        <button type="button" class="fmt-btn" aria-label="Bulleted list" title="Bulleted list" onmousedown="event.preventDefault()" onclick="fmtBullet()">• List</button>
-        <button type="button" class="fmt-btn" aria-label="Quote" title="Quote" onmousedown="event.preventDefault()" onclick="fmtQuote()">❝</button>
-        <button type="button" class="fmt-btn" aria-label="Insert link" title="Link" onmousedown="saveEditorSelection()" onclick="fmtLink()">🔗</button>
-        <button type="button" class="fmt-btn" aria-label="Clear formatting" title="Clear formatting" onmousedown="event.preventDefault()" onclick="fmtClear()">⌫</button>
-      </div>
-      <div class="wfb-spacer"></div>
-      <div class="wfb-group">
-        <button type="button" class="btn btn-sm btn-ghost" id="focusToggleBtn" aria-pressed="${!!state.focusMode}" onclick="toggleFocusMode()">${state.focusMode?'✕ Exit focus':'⛶ Focus'}</button>
-      </div>
-    `;
-  }
+  const wfbHtml = buildWriteBarHtml(draft);
   const dock = document.getElementById('writeSaveDock');
   if(dock){
     dock.innerHTML = `
@@ -6529,9 +6554,7 @@ function renderWrite(){
       </div>
     </div>` : ''}
 
-    <div class="card">
-      ${bookPickerHtml(draft)}
-      <input class="title-input" id="titleInput" aria-label="Title" placeholder="Title" enterkeyhint="next" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();" onkeydown="onTitleKeydown(event)">
+    <div class="card write-card"> <div class="write-fixed-bar wfb-in active show" id="writeFixedBar" role="toolbar" aria-label="Text formatting">${wfbHtml}</div> <input class="title-input" id="titleInput" aria-label="Title" placeholder="Title" enterkeyhint="next" value="${escapeHtml(draft.title)}" oninput="window.__draft.title=this.value; scheduleAutosave();" onkeydown="onTitleKeydown(event)">
 
       <div class="content-input${(draft.content||'').trim() ? '' : ' is-empty'}" id="contentInput" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Journal entry" spellcheck="true" data-placeholder="Start from here" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onpaste="onEditorPaste(event)" onkeyup="updateFormatState()" onmouseup="updateFormatState()">${mdToEditorHtml(draft.content)}</div>
 
@@ -7181,9 +7204,7 @@ function setDraftIntensity(v){
 }
 function toggleDraftFlag(flag){
   window.__draft[flag] = !window.__draft[flag];
-  const fb = document.getElementById(flag==='favorite'?'favBtn':'impBtn');
-  fb.textContent = flag==='favorite' ? (window.__draft.favorite?'★ Favorited':'☆ Favorite') : (window.__draft.important?'🔖 Important':'🏷️ Mark important');
-  fb.setAttribute('aria-pressed', String(!!window.__draft[flag]));
+  const pm = document.querySelector('.uk-pop .wm-more'); if(pm) pm.innerHTML = writeMoreInner();
   scheduleAutosave();
 }
 function updateWordCount(){
@@ -8297,23 +8318,11 @@ function bookOptionsHtml(cur){
   if(booksEnabled()) opts.push('<option value="__new">＋ নতুন বই বানাও…</option>');
   return opts.join('');
 }
-function bookPickerHtml(draft){
-  const cur = draft.bookId || DAILY_BOOK_ID;
-  if(!booksEnabled() && cur === DAILY_BOOK_ID) return '';
-  const b = getBook(cur);
-  return `<div class="book-pick" id="bookPick" style="${b?bookVars(b):''}">
-    <span class="bp-dot" aria-hidden="true"></span>
-    <label for="bookSel">কোন বইয়ে লিখছো</label>
-    <select id="bookSel" class="book-sel" onchange="onBookSel(this)">${bookOptionsHtml(cur)}</select>
-  </div>`;
-}
 function refreshBookSelect(){
-  const sel = document.getElementById('bookSel'); if(!sel || !window.__draft) return;
-  const cur = window.__draft.bookId || DAILY_BOOK_ID;
-  sel.innerHTML = bookOptionsHtml(cur);
-  sel.value = cur;
-  const wrap = document.getElementById('bookPick'), b = getBook(cur);
-  if(wrap && b) wrap.setAttribute('style', bookVars(b));
+  const b = document.getElementById('wfbBook'); if(!b || !window.__draft) return;
+  const bk = getBook(window.__draft.bookId || DAILY_BOOK_ID), t = b.querySelector('.wfb-bk-t');
+  if(t) t.textContent = bk ? bk.title : 'Book';
+  if(bk) b.setAttribute('style', bookVars(bk));
 }
 function setDraftBook(v){
   if(!window.__draft) return;
