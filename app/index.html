@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="JournalOS — a private, AI-assisted journal. Write first; it remembers, organizes and reflects.">
 <meta name="theme-color" content="#FBF7EF">
-<meta name="app-build" content="2026-11-22.11">
+<meta name="app-build" content="2026-11-22.12">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
@@ -2557,6 +2557,25 @@ body.write-mode .main{padding-top:88px}
 .topbar::before{content:'';position:absolute;top:calc(-1 * (14px + var(--safe-t,env(safe-area-inset-top,0px))));left:calc(-1 * (var(--dock-collapsed) + 30px));right:-30px;bottom:-8px;z-index:-1;background:var(--glass-bg-strong);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);backdrop-filter:blur(var(--glass-blur)) saturate(1.5);border-bottom:1px solid var(--glass-border);opacity:0;transition:opacity .18s;pointer-events:none}
 @media (max-width:860px){.topbar::before{top:calc(-1 * (10px + var(--safe-t,env(safe-area-inset-top,0px))));left:-16px;right:-16px}}
 body.tb-solid .topbar::before{opacity:1}
+/* ===== Library page: sticky view tabs + filter bar, phone filter button, new-entry box ===== */
+.lib-sticky{position:sticky;top:calc(62px + var(--safe-t,0px));z-index:30;margin:0 -8px 12px;padding:8px 8px 0;border-radius:0 0 16px 16px;background:color-mix(in srgb,var(--paper) 86%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.lib-tabrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}.lib-tabrow>:first-child{flex:1;min-width:0}
+.lib-sticky .lfw{margin-bottom:8px}
+.lib-fbtn{display:none;position:relative;flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--rule);background:var(--paper-card);color:var(--ink);place-items:center;cursor:pointer}
+.lib-fbtn[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}.lib-fbtn .fb-n{position:absolute;top:-4px;right:-4px}
+.lib-new{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:14px 16px;border:1.5px dashed color-mix(in srgb,var(--accent) 40%,var(--rule));border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 5%,var(--paper-card));cursor:pointer;transition:border-color .15s,background-color .15s}
+.lib-new:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--paper-card))}
+.ln-ic{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.ln-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ln-txt b{font-family:var(--font-serif);font-size:17px;color:var(--ink)}.ln-txt span{font-size:13.5px;color:var(--ink-soft)}
+@media (max-width:860px){
+  .lib-sticky{display:contents}
+  .lib-tabrow{position:sticky;top:calc(54px + var(--safe-t,0px));z-index:30;margin:0 -6px 10px;padding:6px;background:color-mix(in srgb,var(--paper) 86%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .lib-tabrow.show-fbtn .lib-fbtn{display:grid}
+  .lf-slot.floating{min-height:var(--lfh,0px)}
+  .lf-slot.floating .lfw{position:fixed;top:calc(104px + var(--safe-t,0px));left:12px;right:12px;z-index:34;margin:0}
+  .lf-slot.floating .lfb{box-shadow:var(--shadow-float)}
+  .lib-new{flex-wrap:wrap}.lib-new .btn{margin-left:auto}
+}
 /* ===== UX polish v1 (additive, token-based; see CHANGES.md) ===== */
 :is(a,button,input,select,textarea,summary,[tabindex],[role=button],.btn,.chip-btn,.nav-item):focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important}
 ::selection{background:var(--accent-soft);color:var(--ink)}
@@ -6059,7 +6078,7 @@ function startQuickWrite(){
 /* ---------------- RENDER ROUTER ---------------- */
 let __lastView = null;
 function render(){ const main = document.getElementById('main'); if(state.view !== 'timeline') state.libPop = null;
-  document.body.dataset.view = state.view; requestAnimationFrame(() => { syncPageTitle(); navSync(); });
+  document.body.dataset.view = state.view; requestAnimationFrame(() => { syncPageTitle(); navSync(); syncLibSticky(); });
   const views = {
     dashboard: renderDashboard, write: renderWrite, timeline: renderTimeline, calendar: renderCalendar, shelf: renderShelf,
     search: renderSearch, archive: renderArchive, insights: renderInsights, monthly: renderMonthly,
@@ -7518,6 +7537,31 @@ function libSearchInput(el){
 function libClearSearch(){ state.filters.q = ''; state.libLimit = PAGE_SIZE; render(); const n = document.getElementById('libQ'); if(n) n.focus(); }
 function libReset(){ state.libPop = null; clearLibraryFilters(); }
 function libFilter(field, val){ state.filters[field] = val; state.libLimit = PAGE_SIZE; render(); libPosPop(); }
+/* ---------------- Library: phone filter button + floating filter bar ---------------- */
+function libMobile(){ try{ return matchMedia('(max-width:860px)').matches; }catch(e){ return false; } }
+function libToggleFloat(){
+  const slot = document.getElementById('lfSlot');
+  state.libFloat = !state.libFloat; state.libFloatH = state.libFloat && slot ? slot.offsetHeight : 0; state.libPop = null; render();
+}
+let LIB_FOB = null;
+function syncLibSticky(){
+  if(LIB_FOB){ LIB_FOB.disconnect(); LIB_FOB = null; }
+  const slot = document.getElementById('lfSlot'), row = document.getElementById('libTabrow');
+  if(!slot || !row) return;
+  if(!libMobile() || !('IntersectionObserver' in window)){ row.classList.remove('show-fbtn'); if(state.libFloat){ state.libFloat = false; state.libFloatH = 0; } return; }
+  LIB_FOB = new IntersectionObserver(([e]) => {
+    const away = !e.isIntersecting && e.boundingClientRect.top < 96;
+    row.classList.toggle('show-fbtn', away || !!state.libFloat);
+    if(!away && state.libFloat){ state.libFloat = false; state.libFloatH = 0; render(); }
+  }, {rootMargin: '-96px 0px 0px 0px'});
+  LIB_FOB.observe(slot);
+}
+document.addEventListener('click', e => {
+  if(!state.libFloat || e.composedPath().some(n => n.classList && (n.classList.contains('lfw') || n.classList.contains('lib-fbtn') || n.classList.contains('lf-pop')))) return;
+  state.libFloat = false; state.libFloatH = 0; render();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && state.libFloat && !state.libPop){ state.libFloat = false; state.libFloatH = 0; render(); } });
+function libPickStatus(v){ state.libPop = null; libFilter('archived', v); }
 function libPick(field, val){ state.libPop = null; libFilter(field, val === state.filters[field] ? '' : val); }
 function libApplyDates(from, to){ state.libPop = null; state.filters.dateFrom = from; state.filters.dateTo = to; state.libLimit = PAGE_SIZE; render(); }
 function libDatePreset(k){
@@ -7577,6 +7621,7 @@ function libCalPick(iso){
   libApplyDates(iso < c.from ? iso : c.from, iso < c.from ? c.from : iso);
 }
 const LF_IC = {
+  status:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 002 2h10a2 2 0 002-2V9M10 13h4"/></svg>',
   mood:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0M9 9.5h.01M15 9.5h.01"/></svg>',
   tag:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/></svg>',
   book:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 19a2 2 0 012-2h13"/></svg>',
@@ -7595,13 +7640,13 @@ function libPopHtml(key){
   if(key === 'book') return head('Book') + `<div class="lf-list">${opt(!f.book,'','Any book','book')}${allBooks().map(b=>opt(f.book===b.id,b.id,`${b.emblem} ${escapeHtml(b.title)}`,'book')).join('')}</div>`;
   if(key === 'sort') return head('Sort by') + `<div class="lf-list">${LIB_SORTS.map(s=>`<button type="button" class="lf-opt${s[0]===libSortKey()?' on':''}" role="menuitemradio" aria-checked="${s[0]===libSortKey()}" onclick="libSort('${s[0]}')"><span>${s[1]}</span><i class="ck" aria-hidden="true">✓</i></button>`).join('')}</div>`;
   if(key === 'date') return head('Date range') + `<div class="lf-presets">${[['today','Today'],['7d','7 days'],['30d','30 days'],['month','This month'],['year','This year']].map(p=>`<button type="button" onclick="libDatePreset('${p[0]}')">${p[1]}</button>`).join('')}${f.dateFrom||f.dateTo ? `<button type="button" class="lf-x" onclick="libApplyDates('','')">Clear</button>` : ''}</div><div id="lfCal">${libCalBody()}</div>`;
+  if(key === 'status') return head('Status') + `<div class="lf-list">${[['active', 'Active'], ['archived', 'Archived'], ['all', 'All entries']].map(s => `<button type="button" class="lf-opt${f.archived === s[0] ? ' on' : ''}" role="menuitemradio" aria-checked="${f.archived === s[0]}" onclick="libPickStatus('${s[0]}')"><span>${s[1]}</span><i class="ck" aria-hidden="true">✓</i></button>`).join('')}</div>`;
   const sw = (on, field, label) => `<button type="button" class="lf-row" role="switch" aria-checked="${on}" onclick="libFilter('${field}',${!on})"><span>${label}</span><i class="sw"></i></button>`;
-  return head('More filters') + `${sw(f.favOnly,'favOnly','Favorites only')}${sw(f.importantOnly,'importantOnly','Important only')}${sw(f.notesOnly,'notesOnly','Has notes')}
-    <div class="lf-seg" role="radiogroup" aria-label="Archive status">${[['active','Active'],['all','All'],['archived','Archived']].map(a=>`<button type="button" role="radio" aria-checked="${f.archived===a[0]}" class="${f.archived===a[0]?'on':''}" onclick="libFilter('archived','${a[0]}')">${a[1]}</button>`).join('')}</div>`;
+  return head('More filters') + `${sw(f.favOnly,'favOnly','Favorites only')}${sw(f.importantOnly,'importantOnly','Important only')}${sw(f.notesOnly,'notesOnly','Has notes')}`;
 }
 function libToolbarHtml(f, list, allTags){
   const total = list.length, label = `${total} entr${total===1?'y':'ies'}`, m = f.mood && MOODS.find(x=>x.id===f.mood);
-  const b = allBooks().find(x=>x.id===f.book), more = (f.favOnly?1:0)+(f.importantOnly?1:0)+(f.notesOnly?1:0)+(f.archived!=='active'?1:0);
+  const b = allBooks().find(x=>x.id===f.book), more = (f.favOnly?1:0)+(f.importantOnly?1:0)+(f.notesOnly?1:0);
   const d = x => fmtDate(x,{day:'numeric',month:'short'});
   const pill = (key, icon, text, on, badge) => `<button type="button" class="lf-pill${on?' on':''}${state.libPop===key?' open':''}" data-pop="${key}" aria-haspopup="dialog" aria-expanded="${state.libPop===key}" onclick="libPopOpen('${key}')">${icon}<span class="lp-t">${text}</span>${badge?`<span class="flt-count">${badge}</span>`:''}<svg class="car" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
   return `<div class="lfw">
@@ -7612,6 +7657,7 @@ function libToolbarHtml(f, list, allTags){
       ${pill('tag', LF_IC.tag, f.tag ? '#'+escapeHtml(f.tag) : 'Tag', !!f.tag)}
       ${(state.books||[]).length ? pill('book', LF_IC.book, b ? escapeHtml(b.title) : 'Book', !!f.book) : ''}
       ${pill('date', LF_IC.date, f.dateFrom||f.dateTo ? `${f.dateFrom?d(f.dateFrom):'Start'} – ${f.dateTo?d(f.dateTo):'Today'}` : 'Date', !!(f.dateFrom||f.dateTo))}
+      ${pill('status', LF_IC.status, {active:'Active', archived:'Archived', all:'All entries'}[f.archived] || 'Active', f.archived !== 'active')}
       ${pill('more', LF_IC.more, 'More', !!more, more||'')}
       ${pill('sort', LF_IC.sort, LIB_SORTS.find(s=>s[0]===libSortKey())[1], false)}
       ${isLibraryFiltered(f) ? `<button type="button" class="lf-reset" onclick="libReset()">Reset</button>` : ''}
@@ -7635,19 +7681,14 @@ function renderTimeline(){
   const activeCount = countLibraryFilters(f);
 
   return `
-    <div class="page-head">
-      <h1>Journal Library</h1>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="go('archive')">🗄 Archive</button>
-        <button class="btn btn-primary" onclick="go('write')">+ New Entry</button>
-      </div>
-    </div>
-    ${libTabs('timeline')}
-
-    ${libToolbarHtml(f, list, allTags)}
-
-    <div class="card">
-      ${list.length ? renderLibraryGroups(list.slice(0, state.libLimit||PAGE_SIZE), !['newest','oldest'].includes(libSortKey()))
+    <div class="page-head"><div><h1>Journal Library</h1></div></div>
+  <div class="lib-sticky">
+  <div class="lib-tabrow" id="libTabrow">${libTabs('timeline')}<button type="button" class="lib-fbtn" id="libFbtn" aria-label="Filters" aria-expanded="${!!(state.libFloat && libMobile())}" onclick="libToggleFloat()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>${(countLibraryFilters(f) + (f.q ? 1 : 0)) ? `<b class="fb-n">${countLibraryFilters(f) + (f.q ? 1 : 0)}</b>` : ''}</button></div>
+  <div class="lf-slot${state.libFloat && libMobile() ? ' floating' : ''}" id="lfSlot" style="--lfh:${state.libFloatH || 0}px">${libToolbarHtml(f, list, allTags)}</div>
+  </div>
+  <div class="card">
+  <div class="lib-new" role="button" tabindex="0" onclick="go('write')" onkeydown="if(event.key==='Enter')this.click()"><span class="ln-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 00-3-3L5 17z"/><path d="M14.5 7.5l3 3"/></svg></span><div class="ln-txt"><b>Start a new entry</b><span>What is on your mind today? Write a few honest lines, a title is optional.</span></div><button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();go('write')">New entry</button></div>
+  ${list.length ? renderLibraryGroups(list.slice(0, state.libLimit||PAGE_SIZE), !['newest','oldest'].includes(libSortKey()))
         + ui.loadMore(PAGE_SIZE, list.length - Math.min(list.length, state.libLimit||PAGE_SIZE), 'showMoreLibrary()')
       : (isLibraryFiltered(f)
           ? ui.empty({icon:'🔎', title:'Nothing matched your filters.', body:'Try removing a filter to see more of your journals.', action:{label:'Clear filters', onclick:'clearLibraryFilters()'}})
