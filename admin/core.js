@@ -453,6 +453,8 @@ A._db = () => db;
     tag: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/></svg>',
     more: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>',
     sort: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3.5 16.5L7 20l3.5-3.5M17 20V4M13.5 7.5L17 4l3.5 3.5"/></svg>',
+        book: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 19a2 2 0 012-2h13"/></svg>',
+    status: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 002 2h10a2 2 0 002-2V9M10 13h4"/></svg>',
     filter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>',
     search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'
   };
@@ -469,18 +471,18 @@ A._db = () => db;
     open(t, (d.titles && d.titles[k]) || k, body, 'fbp ' + ((d.cls && d.cls[k]) || ''), () => { FB.cur = null; });
     FB.cur = {id, k};
   };
-  FB.tgl = (id, k) => { close(); FB.defs[id].apply(k); };
-  FB.reset = id => { close(); FB.defs[id].reset(); };
-  FB.pick = btn => { const c = FB.cur; if(!c) return; const d = FB.defs[c.id], k = btn.dataset.k || c.k; if(!btn.dataset.keep) close(); d.apply(k, btn.dataset.v); };
-  FB.refresh = id => {
-    const bar = document.getElementById(id); if(!bar) return; const was = FB.cur && FB.cur.id === id ? FB.cur.k : null;
-    bar.outerHTML = FB.html(id);
+  FB.tgl = (id, k) => { close(); if(typeof ptClose === 'function') ptClose(); FB.defs[id].apply(k); };
+  FB.reset = id => { close(); if(typeof ptClose === 'function') ptClose(); FB.defs[id].reset(); };
+  FB.pick = btn => { const c = FB.cur; if(!c) return; const d = FB.defs[c.id], k = btn.dataset.k || c.k; if(!btn.dataset.keep){ close(); if(typeof ptClose === 'function') ptClose(); } d.apply(k, btn.dataset.v); };
+  FB.rebind = id => {
+    const was = FB.cur && FB.cur.id === id ? FB.cur.k : null;
     if(was && cur){ const t = document.querySelector('#' + id + ' .fb-pill[data-k="' + was + '"]'), b = pop.querySelector('.uk-body'); if(t && b){ cur.trig = t; t.setAttribute('aria-expanded', 'true'); b.innerHTML = FB.defs[id].pop(was); place(); } }
   };
+  FB.refresh = id => { const bar = document.getElementById(id); if(!bar) return; bar.outerHTML = FB.html(id); FB.rebind(id); };
   const on1 = (v, cv) => String(v) === String(cv);
   FB.opts = (items, cv, k, keep) => `<div class="uk-list" role="menu">${items.map(([v, t, n]) => `<button type="button" role="menuitemradio" aria-checked="${on1(v, cv)}" class="uk-opt${on1(v, cv) ? ' on' : ''}" data-v="${esc(v)}" ${k ? `data-k="${k}"` : ''} ${keep ? 'data-keep="1"' : ''} onclick="UK.fb.pick(this)"><span>${t}</span>${n != null ? `<small class="fb-cnt">${n}</small>` : ''}<i class="uk-ck" aria-hidden="true">✓</i></button>`).join('')}</div>`;
   FB.chips = (items, isOn, k, keep) => `<div class="fb-chips">${items.map(([v, t]) => `<button type="button" class="fb-chip${isOn(v) ? ' on' : ''}" aria-pressed="${!!isOn(v)}" data-v="${esc(v)}" data-k="${k}" ${keep ? 'data-keep="1"' : ''} onclick="UK.fb.pick(this)">${t}</button>`).join('')}</div>`;
-  FB.moods = (items, isOn, k) => `<div class="fb-moods">${items.map(([v, e, t]) => `<button type="button" class="fb-mood${isOn(v) ? ' on' : ''}" aria-pressed="${!!isOn(v)}" data-v="${esc(v)}" data-k="${k}" data-keep="1" onclick="UK.fb.pick(this)"><span class="em">${e}</span><span>${esc(t)}</span></button>`).join('')}</div>`;
+  FB.moods = (items, isOn, k, keep = true) => `<div class="fb-moods">${items.map(([v, e, t]) => `<button type="button" class="fb-mood${isOn(v) ? ' on' : ''}" aria-pressed="${!!isOn(v)}" data-v="${esc(v)}" data-k="${k}" ${keep ? 'data-keep="1"' : ''} onclick="UK.fb.pick(this)"><span class="em">${e}</span><span>${esc(t)}</span></button>`).join('')}</div>`;
   FB.sw = (isOn, label, k, v) => `<button type="button" class="uk-opt fb-row" role="switch" aria-checked="${!!isOn}" data-k="${k}" data-v="${v}" data-keep="1" onclick="UK.fb.pick(this)"><span>${label}</span><i class="sw"></i></button>`;
   const rc = {y: 0, m: 0, from: '', to: ''};
   const rcBody = () => {
@@ -494,7 +496,7 @@ A._db = () => db;
   FB.rcNav = n => { const d = new Date(rc.y, rc.m + n, 1); rc.y = d.getFullYear(); rc.m = d.getMonth(); rcPaint(); };
   FB.rcPick = iso => {
     if(!rc.from || rc.to){ rc.from = iso; rc.to = ''; rcPaint(); return; }
-    const a = iso < rc.from ? iso : rc.from, b = iso < rc.from ? rc.from : iso, c = FB.cur; close(); if(c && FB.defs[c.id].range) FB.defs[c.id].range(a, b);
+    const a = iso < rc.from ? iso : rc.from, b = iso < rc.from ? rc.from : iso, c = FB.cur; close(); if(typeof ptClose === 'function') ptClose(); if(c && FB.defs[c.id].range) FB.defs[c.id].range(a, b);
   };
   UK.scan = scan; UK.close = close; UK.open = open; UK.cur = () => cur;
   function start(){ scan(document.body); new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(scan))).observe(document.body, {childList: true, subtree: true}); }
